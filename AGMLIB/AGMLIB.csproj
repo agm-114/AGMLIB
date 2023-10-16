@@ -1,0 +1,141 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net481</TargetFramework>
+    <ImplicitUsings>false</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <BaseOutputPath>C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB</BaseOutputPath>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+	<LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="libs\**" />
+    <EmbeddedResource Remove="libs\**" />
+    <None Remove="libs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>libs\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Facepunch.Steamworks.Win64">
+      <HintPath>libs\Facepunch.Steamworks.Win64.dll</HintPath>
+    </Reference>
+    <Reference Include="kcp2k">
+      <HintPath>libs\kcp2k.dll</HintPath>
+    </Reference>
+    <Reference Include="Mirror">
+      <HintPath>libs\Mirror.dll</HintPath>
+    </Reference>
+    <Reference Include="Mirror.Components">
+      <HintPath>libs\Mirror.Components.dll</HintPath>
+    </Reference>
+    <Reference Include="Nebulous">
+      <HintPath>libs\Nebulous.dll</HintPath>
+    </Reference>
+    <Reference Include="Priority Queue">
+      <HintPath>libs\Priority Queue.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC">
+      <HintPath>libs\QFSW.QC.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC.Demo">
+      <HintPath>libs\QFSW.QC.Demo.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC.Extras">
+      <HintPath>libs\QFSW.QC.Extras.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC.Grammar">
+      <HintPath>libs\QFSW.QC.Grammar.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC.Parsers">
+      <HintPath>libs\QFSW.QC.Parsers.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC.Serializers">
+      <HintPath>libs\QFSW.QC.Serializers.dll</HintPath>
+    </Reference>
+    <Reference Include="QFSW.QC.UI">
+      <HintPath>libs\QFSW.QC.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.All">
+      <HintPath>libs\QuickGraph.All.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Core">
+      <HintPath>libs\QuickGraph.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Serialization">
+      <HintPath>libs\QuickGraph.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="RSG.Promise">
+      <HintPath>libs\RSG.Promise.dll</HintPath>
+    </Reference>
+    <Reference Include="ShapesRuntime">
+      <HintPath>libs\ShapesRuntime.dll</HintPath>
+    </Reference>
+    <Reference Include="Surge">
+      <HintPath>libs\Surge.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Linq" />
+    <Reference Include="System.Threading" />
+    <Reference Include="Telepathy">
+      <HintPath>libs\Telepathy.dll</HintPath>
+    </Reference>
+    <Reference Include="UIExtensions">
+      <HintPath>libs\UIExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Addressables">
+      <HintPath>libs\Unity.Addressables.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>libs\Unity.ResourceManager.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor">
+      <HintPath>libs\UnityEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.CoreModule">
+      <HintPath>libs\UnityEditor.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.UIElementsModule">
+      <HintPath>libs\UnityEditor.UIElementsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>libs\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>libs\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>libs\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>libs\UnityEngine.ParticleSystemModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>libs\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VFXModule">
+      <HintPath>libs\UnityEngine.VFXModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Vectrosity">
+      <HintPath>libs\Vectrosity.dll</HintPath>
+    </Reference>
+    <Reference Include="where-allocations">
+      <HintPath>libs\where-allocations.dll</HintPath>
+    </Reference>
+    <Reference Include="XNode">
+      <HintPath>libs\XNode.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="call neblaunch.bat" />
+  </Target>
+
+</Project>
