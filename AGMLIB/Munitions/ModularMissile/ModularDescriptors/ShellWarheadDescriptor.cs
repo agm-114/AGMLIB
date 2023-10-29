@@ -131,7 +131,7 @@ public class ShellWarheadDescriptor : BaseWarheadDescriptor, IModular
     public void Fire(LightweightMunitionBase ammo, Vector3 shotDirection, RuntimeMissileWarhead runtime)
     {
         NetworkPoolable networkPoolable = ammo.InstantiateSelf(runtime.transform.position, _bulletLook ? Quaternion.LookRotation(shotDirection) : Quaternion.identity, shotDirection * ((IMunition)ammo).FlightSpeed);
-        IWeaponStatReportReceiver _reportTo = (IWeaponStatReportReceiver)Common.GetPrivateField(runtime.Missile, "_reportTo");
+        IWeaponStatReportReceiver _reportTo = Common.GetVal<IWeaponStatReportReceiver>(runtime.Missile, "_reportTo");
 
         if (networkPoolable is ILocalImbued localImbued)
         {

@@ -70,7 +70,7 @@ class BundleCache
     public static Dictionary<FilePath, AssetBundleCreateRequest> Preloadedbundles = new();
 }
 
-[HarmonyPatch(typeof(BundleManager), nameof(BundleManager.LoadAssetBundleAsync))]
+//[HarmonyPatch(typeof(BundleManager), nameof(BundleManager.LoadAssetBundleAsync))]
 class QuickLoad
 {
     public static async Task<AssetBundle> AGMLoadAssetBundleAsync(FilePath path, IProgress<float> progress)
@@ -116,7 +116,7 @@ class QuickLoad
 
 
 }
-[HarmonyPatch(typeof(ModDatabase), "FindModInfo")]
+//[HarmonyPatch(typeof(ModDatabase), "FindModInfo")]
 class DependencyPatch
 {
     public static bool window = false;
@@ -139,24 +139,13 @@ class DependencyPatch
         */
 
 
-        if (!__result.DownloadedFromWorkshop || __result.WorkshopItem == null || __result.Assemblies == null || !__result.Assemblies.Contains("AGMLIB.dll"))
+        if (!__result.DownloadedFromWorkshop || __result.WorkshopItem == null || __result.Assemblies == null || !__result.Assemblies.Contains("AGMLIB.dll") || __result.ModName == "AGMLIB")
             return;
 
-
-        //Debug.LogError("Processing :" + __result.ModName);
-        if (__result.Assemblies == null ||  __result.ModName == "AGMLIB")
-            return;
-        //Debug.LogError("Contains AGMLIB :" + __result.ModName);
-
-
-
-
-        Debug.Log(__result.ModName + " Postfix");
+        Debug.LogError(__result.ModName + " Postfix");
         Item workshopstats = __result.WorkshopItem.Value;
         if (__result.ModDescription == null || __result.ModDescription.Length < 1)
             __result.ModDescription = workshopstats.Description;
-
-
 
         //__result.Assemblies = new string[0] { };
         List<string> newassemblies = new();
@@ -168,11 +157,12 @@ class DependencyPatch
         string[] array = new string[newassemblies.Capacity];
         array = newassemblies.Select(i => i.ToString()).ToArray();
         __result.Assemblies = array;
+        __result.Dependencies = new ulong[1] { 2960504230 };
         ModRecord modByID = ModDatabase.Instance.GetModByID(2960504230);
         if (modByID.Loaded || modByID.MarkedForLoad)//&& modByID.Info.DownloadedFromWorkshop
         {
             //Debug.LogError("Injecting Dependency for " + __result.ModName);
-            __result.Dependencies = new ulong[1] { 2960504230 };
+            
         }
 
         if (workshopstats.IsDownloading || workshopstats.IsDownloadPending || workshopstats.NeedsUpdate)
@@ -238,6 +228,17 @@ public class EntryPoint : IModEntryPoint
         Debug.Log("AGMLIB: 0.16 Preload");
         var harmony = new Harmony("neb.lib.harmony.product");
         harmony.PatchAll();
+        return;
+        List<ModRecord> modlist = (List<ModRecord>)ModDatabase.Instance.MarkedForLoad;
+        foreach (ModRecord record in modlist)
+        {
+            ModInfo info = record.Info;
+            //Debug.LogError("Checking " + info.ModName);
+            DependencyPatch.Postfix(ModDatabase.Instance, ref info);
+            return;
+        }
+
+        
         //LobbyModPane modPane = new LobbyModPane();
         //List<ulong> _missingmods = ModDatabase.Instance.GetMissingMods(new ulong[1] { 2960504230 });
         
@@ -249,8 +250,6 @@ public class EntryPoint : IModEntryPoint
         //Debug.LogError("Checking if AGMLIB isn't loaded");
         if (!ModDatabase.Instance.MarkedForLoad.Any(p => p.Info.ModName == "AGMLIB"))//First().Info.ModName != "AGMLIB"
             FixLoadOrder();
-        //Debug.LogError("Checking if AGMLIB isn ordered correctly");
-        List<ModRecord> modlist = (List<ModRecord>)ModDatabase.Instance.MarkedForLoad;
 
 
 
@@ -259,7 +258,7 @@ public class EntryPoint : IModEntryPoint
             ModInfo info = record.Info;
             //Debug.LogError("Checking " + info.ModName);
             DependencyPatch.Postfix(ModDatabase.Instance, ref info);
-            SetPrivateField(record, "Info", info);
+            Common.SetVal(record, "Info", info);
 
             //Debug.Log("Checking order " + info.ModName);
             if (info.Dependencies == null)
@@ -355,7 +354,7 @@ public class EntryPoint : IModEntryPoint
         List<ModRecord> correctLoadOrder = modDependencyGraph.GetCorrectLoadOrder();
         int num = 0;
         foreach (ModRecord item in correctLoadOrder)
-            SetPrivateField(ModDatabase.Instance, "LoadOrder", num++);
+            Common.SetVal(ModDatabase.Instance, "LoadOrder", num++);
         Debug.LogError("MODLIST SORTED");
 
         ModDatabase.Instance.SetModsToLoad(correctLoadOrder);
@@ -378,49 +377,7 @@ public class EntryPoint : IModEntryPoint
 
 
 
-    public static System.Object GetPrivateField(System.Object instance, string fieldName)
-    {
-        static System.Object GetPrivateFieldInternal(System.Object instance, string fieldName, Type type)
-        {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
 
-            if (field != null)
-            {
-                return field.GetValue(instance);
-            }
-            else if (type.BaseType != null)
-            {
-                return GetPrivateFieldInternal(instance, fieldName, type.BaseType);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        return GetPrivateFieldInternal(instance, fieldName, instance.GetType());
-    }
-
-    public static void SetPrivateField(System.Object instance, string fieldName, System.Object value)
-    {
-        static void SetPrivateFieldInternal(System.Object instance, string fieldName, System.Object value, Type type)
-        {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                field.SetValue(instance, value);
-                return;
-            }
-            else if (type.BaseType != null)
-            {
-                SetPrivateFieldInternal(instance, fieldName, value, type.BaseType);
-                return;
-            }
-        }
-
-        SetPrivateFieldInternal(instance, fieldName, value, instance.GetType());
-    }
 }
 
 

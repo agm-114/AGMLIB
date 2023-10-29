@@ -205,7 +205,7 @@ class HullSocketPatch
             //Debug.LogError("Resizing Socket");
             socketFilters.Size = socket.Size.Dimensions;
             socketFilters.Resized = true;
-            Common.SetPrivateField(socket, "_size", componentPrefab.Size);
+            Common.SetVal(socket, "_size", componentPrefab.Size);
             return true;
         }
 
@@ -221,7 +221,7 @@ class HullSocketPatch
             return;
         if (socketFilters.Resized && socketFilters.Size != null)
         {
-            Common.SetPrivateField(__instance, "_size", socketFilters.Size);
+            Common.SetVal(__instance, "_size", socketFilters.Size);
             socketFilters.Resized = false;
         }
         /*if(socket.Component == null)

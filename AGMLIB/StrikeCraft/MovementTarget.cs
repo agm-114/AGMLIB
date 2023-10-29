@@ -66,7 +66,7 @@ public class MovementTarget : MonoBehaviour
                     hullComponent.DoHeal(1);
                 else if (hullComponent.CurrentHealth > targethealth)
                     hullComponent.DoDamage(1, null, null);
-                Common.SetPrivateField(hullComponent, "_minHealthReached", hullComponent.CurrentHealth);
+                Common.SetVal(hullComponent, "_minHealthReached", hullComponent.CurrentHealth);
                 FormationManager.ShipController?.MarkAsDamaged();
             }
         }
