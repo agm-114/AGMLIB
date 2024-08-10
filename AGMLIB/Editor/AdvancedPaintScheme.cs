@@ -12,137 +12,176 @@ using static AdvancedPaintScheme;
 //using static AdvancedPaintScheme;
 
 [ExecuteAlways]
+[ExecuteInEditMode]
 public class AdvancedPaintScheme : MonoBehaviour
 {
 
     //public Texture2D replacementtexture;
     //public HullScheme[] HullSchemes;
 
-
     //public GameObject PaintSchemesChild; 
+    public GameObject Hull;
+    public string ClassName = "default";
+    public bool Serialize = true;
+    public bool AutoFill = true;
+    //bool preserveshader;
+    public List<SegmentOverride> HullSegmentTextures;
 
-    public List<HullScheme> HullPaintSchemes = new List<HullScheme>(1);
+    public List<string> SerializedClassNames = new(1);
+    public List<string> SerializedSegmentNames = new(1);
+    public List<Texture2D> SerializedTextures = new(1);
+    public List<int> SerializedIndexes = new(1);
+    public List<bool> SerializedValidTargets = new(1);
+    public List<FastNameplateBaker.BakeTarget> SerializedTargets = new(1);
 
-    public List<string> SerializedClassNames = new List<string>(1);
-    public List<string> SerializedSegmentNames = new List<string>(1);
-    public List<Texture2D> SerializedTextures = new List<Texture2D>(1);
 
-    //public IDictionary<string, IDictionary<string, Texture2D>> SegmentTextures;
     [Serializable]
-    public class HullScheme
+    public class SegmentOverride
     {
-        public string ClassName;
-        public GameObject Hull;
-        //bool preserveshader;
-        public List<TextureOverride> HullSegmentTextures;
-        //public Dictionary<string, Texture2D> name;
+
+        public string SegmentName = "default";
+        public Texture2D ReplacementTexture;
+        public List<Texture2D> TextureOverrides = new(0);
+        public List<FastNameplateBaker.BakeTarget> Targets = new(0);
     }
-    [Serializable]
-    public class TextureOverride
+    public class MaterialOverrides
     {
 
         public string SegmentName;
         public Texture2D ReplacementTexture;
+        public int MaterialIndex = 0;
+        public int NameplateIndex = 0;
     }
 
+    void Start()
+    {
+        //if(PaintSchemesChild != null)
+        //    Destroy(PaintSchemesChild);
+        //Debug.LogError("Component has: " + HullPaintSchemes.Count + " Hull paint schemes");
+        if (Application.isEditor)
+        {
+            return;
+        }
+        for (int i = 0; i < SerializedTextures.Count; i++)
+        {
+            if (SerializedTextures[i] == null)
+                continue;
+            PaintScheme newpaintscheme = gameObject.AddComponent<PaintScheme>();
+            newpaintscheme.ClassName = SerializedClassNames[i];
+            newpaintscheme.SegmentName = SerializedSegmentNames[i];
+            newpaintscheme.Replacementtexture = SerializedTextures[i];
+            newpaintscheme.Index = SerializedIndexes[i];
+            //newpaintscheme.ValidBaketraget = SerializedValidTargets[i];
+            //stnewpaintscheme.Baketarget = SerializedTargets[i];
+            //if (SerializedTextures[i] == null)
+            //    Debug.LogError("Texture missing in APS");
+        }
+        Destroy(this);
 
+    }
 
     // Update is called once per frame
     void Update()
     {
-        if (Application.isEditor)
+        //Debug.LogError("Running APS Tick");
+        if (!Application.isEditor)
         {
-            for (int i = 0; i < HullPaintSchemes.Count; i++)
-            {
-                if (HullPaintSchemes[i].Hull == null)
-                    continue;
-                
-                Hull newhull = HullPaintSchemes[i].Hull.GetComponent<Hull>();
-                if (newhull == null)
-                    newhull = HullPaintSchemes[i].Hull.GetComponentInChildren<Hull>();
-                if (newhull == null)
-                    newhull = HullPaintSchemes[i].Hull.GetComponentInParent<Hull>();
-                if (newhull == null)
-                {
-                    Debug.LogError("The linked gameobject has no HULL component");
-                    continue;
-                }
-                HullPaintSchemes[i].ClassName = newhull.ClassName;
-                HullSegment[] _paintableMeshes = (HullSegment[])GetPrivateField(newhull, "_paintableMeshes");
+            return;
+        }
 
-                if (HullPaintSchemes[i].HullSegmentTextures == null)
-                    HullPaintSchemes[i].HullSegmentTextures = new  List<TextureOverride>(1);
-                while (HullPaintSchemes[i].HullSegmentTextures.Count < _paintableMeshes.Length)
-                    HullPaintSchemes[i].HullSegmentTextures.Add(new TextureOverride());
-                while (HullPaintSchemes[i].HullSegmentTextures.Count > _paintableMeshes.Length)
-                    HullPaintSchemes[i].HullSegmentTextures.RemoveAt(HullPaintSchemes[i].HullSegmentTextures.Count - 1);
-                for (int j = 0; j < _paintableMeshes.Length; j++)
-                {
-                    HullPaintSchemes[i].HullSegmentTextures[j].SegmentName = _paintableMeshes[j].gameObject.name;
-                }
-            }
+        if (Serialize)
+        {
 
             SerializedClassNames = new List<string>();
             SerializedSegmentNames = new List<string>();
             SerializedTextures = new List<Texture2D>();
+            SerializedIndexes = new List<int>();
 
-            foreach (HullScheme hullScheme in HullPaintSchemes)
+            foreach (SegmentOverride textureOverride in HullSegmentTextures)
             {
-                //Debug.LogError(hullScheme.ClassName);
-                foreach (TextureOverride textureOverride in hullScheme.HullSegmentTextures)
+                //SerializedClassNames[counttexutures] = hullScheme.ClassName;
+                //SerializedSegmentNames[counttexutures] = textureOverride.SegmentName;
+                //SerializedTextures[counttexutures] = textureOverride.ReplacementTexture;
+                void Serialize(int indexval, Texture2D texture, FastNameplateBaker.BakeTarget target, bool validtarget = false)
                 {
-                    //SerializedClassNames[counttexutures] = hullScheme.ClassName;
-                    //SerializedSegmentNames[counttexutures] = textureOverride.SegmentName;
-                    //SerializedTextures[counttexutures] = textureOverride.ReplacementTexture;
-                    SerializedClassNames.Add(hullScheme.ClassName);
+                    SerializedClassNames.Add(ClassName);
                     SerializedSegmentNames.Add(textureOverride.SegmentName);
-                    SerializedTextures.Add(textureOverride.ReplacementTexture);
-                    //counttexutures = 0;
+                    SerializedTextures.Add(texture);
+                    SerializedIndexes.Add(-1);
+                    SerializedValidTargets.Add(validtarget);
+                    SerializedTargets.Add(target);
                 }
+
+                Serialize(-1, textureOverride.ReplacementTexture, new());
+
+                int index = 0;
+
+
+                foreach (Texture2D texture in textureOverride.TextureOverrides)
+                {
+                    Serialize(index, texture, new());
+                    index++;
+                }
+                index = 0;
+
+                foreach (FastNameplateBaker.BakeTarget texture in textureOverride.Targets)
+                {
+                    Serialize(index, null, texture, true);
+                    index++;
+                }
+
+                //counttexutures = 0;
             }
 
         }
-        else
+
+        if (AutoFill)
         {
-            //if(PaintSchemesChild != null)
-            //    Destroy(PaintSchemesChild);
-            //Debug.LogError("Component has: " + HullPaintSchemes.Count + " Hull paint schemes");
-            for(int i  = 0; i < SerializedTextures.Count; i++)
+            Debug.LogError("Running APS Editor Tick");
+
+            if (Hull == null)
             {
-                if (SerializedTextures[i] == null)
-                    continue;
-                PaintScheme newpaintscheme = gameObject.AddComponent<PaintScheme>();
-                newpaintscheme.ClassName = SerializedClassNames[i];
-                newpaintscheme.SegmentName = SerializedSegmentNames[i];
-                newpaintscheme.replacementtexture = SerializedTextures[i];
-                if (SerializedTextures[i] == null)
-                    Debug.LogError("Texture missing in APS");
+                Debug.LogError("Hull is Null");
+                return;
+
             }
-            Destroy(this);
+
+            Hull newhull = (Hull.GetComponent<Hull>() ?? Hull.GetComponentInChildren<Hull>()) ?? Hull.GetComponentInParent<Hull>();
+            if (newhull == null)
+            {
+                Debug.LogError("The linked gameobject has no HULL component");
+                return;
+            }
+            ClassName = newhull.ClassName;
+            HullSegmentBasic[] _paintableMeshes = Common.GetVal<HullSegmentBasic[]>(newhull, "_paintableMeshes");
+            if (_paintableMeshes == null || _paintableMeshes.Length <= 0)
+            {
+                Debug.LogError("No Paintable Medshes Detected, falling back on manual detection");
+                _paintableMeshes = Hull.GetComponentsInChildren<HullSegmentBasic>();
+
+            }
+            if (_paintableMeshes == null || _paintableMeshes.Length <= 0)
+            {
+                Debug.LogError("No Paintable Medshes Detected, falling back on manual detection");
+                return;
+
+            }
+
+
+            if (HullSegmentTextures == null)
+                HullSegmentTextures = new List<SegmentOverride>(1);
+            while (HullSegmentTextures.Count < _paintableMeshes.Length)
+                HullSegmentTextures.Add(new SegmentOverride());
+            while (HullSegmentTextures.Count > _paintableMeshes.Length)
+                HullSegmentTextures.RemoveAt(HullSegmentTextures.Count - 1);
+            for (int j = 0; j < _paintableMeshes.Length; j++)
+            {
+                HullSegmentTextures[j].SegmentName = _paintableMeshes[j].gameObject.name;
+            }
+
         }
-    }
 
-    public static object GetPrivateField(object instance, string fieldName)
-    {
-        static object GetPrivateFieldInternal(object instance, string fieldName, System.Type type)
-        {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
 
-            if (field != null)
-            {
-                return field.GetValue(instance);
-            }
-            else if (type.BaseType != null)
-            {
-                return GetPrivateFieldInternal(instance, fieldName, type.BaseType);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        return GetPrivateFieldInternal(instance, fieldName, instance.GetType());
     }
 }
 

@@ -17,19 +17,18 @@ using Utility;
 [HarmonyPatch(typeof(ActiveJammingEffect), "CheckTargetValidity")]
 class CheckTargetValidityTweak
 {
-    static void Postfix(ActiveJammingEffect __instance, ref bool __result, IEWarTarget target, SignatureType ____sigType)
+    static void Postfix(ActiveEWarEffect __instance, ref bool __result, IEWarTarget target, SignatureType ____sigType)
     {
         FratricidalWeapon weapon = __instance.GetComponent<FratricidalWeapon>();
-        if (weapon == null || !weapon.affectfriendlies)
+        if (weapon == null || !weapon.Targetfriendlies)
         {
             //Debug.LogError("NO  FratricidalWeapon");
             return;
         }
-            
-        IJammable jammable = target as IJammable;
+
         //Debug.LogError("Jamming " + target.ToString());
         //__result = true;
-        if (jammable != null && jammable.SigType == ____sigType && jammable.CanJammerHitAperture(__instance.transform.position.To(jammable.Position)))
+        if (target is IJammable jammable && jammable.SigType == ____sigType && jammable.CanJammerHitAperture(__instance.transform.position.To(jammable.Position)))
         {
             //Debug.LogError("Valid Jamming " + target.ToString());
             //ActiveJammingEffect
@@ -39,16 +38,12 @@ class CheckTargetValidityTweak
     }
 }
 
-
-
-
-
 public class FratricidalWeapon : MonoBehaviour
 {
-    [SerializeField]
-    public bool affectfriendlies = false;
-    [SerializeField]
-    public bool targetfriendlies = false;
+    public bool Affectfriendlies = false;
+    public bool Targetfriendlies = false;
+    [HideInInspector]
+    public WeaponComponent Source;
 
     //ActiveJammingEffect
     //OmnidirectionalEWarComponent
@@ -66,10 +61,7 @@ public class FratricidalWeapon : MonoBehaviour
 class RezFollowingMuzzleFire : MonoBehaviour
 {
 
-    static void Prefix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance)
-    {
-        FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
-    }
+    static void Prefix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
 
     static void Postfix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance)
     {
@@ -79,23 +71,18 @@ class RezFollowingMuzzleFire : MonoBehaviour
         //__instance.gameObject.GetOrAddComponent<FratricidalWeapon>().affectfriendlies = true;
 
         //TEMP
-        FratricidalWeapon weapon = __instance.GetComponentInChildren<FratricidalWeapon>();
-        if (weapon == null)
-            weapon = __instance.GetComponentInParent<FratricidalWeapon>();
+        FratricidalWeapon weapon = __instance.GetComponentInChildren<FratricidalWeapon>() 
+                                ?? __instance.GetComponentInParent<FratricidalWeapon>();
         if (weapon == null)
             return;
         FratricidalWeapon followingweapon = ____followingInstance.gameObject.GetOrAddComponent<FratricidalWeapon>();
-        followingweapon.affectfriendlies = weapon.affectfriendlies;
-
+        followingweapon.Source = __instance.GetComponentInParent<WeaponComponent>();
+        followingweapon.Affectfriendlies = weapon.Affectfriendlies;
     }
-
 }
 
 [HarmonyPatch(typeof(RezFollowingMuzzle), nameof(RezFollowingMuzzle.StopFire))]
 class RezFollowingMuzzleStopFire
 {
-    static void Prefix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance)
-    {
-        FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
-    }
+    static void Prefix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
 }

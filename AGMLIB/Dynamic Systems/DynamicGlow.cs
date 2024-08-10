@@ -9,14 +9,16 @@ using Utility;
 public class DynamicGlow : MonoBehaviour
 {
     // Start is called before the first frame update
-
+    [Space]
+    [Header("Glow Settings")]
+    [Space]
     public AnimationCurve[] emissivecurves = new AnimationCurve[4];
     public float thershold = 0.5f;
-    List<Material> targetmats = new List<Material>();
+    List<Material> targetmats = new();
     public MeshRenderer[] targetmeshes;
     public DynamicVisibleParticles[] targetparticles;
     private float glow = 0;
-    private int i = -500;
+    private int i = 1;
     //public GameObject target;
     public enum Mode
     {
@@ -42,10 +44,11 @@ public class DynamicGlow : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        i++;
+
+        //i++;
         //Debug.LogError("Heat Timer:" + i);
-        if (i < 0)
-            return;
+        //if (i < 0)
+        //    return;
         //targetmats = new List<Material>();
         //targetmeshes = target.GetComponentsInChildren<MeshRenderer>();
 
@@ -96,9 +99,6 @@ public class DynamicGlow : MonoBehaviour
                 }
             }
         }
-
-
-
     }
 }
       

@@ -11,7 +11,6 @@ using System;
 using System.Globalization;
 using UnityEngine.Serialization;
 using static Utility.GameColors;
-using static UnityEditor.PlayerSettings;
 using System.Drawing.Printing;
 using System.Drawing;
 
@@ -44,60 +43,47 @@ public class StringFormatter : MonoBehaviour
     [SerializeField]
     protected bool _colortext = false;
     [SerializeField]
-    protected GameColors.ColorName _color = GameColors.ColorName.White;
+    protected ColorName _color = ColorName.White;
     [SerializeField]
     protected List<StringFormatter> _prefixes = new();
     [TextArea(5, 10)]
     [SerializeField]
-    protected string _text = "https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/RichText.html";
+    protected string _text = "";//https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/RichText.html
     [SerializeField]
     protected List<StringFormatter> _postfixes = new();
-    public static string GetCoreTag(BasicTag tag)
+    public static string GetCoreTag(BasicTag tag) => tag switch
     {
-        return tag switch
-        {
-            BasicTag.None => "",
-            BasicTag.NoBreak => "nobr",
-            BasicTag.Align => "align",
-            BasicTag.AlignLeft => "align",
-            BasicTag.AlignCenter => "align",
-            BasicTag.AlignRight => "align",
-            BasicTag.AlignJustified => "align",
-            BasicTag.AlignFlushed => "align",
-            BasicTag.CapsUpper => "lowercase",
-            BasicTag.CapsLower => "uppercase",
-            BasicTag.CapsSmallcaps => "smallcaps",
-            BasicTag.Subscript => "sub",
-            BasicTag.Superscript => "sup",
-            BasicTag.Bold => "b",
-            BasicTag.Italic => "i",
-            BasicTag.StrikeThrough => "s",
-            BasicTag.Underline => "u",
-            _ => ""
-        };
-    }
-    public static string GetEntryTag(BasicTag tag, string value = "1px")
-    {
-        return "<" + GetCoreTag(tag) + "=" + value + '>';
-    }
+        BasicTag.None => "",
+        BasicTag.NoBreak => "nobr",
+        BasicTag.Align => "align",
+        BasicTag.AlignLeft => "align",
+        BasicTag.AlignCenter => "align",
+        BasicTag.AlignRight => "align",
+        BasicTag.AlignJustified => "align",
+        BasicTag.AlignFlushed => "align",
+        BasicTag.CapsUpper => "lowercase",
+        BasicTag.CapsLower => "uppercase",
+        BasicTag.CapsSmallcaps => "smallcaps",
+        BasicTag.Subscript => "sub",
+        BasicTag.Superscript => "sup",
+        BasicTag.Bold => "b",
+        BasicTag.Italic => "i",
+        BasicTag.StrikeThrough => "s",
+        BasicTag.Underline => "u",
+        _ => ""
+    };
+    public static string GetEntryTag(BasicTag tag, string value = "1px") => "<" + GetCoreTag(tag) + "=" + value + '>';
 
-    public static string GetEntryTag(BasicTag tag)
+    public static string GetEntryTag(BasicTag tag) => tag switch
     {
-        return tag switch
-        {
-            BasicTag.AlignLeft => GetEntryTag(BasicTag.Align, "\"left\""),
-            BasicTag.AlignCenter => GetEntryTag(BasicTag.Align, "\"center\""),
-            BasicTag.AlignRight => GetEntryTag(BasicTag.Align, "\"right\""),
-            BasicTag.AlignJustified => GetEntryTag(BasicTag.Align, "\"justified\""),
-            BasicTag.AlignFlushed => GetEntryTag(BasicTag.Align, "\"flush\""),
-            _ => "<" + GetCoreTag(tag) + '>',
-        };
-    }
-    public static string GetExitTag(BasicTag tag)
-    {
-        return "</" + GetCoreTag(tag) + '>';
-    }
-
+        BasicTag.AlignLeft => GetEntryTag(BasicTag.Align, "\"left\""),
+        BasicTag.AlignCenter => GetEntryTag(BasicTag.Align, "\"center\""),
+        BasicTag.AlignRight => GetEntryTag(BasicTag.Align, "\"right\""),
+        BasicTag.AlignJustified => GetEntryTag(BasicTag.Align, "\"justified\""),
+        BasicTag.AlignFlushed => GetEntryTag(BasicTag.Align, "\"flush\""),
+        _ => "<" + GetCoreTag(tag) + '>',
+    };
+    public static string GetExitTag(BasicTag tag) => "</" + GetCoreTag(tag) + '>';
 
     public static string MergeStrings(List<StringFormatter> strings)
     {
@@ -110,7 +96,7 @@ public class StringFormatter : MonoBehaviour
     {
         string returnstring = string.Empty;
         if (_colortext)
-            returnstring += "<color=" + GameColors.GetTextColor(_color) + ">";
+            returnstring += "<color=" + GetTextColor(_color) + ">";
         foreach (BasicTag tag in _taglist)
             returnstring += GetEntryTag(tag);
         returnstring += MergeStrings(_prefixes);

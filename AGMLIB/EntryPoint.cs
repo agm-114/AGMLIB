@@ -22,8 +22,239 @@ using UnityEngine.PlayerLoop;
 using System.IO;
 using Missions.Nodes;
 using UnityEditor;
+using Shapes;
+using System.Text;
+using static Game.Sensors.SensorTrackableObject.SavedSTOState;
+using static UnityEngine.ParticleSystem;
+using System.Net.NetworkInformation;
 
-[HarmonyPatch (typeof(HullComponent), "GetMissingResources")]
+public class EntryPoint : IModEntryPoint 
+{
+    private static readonly FilePath[] _stockBundles = new FilePath[5]
+    {
+                new("stock", "Assets/AssetBundles/"),
+                new("stock-f1", "Assets/AssetBundles/"),
+                new("stock-f2", "Assets/AssetBundles/"),
+                new("stock-maps", "Assets/AssetBundles/"),
+                new("stock-voice", "Assets/AssetBundles/")
+    };
+    private static readonly FilePath[] _compressedBundles = new FilePath[5]
+{
+                new("stock", "Assets/ComAssetBundles/"),
+                new("stock-f1", "Assets/ComAssetBundles/"),
+                new("stock-f2", "Assets/ComAssetBundles/"),
+                new("stock-maps", "Assets/ComAssetBundles/"),
+                new("stock-voice", "Assets/ComAssetBundles/")
+};
+
+    public void PreLoad()
+    {
+        DependencyPatch.window = false;
+        //Application.Quit();
+        Debug.Log("AGMLIB: 0.16 Preload");
+        if (Harmony.HasAnyPatches("neb.lib.harmony.product")) {
+            //Debug.LogError("Illegal Load Order");
+            return;
+        }
+        var harmony = new Harmony("neb.lib.harmony.product");
+        harmony.PatchAll();
+        /*
+        Dictionary<string, FactionTraitCard> traits = Common.GetVal<Dictionary<string, FactionTraitCard>>(BundleManager.Instance, "_conquestTraits");
+        KeyValuePair<string, FactionTraitCard> newtrait = new();
+        foreach (KeyValuePair<string, FactionTraitCard> trait in traits)
+        {
+            newtrait = new(trait.Key + "x", trait.Value);
+        }
+        newtrait.Value.name = "Ship's Cat";
+        newtrait.Value.PointCost = 100;
+        newtrait.Value.Description = "Don't be fooled by the purring engines and sunbeam naps. Every vessel in the [Faction Name] fleet boasts a seasoned feline navigator. These furred veterans aren't just mousers – they sn
+        out storms, predict fair winds with a twitch of the tail, and even lend a paw with repairs (mostly by napping strategically on loose wires). So remember, matey, if you see a cat on our decks, show some respect – you might just owe your next fair voyage to a whiskered oracle.\r\n\r\n";
+        //newtrait.Value.Modifiers.AddItem(new("test", 0, 1));
+        //traits.Add(newtrait.Key, newtrait.Value);
+        newtrait.Value.Modifiers[0] = new("hull-crew-cheer", 0, 1);
+        newtrait.Value.Modifiers.AddItem(new("conq-team-initialofficerbonusskills", 0, 0.5f));
+        newtrait.Value.Modifiers.AddItem(new("hull-turnrate", 0, 0.25f));
+        newtrait.Value.Modifiers.AddItem(new("hull-angularmotor", 0, 0.125f));
+        Debug.LogError("Error");
+        Common.SetVal(BundleManager.Instance, "_conquestTraits", traits);
+        */
+        return;
+        foreach (var path in _stockBundles.Zip(_compressedBundles, (n, w) => new { Source = n, Dest = w }))
+        {
+            Debug.LogError("Recompiling Assetbundle at " + path.Source.FullPath);
+            FilePath test = new("Assets/ComAssetBundles/");
+            Directory.CreateDirectory(test.FullPath);
+            AssetBundle.RecompressAssetBundleAsync(path.Source.FullPath, path.Dest.FullPath, BuildCompression.LZ4Runtime);
+        }
+
+        return;
+
+        List<ModRecord> modlist = (List<ModRecord>)ModDatabase.Instance.MarkedForLoad;
+        foreach (ModRecord record in modlist)
+        {
+            ModInfo info = record.Info;
+            //Debug.LogError("Checking " + info.ModName);
+            DependencyPatch.Postfix(ModDatabase.Instance, ref info);
+            return;
+        }
+        //LobbyModPane modPane = new LobbyModPane();
+        //List<ulong> _missingmods = ModDatabase.Instance.GetMissingMods(new ulong[1] { 2960504230 });
+
+        ModRecord modByID = ModDatabase.Instance.GetModByID(2960504230);  
+        IEnumerable<ModRecord> mods = new List<ModRecord>();
+        //Debug.LogError("Checking Missing Mods");
+
+        //Debug.LogError("Checking Loaded AGMLIB");
+        //Debug.LogError("Checking if AGMLIB isn't loaded");
+        if (!ModDatabase.Instance.MarkedForLoad.Any(p => p.Info.ModName == "AGMLIB"))//First().Info.ModName != "AGMLIB"
+            FixLoadOrder();
+
+        foreach (ModRecord record in modlist)
+        {
+            ModInfo info = record.Info;
+            //Debug.LogError("Checking " + info.ModName);
+            DependencyPatch.Postfix(ModDatabase.Instance, ref info);
+            Common.SetVal(record, "Info", info);
+
+            //Debug.Log("Checking order " + info.ModName);
+            if (info.Dependencies == null)
+                continue;
+            foreach (ulong depedencyid in info.Dependencies)
+            {
+                ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
+                if(dependencyrecord == null || dependencyrecord.Missing)
+                    dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
+                if (record.LoadOrder < dependencyrecord.LoadOrder)
+                {
+                    Debug.LogError("Fixing load order");
+                    FixLoadOrder(depedencyid);
+                }         //
+            }
+            //Debug.Log("Writing field " + modlist[i].Info.ModName);
+            
+            //Debug.Log("Wrote field " + modlist[i].Info.ModName);
+
+        }
+
+        //IProgress<float> progress = null;
+
+        /*
+        foreach (AssetBundle bundle in await BundleManager.LoadAssetBundleListAsync(_stockBundles, progress))
+        {
+            BundleManager.Instance.ProcessAssetBundle(bundle, null);
+        }
+        */
+
+        foreach (ModRecord record in (List<ModRecord>)ModDatabase.Instance.AllMods)
+        {
+
+            ModInfo info = record.Info;
+            if (info.UniqueIdentifier != 2977225446)
+                continue;
+            foreach (ulong depedencyid in info.Dependencies)
+            {
+                ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
+                if (dependencyrecord == null || dependencyrecord.Missing)
+                {
+                    
+                    Debug.LogError("Grabbing Depedency");
+                    dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
+                }
+            }
+
+            if (record.Info == null || record.Info.AssetBundles == null || record.Info.FileLocation != null)
+                continue;
+
+            if (!record.MarkedForLoad)
+                continue;
+            if (record.Loaded)
+                continue;
+
+            foreach (string bundleName in record.Info.AssetBundles)
+            {
+                FilePath path = new(bundleName, record.Info.FileLocation.Directory);
+                if (!BundleCache.Preloadedbundles.ContainsKey(path))
+                {
+                    //BundleCache.Preloadedbundles.Add(path, AssetBundle.LoadFromFileAsync(path.RelativePath));
+                }
+            }
+        }
+        //Debug.LogError("End Preload");
+        DependencyPatch.window = true;
+        return;
+    }
+
+    void FixLoadOrder(ulong modid = 2960504230)
+    {
+        Debug.LogError("FIXING LOAD ORDER");
+        ModRecord modByID = modByID = ModDatabase.Instance.GetModByID(modid);
+        if (modByID == null || modByID.Missing)
+            modByID.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
+        IEnumerable<ModRecord> mods = new List<ModRecord>();
+        if (!ModDatabase.Instance.MarkedForLoad.Any(p => p.Info.ModName == "AGMLIB"))//First().Info.ModName != "AGMLIB"
+            mods = mods.AddItem(modByID);
+        foreach (ModRecord mod in ModDatabase.Instance.MarkedForLoad)
+            mods = mods.AddItem(mod);
+        Debug.LogError("MODLIST GENERATED");
+        ModDependencyGraph modDependencyGraph = new(mods);
+        List<ModRecord> correctLoadOrder = modDependencyGraph.GetCorrectLoadOrder();
+        int num = 0;
+        foreach (ModRecord item in correctLoadOrder)
+            Common.SetVal(ModDatabase.Instance, "LoadOrder", num++);
+        Debug.LogError("MODLIST SORTED");
+
+        ModDatabase.Instance.SetModsToLoad(correctLoadOrder);
+        Process.Start(Application.dataPath.Replace("_Data", ".exe"));
+
+        Debug.Log("NOFIX");
+        Application.Quit();
+    }
+
+    public void PostLoad()
+    {
+        var csv = new StringBuilder();
+        return;
+        foreach (BaseHull _hull in BundleManager.Instance.AllHulls)
+        {
+            FilePath path = new FilePath(_hull.ClassName + ".txt", "Assets/ComAssetBundles/");
+            //File.WriteAllText(path.FullPath, _hull.LongDescription);
+            static string tocsv(string? input) => '"' + (input?.Replace('"', ' ') ?? "") + '"' + ",";
+            string newLine = tocsv(_hull.ClassName);
+            newLine += tocsv("(" + _hull.HullClassification + " Class)" );
+            //image = _hull.HullScreenshot;
+            newLine += tocsv(_hull.LongDescription);
+            newLine += tocsv(_hull.EditorFormatHullStats(showBreakdown: false)); ;
+            newLine += tocsv("<b>Modifiers:</b>\n" + _hull.EditorFormatHullBuffs());
+            newLine += tocsv("<i><color=#FFEF9E>" + _hull.FlavorText+ "</color></i>");
+            csv.AppendLine(newLine);
+
+            static string toheader(string? input) => "== " + (input ?? "") + " ==\n";
+
+            newLine = toheader(_hull.ClassName);
+            newLine += "(" + _hull.HullClassification + " Class)" + "\n";
+            //image = _hull.HullScreenshot;
+            newLine += toheader("Description");
+            newLine += (_hull.LongDescription) + "\n";
+            newLine += toheader("Stats");
+            newLine += (_hull.EditorFormatHullStats(showBreakdown: false)) + "\n";
+            newLine += toheader("Hull Buffs");
+            newLine += _hull.EditorFormatHullBuffs() + "\n";
+            newLine += toheader("Flavor Text");
+            newLine += _hull.FlavorText + "\n";
+            File.WriteAllText(path.FullPath, newLine);
+
+        }
+        File.WriteAllText(new FilePath("hulldump.csv", "Assets/ComAssetBundles/").FullPath, csv.ToString());
+
+        //Application.Quit();
+        //Debug.LogError("AGMLIB: 1.0");
+        return;
+        //updateAllDesignators();
+        //createDrones();
+    }
+}
+
+[HarmonyPatch(typeof(HullComponent), "GetMissingResources")]
 class HullComponentGetMissingResources : MonoBehaviour
 {
 
@@ -51,7 +282,6 @@ class HullComponentGetMissingResources : MonoBehaviour
                     {
                         //Debug.LogError("String gen error");
                     }
-
                 }
             }
             catch
@@ -63,7 +293,6 @@ class HullComponentGetMissingResources : MonoBehaviour
         __result = text;
         return false;
     }
-
 }
 class BundleCache
 {
@@ -97,11 +326,10 @@ class QuickLoad
     public static bool Prefix(BundleManager __instance, FilePath path, IProgress<float> progress, ref Task<AssetBundle> __result)
     {
 
-
         if (BundleCache.Preloadedbundles.ContainsKey(path))
         {
             // = AssetBundle.LoadFromFileAsync(path.RelativePath);
-            
+
             __result = AGMLoadAssetBundleAsync(path, progress);
             return false;
         }
@@ -113,8 +341,6 @@ class QuickLoad
             return true;
         }
     }
-
-
 }
 //[HarmonyPatch(typeof(ModDatabase), "FindModInfo")]
 class DependencyPatch
@@ -122,6 +348,7 @@ class DependencyPatch
     public static bool window = false;
     public static void Postfix(ModDatabase __instance, ref ModInfo __result)
     {
+
         //Debug.LogError(__result.ModName + " Postfix");
 
         /*
@@ -138,7 +365,6 @@ class DependencyPatch
         }
         */
 
-
         if (!__result.DownloadedFromWorkshop || __result.WorkshopItem == null || __result.Assemblies == null || !__result.Assemblies.Contains("AGMLIB.dll") || __result.ModName == "AGMLIB")
             return;
 
@@ -150,9 +376,10 @@ class DependencyPatch
         //__result.Assemblies = new string[0] { };
         List<string> newassemblies = new();
         foreach (string s in __result.Assemblies)
+        {
             if (s != "AGMLIB.dll")
                 newassemblies.Add(s);
-
+        }
 
         string[] array = new string[newassemblies.Capacity];
         array = newassemblies.Select(i => i.ToString()).ToArray();
@@ -162,7 +389,7 @@ class DependencyPatch
         if (modByID.Loaded || modByID.MarkedForLoad)//&& modByID.Info.DownloadedFromWorkshop
         {
             //Debug.LogError("Injecting Dependency for " + __result.ModName);
-            
+
         }
 
         if (workshopstats.IsDownloading || workshopstats.IsDownloadPending || workshopstats.NeedsUpdate)
@@ -204,187 +431,10 @@ class DependencyPatch
             delegate { Application.Quit(); },
             delegate { Debug.Log("NOFIX"); });
         }
-
     }
-  
 }
-
-
-public class EntryPoint : IModEntryPoint 
-{
-    private static readonly FilePath[] _stockBundles = new FilePath[5]
-    {
-                new FilePath("stock", "Assets/AssetBundles/"),
-                new FilePath("stock-f1", "Assets/AssetBundles/"),
-                new FilePath("stock-f2", "Assets/AssetBundles/"),
-                new FilePath("stock-maps", "Assets/AssetBundles/"),
-                new FilePath("stock-voice", "Assets/AssetBundles/")
-    };
-
-    public void PreLoad()
-    {
-        DependencyPatch.window = false;
-        //Application.Quit();
-        Debug.Log("AGMLIB: 0.16 Preload");
-        var harmony = new Harmony("neb.lib.harmony.product");
-        harmony.PatchAll();
-        return;
-        List<ModRecord> modlist = (List<ModRecord>)ModDatabase.Instance.MarkedForLoad;
-        foreach (ModRecord record in modlist)
-        {
-            ModInfo info = record.Info;
-            //Debug.LogError("Checking " + info.ModName);
-            DependencyPatch.Postfix(ModDatabase.Instance, ref info);
-            return;
-        }
-
-        
-        //LobbyModPane modPane = new LobbyModPane();
-        //List<ulong> _missingmods = ModDatabase.Instance.GetMissingMods(new ulong[1] { 2960504230 });
-        
-        ModRecord modByID = ModDatabase.Instance.GetModByID(2960504230);  
-        IEnumerable<ModRecord> mods = new List<ModRecord>();
-        //Debug.LogError("Checking Missing Mods");
-
-        //Debug.LogError("Checking Loaded AGMLIB");
-        //Debug.LogError("Checking if AGMLIB isn't loaded");
-        if (!ModDatabase.Instance.MarkedForLoad.Any(p => p.Info.ModName == "AGMLIB"))//First().Info.ModName != "AGMLIB"
-            FixLoadOrder();
-
-
-
-        foreach (ModRecord record in modlist)
-        {
-            ModInfo info = record.Info;
-            //Debug.LogError("Checking " + info.ModName);
-            DependencyPatch.Postfix(ModDatabase.Instance, ref info);
-            Common.SetVal(record, "Info", info);
-
-            //Debug.Log("Checking order " + info.ModName);
-            if (info.Dependencies == null)
-                continue;
-            foreach (ulong depedencyid in info.Dependencies)
-            {
-                ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
-                if(dependencyrecord == null || dependencyrecord.Missing)
-                    dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
-                if (record.LoadOrder < dependencyrecord.LoadOrder)
-                {
-                    Debug.LogError("Fixing load order");
-                    FixLoadOrder(depedencyid);
-                }         //
-            }
-            //Debug.Log("Writing field " + modlist[i].Info.ModName);
-            
-            //Debug.Log("Wrote field " + modlist[i].Info.ModName);
-
-        }
-
-        //IProgress<float> progress = null;
-
-
-        
-        foreach (FilePath path in _stockBundles)
-        {
-            //Debug.LogError("Recompiling Assetbundle at " + path.FullPath);
-            //AssetBundle.RecompressAssetBundleAsync(path.FullPath, path.FullPath + "x", BuildCompression.LZ4Runtime);
-        }
-        
-        /*
-        foreach (AssetBundle bundle in await BundleManager.LoadAssetBundleListAsync(_stockBundles, progress))
-        {
-            BundleManager.Instance.ProcessAssetBundle(bundle, null);
-        }
-        */
-
-        foreach (ModRecord record in (List<ModRecord>)ModDatabase.Instance.AllMods)
-        {
-
-            ModInfo info = record.Info;
-            if (info.UniqueIdentifier != 2977225446)
-                continue;
-            foreach (ulong depedencyid in info.Dependencies)
-            {
-                ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
-                if (dependencyrecord == null || dependencyrecord.Missing)
-                {
-                    
-                    Debug.LogError("Grabbing Depedency");
-                    dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
-                }
-
-            }
-
-            if (record.Info == null || record.Info.AssetBundles == null || record.Info.FileLocation != null)
-                continue;
-
-            if (!record.MarkedForLoad)
-                continue;
-            if (record.Loaded)
-                continue;
-
-            foreach (string bundleName in record.Info.AssetBundles)
-            {
-                FilePath path = new(bundleName, record.Info.FileLocation.Directory);
-                if (!BundleCache.Preloadedbundles.ContainsKey(path))
-                {
-                    //BundleCache.Preloadedbundles.Add(path, AssetBundle.LoadFromFileAsync(path.RelativePath));
-                }
-            }
-
-        }
-        //Debug.LogError("End Preload");
-        DependencyPatch.window = true;
-        return;
-    }
-
-    void FixLoadOrder(ulong modid = 2960504230)
-    {
-        Debug.LogError("FIXING LOAD ORDER");
-        ModRecord modByID = modByID = ModDatabase.Instance.GetModByID(modid);
-        if (modByID == null || modByID.Missing)
-            modByID.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
-        IEnumerable<ModRecord> mods = new List<ModRecord>();
-        if (!ModDatabase.Instance.MarkedForLoad.Any(p => p.Info.ModName == "AGMLIB"))//First().Info.ModName != "AGMLIB"
-            mods = mods.AddItem(modByID);
-        foreach (ModRecord mod in ModDatabase.Instance.MarkedForLoad)
-            mods = mods.AddItem(mod);
-        Debug.LogError("MODLIST GENERATED");
-        ModDependencyGraph modDependencyGraph = new(mods);
-        List<ModRecord> correctLoadOrder = modDependencyGraph.GetCorrectLoadOrder();
-        int num = 0;
-        foreach (ModRecord item in correctLoadOrder)
-            Common.SetVal(ModDatabase.Instance, "LoadOrder", num++);
-        Debug.LogError("MODLIST SORTED");
-
-        ModDatabase.Instance.SetModsToLoad(correctLoadOrder);
-        Process.Start(Application.dataPath.Replace("_Data", ".exe"));
-
-
-
-        Debug.Log("NOFIX");
-        Application.Quit();
-    }
-
-    public void PostLoad()
-    {
-        //Application.Quit();
-        //Debug.LogError("AGMLIB: 1.0");
-        return;
-        //updateAllDesignators();
-        //createDrones();
-    }
-
-
-
-
-}
-
 
 //SetPrivateField(ModDatabase.Instance, "_allMods", modslsit);
-
-
-
 
 //mods[i] = new ModRecord(info, mods[i])
 

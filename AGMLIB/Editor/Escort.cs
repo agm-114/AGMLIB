@@ -32,9 +32,9 @@ public class Escort : MonoBehaviour
 
     public bool disableremoval = false;
     public bool disabepalette = false;
-    public List<string> whitelist = new List<string>();
+    public List<string> whitelist = new();
     public bool whitelisteverything = false;
-    public List<string> blacklist = new List<string>();
+    public List<string> blacklist = new();
     public bool blacklisteverything = false;
 
     /*
@@ -81,10 +81,11 @@ class SerializedFleetEnforceShipLimit
 }
 
 //[HarmonyPatch(typeof(FleetCompositionSubmodeController), nameof(FleetCompositionSubmodeController.CopyShip))]
+
 class FleetEditorFleetCompositionSubmodeController
 {
-    static bool Prefix(FleetCompositionSubmodeController __instance, Ship ship, FleetEditorController ____controller)
-    {
+    static bool Prefix(FleetCompositionSubmodeController __instance, Ship ship, FleetEditorController ____controller) => false;
+    /*
         FleetEditorController _controller = ____controller;
         if (_controller.Fleet.FleetSize < 10)
             return true;
@@ -100,7 +101,7 @@ class FleetEditorFleetCompositionSubmodeController
         __instance.SelectShip(activeShip);
         return false;
         //__instance.SetActiveShip(activeShip);
-    }
+        */
 }
 
 //[HarmonyPatch(typeof(FleetListPane), "HandleShipAdded")]
@@ -113,7 +114,7 @@ class FleetListPaneHandleShipAdded : MonoBehaviour
         RectTransform _scrollPaneContent = ____scrollPaneContent;
         FleetCompositionSubmodeController _controller = ____controller;
 
-        List<ShipListItem> _items = new List<ShipListItem>();
+        List<ShipListItem> _items = new();
         GameObject itemObj = UnityEngine.Object.Instantiate(_shipItemPrefab, _scrollPaneContent);
         ShipListItem item = itemObj.GetComponent<ShipListItem>();
         item.SetShip(ship);
@@ -138,8 +139,6 @@ class FleetListPaneHandleShipAdded : MonoBehaviour
         return false;
     }
 }
-
-
 
 /*
 [HarmonyPatch(typeof(SkirmishGameManager), "CoroutineSpawnPlayerFleet")]

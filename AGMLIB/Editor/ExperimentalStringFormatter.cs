@@ -11,7 +11,6 @@ using System;
 using System.Globalization;
 using UnityEngine.Serialization;
 using static Utility.GameColors;
-using static UnityEditor.PlayerSettings;
 using System.Drawing.Printing;
 using System.Drawing;
 using Munitions;
@@ -44,39 +43,28 @@ public class ExperimentalStringFormatter : StringFormatter
 
     public IEnumerable<KeyValuePair<AdvancedTag, string>> AdvancedTagList => _advancedtaglist.Zip(_advancedtaglistvalues, (key, value) => new KeyValuePair<AdvancedTag, string>(key, value));
 
-
-    public static string GetCoreTag(AdvancedTag tag)
+    public static string GetCoreTag(AdvancedTag tag) => tag switch
     {
-        return tag switch
-        {
-            AdvancedTag.Alpha => "alpha",
-            AdvancedTag.Indentation => "indent",
-            AdvancedTag.Height => "line-height",
-            AdvancedTag.Color => "color",
-            AdvancedTag.Font => "font",
-            AdvancedTag.FontWeight => "font-weight",
-            AdvancedTag.Size => "size",
-            AdvancedTag.Margin => "margin",
-            AdvancedTag.MarginRight => "margin-right",
-            AdvancedTag.MarginLeft => "margin-left",
-            AdvancedTag.Mark => "mark",
-            AdvancedTag.Monospace => "mspace",
-            AdvancedTag.Pos => "pos",
-            AdvancedTag.Rotate => "rotate",
-            AdvancedTag.Width => "width",
-            AdvancedTag.Align => "align",
-            _ => "",
-        };
-    }
-    public static string GetEntryTag(AdvancedTag tag, string value = "1px")
-    {
-        return "<" + GetCoreTag(tag) + "=" + value + '>';
-    }
-    public static string GetExitTag(AdvancedTag tag, string _ = "")
-    {
-        return "</" + GetCoreTag(tag) + '>';
-    }
-
+        AdvancedTag.Alpha => "alpha",
+        AdvancedTag.Indentation => "indent",
+        AdvancedTag.Height => "line-height",
+        AdvancedTag.Color => "color",
+        AdvancedTag.Font => "font",
+        AdvancedTag.FontWeight => "font-weight",
+        AdvancedTag.Size => "size",
+        AdvancedTag.Margin => "margin",
+        AdvancedTag.MarginRight => "margin-right",
+        AdvancedTag.MarginLeft => "margin-left",
+        AdvancedTag.Mark => "mark",
+        AdvancedTag.Monospace => "mspace",
+        AdvancedTag.Pos => "pos",
+        AdvancedTag.Rotate => "rotate",
+        AdvancedTag.Width => "width",
+        AdvancedTag.Align => "align",
+        _ => "",
+    };
+    public static string GetEntryTag(AdvancedTag tag, string value = "1px") => "<" + GetCoreTag(tag) + "=" + value + '>';
+    public static string GetExitTag(AdvancedTag tag, string _ = "") => "</" + GetCoreTag(tag) + '>';
 
     public override string ToString()
     {

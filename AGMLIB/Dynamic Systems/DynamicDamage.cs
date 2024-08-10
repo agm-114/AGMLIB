@@ -18,7 +18,7 @@ public class DynamicDamage : ActiveSettings
     }
     //public Hull hull;
     [Space]
-    [Header("Component Specfic Settings")]
+    [Header("Damage Settings")]
     [Space]
     public DamageTarget damageTarget = DamageTarget.Random;
     public float damagepertick = 1;
@@ -27,8 +27,6 @@ public class DynamicDamage : ActiveSettings
     private float time;
 
     //public ModiferOverride modiferOverride;
-
-
     // Update is called once per frame
     protected override void FixedUpdate()
     {
@@ -42,8 +40,6 @@ public class DynamicDamage : ActiveSettings
             return;
 
         //Debug.Log("Damage Tick");
-
-
         Debug.Log("Triggering Damage");
         HullPart[] parts = ShipController.gameObject.GetComponentsInChildren<HullPart>();
         if (damageTarget == DamageTarget.Random && !ShipController.IsEliminated)
@@ -54,7 +50,6 @@ public class DynamicDamage : ActiveSettings
             }
             catch (Exception)
             {
-
             }
             ShipController?.MarkAsDamaged();
         }
@@ -68,11 +63,7 @@ public class DynamicDamage : ActiveSettings
         {
             //module.DoDamage(damagepertick);
         }
-
-
         //Debug.LogError("Hull Part: " + part2.gameObject.name);
-
-
         //CommsAntennaPart //HullComponent //SectorSensorPart //ThrusterPart //HullPart
 
     }

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "AGMLIB": {
+      "commandName": "Project"
+    },
+    "NEB": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Nebulous\\Nebulous.exe",
+      "workingDirectory": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Nebulous"
+    }
+  }
+}

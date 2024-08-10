@@ -43,16 +43,23 @@ public class ResourceModule : ActiveSettings
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
-        
+        //Debug.LogError("Module? " + gameObject.name + " " + base.active + " Generating: " + generation * scaling + " "+ activateButtonState.ToString());
+     
+        if (generation * scaling < 0)
+        {
+            //Debug.LogError("Module? " + gameObject.name + " " + base.active + " Generating: " + generation * scaling);
+            foreach(KeyValuePair<string, string> item in ActiveStates)
+            {
+                //Debug.LogError(item.Key + " " + item.Value);
+            }
+        }
+            
+
         if (!base.active)
         {
-            //Debug.LogError("Module? " + gameObject.name + " " + base.active + " Generating: UPDATE");
             //Debug.LogError(ShipController.Throttle);
             return;
         }
-            
-            
-
         float size;
         if(false && scalingmode == GenerationScaling.ModuleSize)
         {
@@ -65,8 +72,6 @@ public class ResourceModule : ActiveSettings
                     //size = partsocket.Size.x * partsocket.Size.y * partsocket.Size.y;
 
                 }
-
-
             }
         }
         else
@@ -76,5 +81,4 @@ public class ResourceModule : ActiveSettings
         
         base.ResourceComponent.currentamount = base.ResourceComponent.currentamount += generation * size * scaling * Time.deltaTime;
     }
-
 }

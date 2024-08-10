@@ -22,12 +22,8 @@ using Object = UnityEngine.Object;
 public class ChildSocket : MonoBehaviour
 {
     public List<string> Components = new();
-
-
     private readonly List<GameObject> _children = new();
-
     private HullSocket _hullsocket;
-
     void Start()
     {
         _hullsocket = gameObject.GetComponentInParent<HullSocket>();
@@ -38,8 +34,8 @@ public class ChildSocket : MonoBehaviour
         {
             GameObject socketObject = Object.Instantiate(new GameObject(), _hullsocket.transform);
             HullSocket newsocket = socketObject.AddComponent<HullSocket>();
-            SetPrivateField(newsocket, "_key", ShortGuid.NewGuid().ToString());
-            SetPrivateField(gameObject.GetComponentInParent<BaseHull>(), "_socketLookup", null);
+            Common.SetVal(newsocket, "_key", ShortGuid.NewGuid().ToString());
+            Common.SetVal(gameObject.GetComponentInParent<BaseHull>(), "_socketLookup", null);
             //socketObject.AddComponent<SocketFilters>().Whitelisteverything = true;
             newsocket.SetComponent(componentPrefab);
 
@@ -49,8 +45,6 @@ public class ChildSocket : MonoBehaviour
             //_component.SetSocket(newsocket);
             //gameObject.transform.SetParent(newsocket.transform);
             //gameObject.transform.localPosition = newsocket.AttachPoint / 10f;
-
-
             //_children.Add(.gameObject);
             _children.Add(socketObject);
 
@@ -75,27 +69,5 @@ public class ChildSocket : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
-    public static void SetPrivateField(System.Object instance, string fieldName, System.Object value)
-    {
-        static void SetPrivateFieldInternal(System.Object instance, string fieldName, System.Object value, System.Type type)
-        {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                field.SetValue(instance, value);
-                return;
-            }
-            else if (type.BaseType != null)
-            {
-                SetPrivateFieldInternal(instance, fieldName, value, type.BaseType);
-                return;
-            }
-        }
-
-        SetPrivateFieldInternal(instance, fieldName, value, instance.GetType());
-    }
-
 }
 

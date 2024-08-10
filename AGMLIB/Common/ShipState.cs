@@ -19,51 +19,10 @@ public class ShipState : MonoBehaviour
 
     }
     // Start is called before the first frame update
-
-
-
-    protected State flankState
-    {
-        get
-        {
-            if (ShipController.Throttle == MovementSpeed.Flank)
-                return State.Enabled;
-            else
-                return State.Disabled;
-        }
-    }
-    protected State battleshortState
-    {
-        get
-        {
-            if (ShipController.BattleShortEnabled == true)
-                return State.Enabled;
-            else
-                return State.Disabled;
-        }
-    }
-
-    protected State controlState
-    {
-        get
-        {
-            if (ShipController.CommandState == CommandFunctions.None)
-                return State.Disabled;
-            else
-                return State.Enabled;
-        }
-    }
-
-    protected State elimnatedState
-    {
-        get
-        {
-            if (ShipController.IsEliminated)
-                return State.Disabled;
-            else
-                return State.Enabled;
-        }
-    }
+    protected State flankState => ShipController.Throttle == MovementSpeed.Flank ? State.Enabled : State.Disabled;
+    protected State battleshortState => ShipController.BattleShortEnabled == true ? State.Enabled : State.Disabled;
+    protected State controlState => ShipController.CommandState == CommandFunctions.None ? State.Disabled : State.Enabled;
+    protected State elimnatedState => ShipController.IsEliminated ? State.Disabled : State.Enabled;
     [Space]
     [Header("Activation Conditions")]
     [Space]
@@ -79,15 +38,28 @@ public class ShipState : MonoBehaviour
     [HideInInspector]
     public ResourceComponent ResourceComponent;
     [HideInInspector]
-    public Ship ship;
+    public HullComponent Module;
     [HideInInspector]
-    public HullComponent module;
-    [HideInInspector]
-    public WeaponComponent weapon;
+    public WeaponComponent Weapon;
     [HideInInspector]
     public EditorShipController EditorShipController;
-    
+    [HideInInspector]
+    public Hull Hull;
+    private Rigidbody _rigidbody = null;
+    [HideInInspector]
+    public Rigidbody? Rigidbody
+    {
+        get
+        {
+            if (ShipController != null && _rigidbody == null)
+                _rigidbody = Common.GetVal<Rigidbody>(ShipController, "_rigidbody");
+            return _rigidbody;
+        }
 
+    }
+    public float velocity => Rigidbody?.velocity.magnitude ?? 0;
+    public bool InEditor => EditorShipController != null;
+    public bool InGame => !InEditor;
     protected virtual void Awake()
     {
         if (EditorShipController == null)
@@ -102,12 +74,12 @@ public class ShipState : MonoBehaviour
             ShipController = transform.gameObject.GetComponent<ShipController>();
         if (ShipController == null)
             ShipController = transform.gameObject.GetComponentInChildren<ShipController>();
-        if (ship == null && ShipController != null && ShipController.Ship != null)
-            ship = ShipController.Ship;
-        if (ship == null)
-            ship = transform.gameObject.GetComponentInParent<Ship>();
-        if (ship == null)
-            ship = transform.gameObject.GetComponent<Ship>();
+        if (Ship == null && ShipController != null && ShipController.Ship != null)
+            Ship = ShipController.Ship;
+        if (Ship == null)
+            Ship = transform.gameObject.GetComponentInParent<Ship>();
+        if (Ship == null)
+            Ship = transform.gameObject.GetComponent<Ship>();
 
         if (ResourceComponent == null)
             ResourceComponent = transform.gameObject.GetComponentInParent<ResourceComponent>();
@@ -116,18 +88,28 @@ public class ShipState : MonoBehaviour
         if (ResourceComponent == null)
             ResourceComponent = transform.gameObject.GetComponentInChildren<ResourceComponent>();
         if (ResourceComponent == null)
-            ResourceComponent = ship.gameObject.GetComponentInChildren<ResourceComponent>();
+            ResourceComponent = Ship.gameObject.GetComponentInChildren<ResourceComponent>();
         if (ResourceComponent == null)
-            ResourceComponent = ship.gameObject.GetComponent<ResourceComponent>();
+            ResourceComponent = Ship.gameObject.GetComponent<ResourceComponent>();
+        if (ResourceComponent == null)
+            ResourceComponent = Ship.gameObject.GetComponentInParent<ResourceComponent>();
 
-        module = gameObject.GetComponent<HullComponent>();
-        if (module == null)
-            module = gameObject.GetComponentInParent<HullComponent>();
-        weapon = gameObject.GetComponent<WeaponComponent>();
-        if (weapon == null)
-            weapon = gameObject.GetComponentInParent<WeaponComponent>();
+        Module = gameObject.GetComponent<HullComponent>();
+        if (Module == null)
+            Module = gameObject.GetComponentInParent<HullComponent>();
+        Weapon = gameObject.GetComponent<WeaponComponent>();
+        if (Weapon == null)
+            Weapon = gameObject.GetComponentInParent<WeaponComponent>();
+
+        if (Hull == null)
+            Hull = transform.gameObject.GetComponentInParent<Hull>();
+        if (Hull == null)
+            Hull = transform.gameObject.GetComponent<Hull>();
+        if (Hull == null)
+            Hull = transform.gameObject.GetComponentInChildren<Hull>();
+
+
         //module = gameObject.GetComponent<HullComponent>();
     }
-
 }
 #pragma warning restore IDE1006 // Naming Styles

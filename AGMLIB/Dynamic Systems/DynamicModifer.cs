@@ -18,41 +18,49 @@ using static Game.Sensors.SensorTrackableObject.SavedSTOState;
 using static UnityEngine.ParticleSystem;
 using System.Linq;
 //using Game.Ships;
-
-
-
-
-
-
 public class DynamicModifer : ActiveSettings
 {
     //public float launcherindex = 0;
     [Space]
-    [Header("Component Specfic Settings")]
+    [Header("Modifier Settings")]
     [Space]
     public StatModifier[] Modifiers;
 
-    //public ModiferOverride modiferOverride;
-
-
-    private void ApplyAllStatModifiers()
+    public StatModifier[] TargetModifiers
     {
-        StatModifier[] modifiers = module.Modifiers;
-        foreach (StatModifier modifier in modifiers)
+        get
         {
-            base.ship.AddStatModifier(module, modifier);
+            //Debug.LogError(Mode);
+            if (Mode == ModifierMode.Module)
+                return Module.Modifiers;
+            else if (Mode == ModifierMode.Hull)
+                return Hull.BaseModifiers;
+            return null;
+        }
+        set
+        {
+            if (Mode == ModifierMode.Module)
+                Module.Modifiers = value;
+            else if (Mode == ModifierMode.Hull)
+                Hull.BaseModifiers = value;
         }
     }
-
-    private void RemoveAllStatModifiers()
+    public ModifierMode Mode = ModifierMode.Module;
+    public enum ModifierMode
     {
-        StatModifier[] modifiers = module.Modifiers;
-        foreach (StatModifier statModifier in modifiers)
-        {
-            base.ship.RemoveStatModifier(module, statModifier.StatName);
-        }
+        Module,
+        Hull,
+        Disabled
+
     }
 
+    private void ModFromSource(IModifierSource source)
+    {
+        foreach (StatModifier modifier in Modifiers)
+        {
+            base.Ship.AddStatModifier(source, modifier);
+        }
+    }
     // Update is called once per frame
 
     protected override void FixedUpdate()
@@ -62,87 +70,63 @@ public class DynamicModifer : ActiveSettings
         if (!base.active)
         {
             //Debug.LogError("Not Active");
+            //Debug.LogError("Not Active " + gameObject.name + " " + Modifiers[0].ToString());
+
             return;
         }  
         else
         {
-            //Debug.LogError("Active");
+            //Debug.LogError("Active " + gameObject.name + " " + Modifiers[0].ToString());
         }
-
-
         bool changes = false;
 
-        if(module.Modifiers.Length < Modifiers.Length)
+        if(TargetModifiers.Length < Modifiers.Length)
         {
             //Debug.LogError("Possible Dynamic Modifer Misconfiguration");
         }
 
-        for (int i = 0; i < module.Modifiers.Length; i++)
+        //Debug.LogError(TargetModifiers.Length);
+
+        foreach (StatModifier Modifier in Modifiers)
         {
-            for (int j = 0; j < Modifiers.Length; j++)
+            int i = Array.FindIndex(TargetModifiers, TargetModifier => TargetModifier.StatName == Modifier.StatName);
+            if (i == -1)
             {
-                if (module.Modifiers[i].StatName == Modifiers[j].StatName && module.Modifiers[i].Modifier != Modifiers[j].Modifier)
-                {
-                    //Debug.LogError("Updating " + Modifiers[j].StatName + "  values at index[" + i + "] from" + module.Modifiers[i].Modifier + " to " + Modifiers[j].Modifier);
-                    module.Modifiers[i] = Modifiers[j];//new StatModifier(@override.Modifiers[j].StatName, 0, @override.Modifiers[j].Modifier);
-                    changes = true;
-                }
+                //Debug.LogError("Adding " + Modifier.StatName);
+
+                TargetModifiers = TargetModifiers.Append(new StatModifier(Modifier.StatName, 0, 0)).ToArray();
+            }
+            else if (TargetModifiers[i].Modifier != Modifier.Modifier || TargetModifiers[i].Literal != Modifier.Literal)
+            {
+                //Debug.LogError("Updating " + Modifier.StatName + "  values at index[" + i + "] from" + TargetModifiers[i].Modifier + " to " + Modifier.Modifier);
+                TargetModifiers[i] = Modifier;//new StatModifier(@override.Modifiers[j].StatName, 0, @override.Modifiers[j].Modifier);
+                changes = true;
             }
         }
-
-
-
 
         if (changes)
-            ApplyAllStatModifiers();
-
-
-
-
-    }
-
-    public static object GetPrivateField(object instance, string fieldName)
-    {
-        static object GetPrivateFieldInternal(object instance, string fieldName, Type type)
         {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                return field.GetValue(instance);
-            }
-            else if (type.BaseType != null)
-            {
-                return GetPrivateFieldInternal(instance, fieldName, type.BaseType);
-            }
-            else
-            {
-                return null;
-            }
+            if( Mode == ModifierMode.Module)
+                ModFromSource(Module);
+            else if( Mode == ModifierMode.Hull)
+                ModFromSource(Hull);
         }
-
-        return GetPrivateFieldInternal(instance, fieldName, instance.GetType());
     }
-
-    public static void SetPrivateField(object instance, string fieldName, object value)
+    private void ApplyAllStatModifiers()
     {
-        static void SetPrivateFieldInternal(object instance, string fieldName, object value, Type type)
+        StatModifier[] modifiers = Module.Modifiers;
+        foreach (StatModifier modifier in modifiers)
         {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                field.SetValue(instance, value);
-                return;
-            }
-            else if (type.BaseType != null)
-            {
-                SetPrivateFieldInternal(instance, fieldName, value, type.BaseType);
-                return;
-            }
+            base.Ship.AddStatModifier(Module, modifier);
         }
-
-        SetPrivateFieldInternal(instance, fieldName, value, instance.GetType());
+    }
+    private void RemoveAllStatModifiers()
+    {
+        StatModifier[] modifiers = Module.Modifiers;
+        foreach (StatModifier statModifier in modifiers)
+        {
+            base.Ship.RemoveStatModifier(Module, statModifier.StatName);
+        }
     }
 }
 /*

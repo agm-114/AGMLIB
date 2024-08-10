@@ -5,8 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
 public class ResourceComponent : ActiveSettings
 {
     // Start is called before the first frame update
@@ -16,7 +14,6 @@ public class ResourceComponent : ActiveSettings
         Clamp,
         NoCap,
     }
-
 
     //public string resourcename = "";
     //public HullComponent component;
@@ -42,15 +39,12 @@ public class ResourceComponent : ActiveSettings
         //if(parent == null)
         //    parent = ShipController.gameObject.GetComponent<ResourceComponent>();
         //Ship = ShipController.Ship;
-
-
         if(ResourceIcon != null)
         {
             ResourceBar newicon = Instantiate(ResourceIcon).GetComponentInChildren<ResourceBar>();
             newicon.ResourceComponent = this;
             newicon.ShipController = ShipController;
         }
-
     }
 
     // Update is called once per frame

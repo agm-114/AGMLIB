@@ -11,14 +11,13 @@ using Utility;
 
 using UnityEngine;
 
-
 using System.Reflection;
 using Game.EWar;
 using Steamworks.Data;
 
 public class IFFComponent : MonoBehaviour
 {
-    private HashSet<LoiteringMissile> _detectedmines = new HashSet<LoiteringMissile>();
+    private HashSet<LoiteringMissile> _detectedmines = new();
 
     private ShipController _shipController;
     bool jammed = false;
@@ -27,21 +26,17 @@ public class IFFComponent : MonoBehaviour
     public bool antennastatus = true;
 
     // Start is called before the first frame update
-    void Start()
+    void Start() => _shipController = transform.gameObject.GetComponentInParent<ShipController>();
+    private void FixedUpdate()
     {
-        _shipController = transform.gameObject.GetComponentInParent<ShipController>();
-    }
 
-    // Update is called once per frame
-    void FixedUpdate()
-    {
         if (_shipController == null)
             return;
         //Debug.LogError("IFF UPDATE");
         jammed = _shipController.Comms.AnyJamming;
 
         foreach (LoiteringMissile loiteringMissile in _detectedmines)
-            if(((Communicator)GetPrivateField(loiteringMissile, "_comms")).AnyJamming)
+            if(Common.GetVal<Communicator>(loiteringMissile, "_comms").AnyJamming)
                 jammed = true;
         if (jammed)
             Debug.LogError("IFF SHIP JAMMED" + jammed);
@@ -64,9 +59,10 @@ public class IFFComponent : MonoBehaviour
             Debug.LogError("TRIGGERING IFF");
             List<InternalActiveSensorComponent> internals = _shipController.GetComponentsInChildren<InternalActiveSensorComponent>().ToList();
             Debug.LogError("FINDING TARGET SENSOR");
-            disabledsensor = internals.Where((InternalActiveSensorComponent x) => x.IsFunctional).SelectMax((InternalActiveSensorComponent x) => ((StatValue)GetPrivateField(x, "_statRadiatedPower")).Value);
+            disabledsensor = internals.Where((InternalActiveSensorComponent x) => x.IsFunctional).SelectMax((InternalActiveSensorComponent x) => Common.GetVal<StatValue>(x, "_statRadiatedPower").Value);
             Debug.LogError("TRANSMITTING VIA RADAR");
-            SetAntennaPower(((StatValue)GetPrivateField(disabledsensor, "_statRadiatedPower")).Value);
+            
+            SetAntennaPower(Common.GetVal<StatValue>(disabledsensor, "_statRadiatedPower").Value);
             Debug.LogError("RECALCULATING");
 
             //typeof(StatValue).GetMethod("Recalculate").Invoke((StatValue)GetPrivateField(antenna, "_statTransmitPower"), null);
@@ -75,17 +71,16 @@ public class IFFComponent : MonoBehaviour
 
         }
 
-
         //base.FixedUpdate();
     }
 
     void SetAntennaPower(float power)
     {
-        SetPrivateField((StatValue)GetPrivateField(antenna, "_statTransmitPower"), "_valueCached", power);
+        Common.SetVal(Common.GetVal<StatValue>(antenna, "_statTransmitPower"), "_valueCached", power);
 
-        FreeModifierSource mod = new FreeModifierSource("Toggle Radar", new StatModifier("test", 0f, 0f));
-        ((StatValue)GetPrivateField(antenna, "_statTransmitPower")).AddModifier(mod, mod.Modifier);
-        ((StatValue)GetPrivateField(antenna, "_statTransmitPower")).RemoveModifier(mod);
+        FreeModifierSource mod = new("Toggle Radar", new StatModifier("test", 0f, 0f));
+        Common.GetVal<StatValue>(antenna, "_statTransmitPower").AddModifier(mod, mod.Modifier);
+        Common.GetVal<StatValue>(antenna, "_statTransmitPower").RemoveModifier(mod);
     }
 
     public void OnTriggerEnter(Collider other)
@@ -106,49 +101,5 @@ public class IFFComponent : MonoBehaviour
         {
             _detectedmines.Remove(loiteringMissile);
         }
-    }
-
-    public static void SetPrivateField(object instance, string fieldName, object value)
-    {
-        static void SetPrivateFieldInternal(object instance, string fieldName, object value, Type type)
-        {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                field.SetValue(instance, value);
-                return;
-            }
-            else if (type.BaseType != null)
-            {
-                SetPrivateFieldInternal(instance, fieldName, value, type.BaseType);
-                return;
-            }
-        }
-
-        SetPrivateFieldInternal(instance, fieldName, value, instance.GetType());
-    }
-
-    public static object GetPrivateField(object instance, string fieldName)
-    {
-        static object GetPrivateFieldInternal(object instance, string fieldName, Type type)
-        {
-            FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                return field.GetValue(instance);
-            }
-            else if (type.BaseType != null)
-            {
-                return GetPrivateFieldInternal(instance, fieldName, type.BaseType);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        return GetPrivateFieldInternal(instance, fieldName, instance.GetType());
     }
 }

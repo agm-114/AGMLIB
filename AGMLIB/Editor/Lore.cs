@@ -8,6 +8,8 @@ using Bundles;
 using UnityEngine.UI;
 using Utility;
 using System;
+using static System.Net.Mime.MediaTypeNames;
+using Image = UnityEngine.UI.Image;
 
 public class Lore : MonoBehaviour
 {
@@ -27,13 +29,13 @@ public class Lore : MonoBehaviour
     [SerializeField]
     protected StringFormatter _postlorestring = new();
 
-    public String Prefixstring { get => _prefixstring.ToString(); }
-    public String Postdescriptionstring { get => _postdescriptionstring.ToString(); }
-    public String Poststatsstring { get => _poststatsstring.ToString(); }
-    public String Postresourcesstring { get => _postresourcesstring.ToString(); }
-    public String Postbuffstring { get => _postbuffstring.ToString(); }
-    public String Postlorestring { get => _postlorestring.ToString(); }
-    public Sprite LoreIcon { get => _loreicon; }
+    public String Prefixstring => _prefixstring?.ToString() ?? "";
+    public String Postdescriptionstring => _postdescriptionstring?.ToString() ?? "";
+    public String Poststatsstring => _poststatsstring?.ToString() ?? "";
+    public String Postresourcesstring => _postresourcesstring?.ToString() ?? "";
+    public String Postbuffstring => _postbuffstring?.ToString() ?? "";
+    public String Postlorestring => _postlorestring?.ToString() ?? "";
+    public Sprite LoreIcon => _loreicon;
 }
 
 [HarmonyPatch(typeof(PaletteItem), nameof(PaletteItem.SetComponent))]
@@ -48,11 +50,6 @@ class ComponentPaletteCreateItemPatch
             ____modBadge.sprite = _loreicon;
         //____modBadge.sprite = BundleManager.Instance.AllFactions.ToList()[2].SmallLogo;
     }
-
-
-
-
-
 }
 
 [HarmonyPatch(typeof(PaletteItem), "GetDetailText")]
@@ -95,9 +92,36 @@ class ComponentPaletteGetDetailTextPatch
         //text = text + "\n\n\n\n" + "<rotate=\"45\"> " + test + " </rotate>";
         __result = text;
     }
+}
 
 
-    
+[HarmonyPatch(typeof(HullListItem), nameof(HullListItem.GetDetails))]
+class HullListItemGetDetails
+{
+    static void Postfix(PaletteItem __instance, BaseHull ____hull, out string title, out string subtitle, out Sprite image, out string details)
+    {
 
+        //ref string title, ref string subtitle, ref Sprite image, ref string details
+        BaseHull _hull = ____hull;
+        Lore lore = _hull.GetComponentInChildren<Lore>() ?? new();
+        title = _hull.ClassName;
+        subtitle = "(" + _hull.HullClassification + " Class)";
+        image = _hull.HullScreenshot;
+        details = lore.Prefixstring;
+        details += _hull.LongDescription + "\n\n" + _hull.EditorFormatHullStats(showBreakdown: false);
+        details += lore.Postdescriptionstring;
+        string buffs = _hull.EditorFormatHullBuffs();
+        if (buffs != null)
+        {
+            details = details + "\n\n<b>Modifiers:</b>\n" + buffs;
+            
+        }
+        details += lore.Postbuffstring;
+        if (!string.IsNullOrEmpty(_hull.FlavorText))
+        {
+            details = details + "\n<i><color=#FFEF9E>" + _hull.FlavorText + "</color></i>";
+        }
+        details += lore.Postlorestring;
 
+    }
 }

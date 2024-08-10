@@ -28,7 +28,6 @@ class HasOffensiveAbilityTweak
     }
 }
 
-
 [HarmonyPatch(typeof(ObjectivePoint), "OnTriggerEnter")]
 class ContestTweak
 {
@@ -37,20 +36,13 @@ class ContestTweak
         
         if (!other.isTrigger)
         {
-            TacticalModule component = other.gameObject.transform.root.GetComponent<TacticalModule>();
-            if (component == null)
-                component = other.gameObject.transform.root.GetComponentInChildren<TacticalModule>();
-            if (component != null && !component.CanContestPoints)
-                return false;
-            else return true;
+            TacticalModule component = other.gameObject.transform.root.GetComponent<TacticalModule>() ?? other.gameObject.transform.root.GetComponentInChildren<TacticalModule>();
+            return component == null || component.CanContestPoints;
         }
         else
             return true;
     }
-
-
 }
-
 
 public class TacticalModule : ShipState
 {
