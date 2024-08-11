@@ -26,24 +26,15 @@ public class KinematicLauncher : ActiveSettings
     public float SpawnVelocity => 0;
     public float ReleaseVelocity = 500;
     public float EndVelocity = 0;
-
     public float PostReleaseBoostTime = 5;
     public DynamicVisible DynamicVisible;
-
     public GameObject ParticleEffect;
-
     public BaseSoundEffect Sound;
-
     public float Delay = 0;
-
 
     //private Rigidbody Body => Obj?.gameObject?.GetComponent<Rigidbody>();
 
-    public void PlayFiringEffect(MissileEjector ejector = null)
-    {
-        StartCoroutine(CoroutineDelayedPlayParticles(ejector.transform));
-    }
-
+    public void PlayFiringEffect(MissileEjector ejector = null) => StartCoroutine(CoroutineDelayedPlayParticles(ejector.transform));
     private IEnumerator CoroutineDelayedPlayParticles(Transform target)
     {
         yield return new WaitForSeconds(Delay);
@@ -60,33 +51,85 @@ public class KinematicLauncher : ActiveSettings
                 ObjectPooler.Instance.GetNextOrNew(ParticleEffect, Vector3.zero, Quaternion.identity, base.transform, localCoordinates: true);
             }
         }
-
         else
         {
             //Debug.LogError("Null Particle Effect");
         } 
     }
-
-
     public void Launch(NetworkPoolable obj = null)
     {
         if (obj != null && active)
         {
             //Debug.LogError("Step 4 Missile Setup");
             KinematicMissile missile = obj?.gameObject?.AddComponent<KinematicMissile>()?.Setup(this);
-
         }
     }
+}
 
+public interface IMissileFixedUpdate
+{
+    public void Start();
+    public void FixedUpdate();
+}
+public class MissileLaunchKinematics : LaunchKinematics
+{
+    private Missile _missile; // field
+    public Missile Missile   // property
+    {
+        get {
+            if (_missile == null)
+                _missile = gameObject.GetComponent<Missile>();
+            return _missile; 
+        }   // get method
+    }
+    public bool HotLaunch = true;
+    public override void FixedUpdate()
+    {
+        if(Missile?.HotLaunch == HotLaunch) 
+            base.FixedUpdate();
+    }
 
 }
 
+public class LaunchKinematics : MonoBehaviour, IMissileFixedUpdate
+{
+    public ClampMode Mode = ClampMode.Ceil;
 
+    public AnimationCurve VelocityCurve = new(new Keyframe(0f, 1f), new Keyframe(10f, 100f));
+    public float Velocity => VelocityCurve.Evaluate(Age);
+    public float EffectDuration = 0;
+    private bool _fixedupdate = false;
+    private Rigidbody Body => gameObject.GetComponent<Rigidbody>();
+    private float _startTime = 0;
+    private float Age => Time.fixedTime - _startTime;
+    public void Start() => _startTime = Time.fixedTime;
+    public enum ClampMode
+    {
+        Ceil,
+        Floor
+    }
+    virtual public void FixedUpdate()
+    {
 
+        if (Age > EffectDuration)
+        {
+            return;
+        }
 
+        if (Mode == ClampMode.Floor && Body.velocity.magnitude < Velocity)
+        {
+            Body.velocity = Body.velocity.normalized * Velocity;
+        }
+        if (Mode == ClampMode.Ceil && Body.velocity.magnitude > Velocity)
+        {
+            Body.velocity = Body.velocity.normalized * Velocity;
+        }
+        _fixedupdate = false;
+    }
 
+}
 
-public class KinematicMissile : MonoBehaviour
+public class KinematicMissile : MonoBehaviour, IMissileFixedUpdate
 {
     public KinematicLauncher Launcher = new();
     public float StartVelocity => Launcher?.ReleaseVelocity ?? 0;
@@ -97,15 +140,11 @@ public class KinematicMissile : MonoBehaviour
     private Rigidbody Body => gameObject.GetComponent<Rigidbody>();
     private float _startTime = 0;
     private float Age =>  Time.fixedTime - _startTime;
-    public void Start()
-    {
-        Setup(null);
-    }
+    public void Start() => _startTime = Time.fixedTime;
     public KinematicMissile Setup(KinematicLauncher launcher)
     {
         if(launcher != null)
             Launcher = launcher;
-        _startTime = Time.fixedTime;
         return this;
     }
     public void FixedUpdate()
@@ -180,33 +219,22 @@ class MissileEjectorMissileInstantiated
             //kmissile.Launcher = launcher;
             //Debug.LogError("2 Launcher Detected");
         }
+        obj.gameObject.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(f => f?.FixedUpdate());
         //else
         //    Debug.LogError("Launcher Not Found");
     }
 }
 
-
-
 [HarmonyPatch(typeof(Missile), "FixedUpdate")]
 class MissileFixedUpate
 {
-
-    public static void Postfix(Missile __instance)
-    {
-        __instance?.GetComponents<KinematicMissile>()?.ToList()?.ForEach(a => a?.FixedUpdate());
-    }
-
+    public static void Postfix(Missile __instance) => __instance?.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(a => a?.FixedUpdate());
 }
 
 [HarmonyPatch(typeof(Missile), "Thrust")]
 class MissileThrust
 {
-
-    public static void Postfix(Missile __instance)
-    {
-        __instance?.GetComponents<KinematicMissile>()?.ToList()?.ForEach(a => a?.FixedUpdate());
-    }
-
+    public static void Postfix(Missile __instance) => __instance?.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(a => a?.FixedUpdate());
 }
 
 
