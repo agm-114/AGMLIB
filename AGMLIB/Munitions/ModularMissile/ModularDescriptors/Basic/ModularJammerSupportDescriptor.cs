@@ -86,28 +86,20 @@ public class BeamRuntimeJammerSupport : RuntimeMissileBehaviour
 
     private void FixedUpdate()
     {
-        if (!base.isServer || !(_effect != null))
+        if (!base.isServer || _effect == null)
         {
             return;
         }
 
         _effect.transform.position = base.transform.position;
-        if (_supportDesc.ConicalScan && !base.Missile.CurrentTargetDirection.HasValue)
-            DoConicalScan(Time.fixedDeltaTime);
-        if (_supportDesc.DirectAtTarget)
+        if (_supportDesc.DirectAtTarget && base.Missile.CurrentTargetDirection is Vector3 currentTargetDirection)
         {
-            Vector3? currentTargetDirection = base.Missile.CurrentTargetDirection;
-            if (currentTargetDirection.HasValue)
-            {
-                _effect.transform.rotation = Quaternion.RotateTowards(base.transform.rotation, Quaternion.LookRotation(currentTargetDirection.Value.normalized), _supportDesc.MaxAimingAngle);
-            }
-            else
-            {
-                _effect.transform.rotation = Quaternion.LookRotation(_worldBeamDirection, Vector3.up);
-            }
+            _effect.transform.rotation = Quaternion.RotateTowards(base.transform.rotation, Quaternion.LookRotation(currentTargetDirection.normalized), _supportDesc.MaxAimingAngle);
         }
         else
         {
+            if(_supportDesc.ConicalScan)
+                    DoConicalScan(Time.fixedDeltaTime);
             _effect.transform.rotation = Quaternion.LookRotation(_worldBeamDirection, Vector3.up);
         }
     }

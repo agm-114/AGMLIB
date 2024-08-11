@@ -2,7 +2,7 @@
 <ModInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<ModName>AGMLIB - Beta</ModName>
 	<ModDescription>By: AGM</ModDescription>
-	<ModVer>0.3.2.1.3</ModVer>
+	<ModVer>0.3.2.1.4</ModVer>
 	<Assemblies>
 		<string>Debug\net481\AGMLIB.dll</string>
 		<string>Debug\net481\0Harmony.dll</string>
