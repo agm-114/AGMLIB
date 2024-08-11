@@ -34,7 +34,7 @@ class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
 
         if (__instance is ModularJammerSupportDescriptor jammer)
         {
-            Debug.LogError("Setting Up Illums " + _sigType);
+            //Debug.LogError("Setting Up Illums " + _sigType);
             
             IReadOnlyCollection<HullComponent> hullComponents = BundleManager.Instance.AllComponents;
 

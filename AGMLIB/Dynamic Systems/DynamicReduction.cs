@@ -67,7 +67,7 @@ class HullComponentConsumeResources
             return;
         OldResourceVals vals = __instance.GetComponent<OldResourceVals>();
         if(vals == null)
-            __instance.gameObject.AddComponent<OldResourceVals>();
+            vals = __instance.gameObject.AddComponent<OldResourceVals>();
         vals.Setup(__instance);
         ResourceValue[] ModifiedRequiredResources = vals.RequiredResources.ConvertAll(element => Reduce(element, _reduced)).ToArray();
         //reduction.Setup(__instance, ____requiredResources);
