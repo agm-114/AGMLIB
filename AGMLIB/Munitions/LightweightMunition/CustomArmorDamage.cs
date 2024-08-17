@@ -2,6 +2,7 @@
 using Game.Units;
 using HarmonyLib;
 using Munitions;
+using Munitions.InstancedDamagers;
 using Munitions.ModularMissiles.Descriptors.Support;
 using Ships;
 using System;
@@ -18,18 +19,35 @@ namespace AGMLIB.Munitions.LightweightMunition
     public class CustomArmorDamage : ScriptableObject
     {
         public float ArmorStripPercentage = 1;
+        public bool MaxThickness = true;
     }
     [HarmonyPatch(typeof(ShipController), "ApplyArmorDamage")]
     public class ShipControllerApplyArmorDamage
     {
         static void Prefix(ShipController __instance, MunitionHitInfo hitInfo, IDamageDealer character, bool neverRicochet) {
-            if (character is not IModular modular)
+            IModular modular = character as IModular;
+            if (modular == null && character is BaseThrowawayDamager damager)
+            {
+                modular = Common.GetVal<IDamageCharacteristic>(damager, "_damage") as IModular;
+                //Debug.LogError("Damager is " + Common.GetVal<IDamageCharacteristic>(damager, "_damage"));
+
+            }
+            if (modular == null)
                 return;
             var test = modular.Modules.OfType<CustomArmorDamage>();
             if (!test.Any())
                 return;
             CustomArmorDamage damage = test.First();
             ShipController controller = __instance;
+            IArmorSection[] _dynamicArmor;
+            if (damage.MaxThickness)
+            {
+                _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
+                doarmordamage = true;
+                //Debug.LogError("Armor Sections ")
+                armordamage = _dynamicArmor.FirstOrDefault().Thickness * damage.ArmorStripPercentage;
+                return;
+            }
             if (hitInfo.HitCollider is not MeshCollider meshCollider || !hitInfo.HitUV.HasValue)
             {
                 return;
@@ -39,7 +57,7 @@ namespace AGMLIB.Munitions.LightweightMunition
             {
                 return;
             }
-            IArmorSection[] _dynamicArmor = Common.GetVal<IArmorSection[]>(controller, "_dynamicArmor");
+            _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
             if (dynamicArmorIndex >= _dynamicArmor.Length)
             {
                 return;
@@ -48,6 +66,8 @@ namespace AGMLIB.Munitions.LightweightMunition
             _dynamicArmor[dynamicArmorIndex].GetHPAtPosition(hitInfo.HitUV.Value, out var armor, out var heat);
             doarmordamage = true;
             armordamage = armor * damage.ArmorStripPercentage;
+            
+            Debug.LogError("Armor "  + armor + " % " + damage.ArmorStripPercentage + " armordamage " + armordamage);
         }
 
         public static bool doarmordamage = false;
@@ -62,6 +82,7 @@ namespace AGMLIB.Munitions.LightweightMunition
             if (ShipControllerApplyArmorDamage.doarmordamage)
                 damage = ShipControllerApplyArmorDamage.armordamage;
             ShipControllerApplyArmorDamage.doarmordamage = false;
+            Debug.LogError("Custom Armor Damage" + damage);
         }
 
     }
