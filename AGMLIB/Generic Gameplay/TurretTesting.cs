@@ -13,6 +13,34 @@ using UnityEngine.Profiling;
 using Utility;
 
 
+public class CustomTartTraversalLimits : CustomTraversalLimits
+{
+    public override TraversalLimits PublicForwardLimits
+    {
+        get
+        {
+            TraversalLimits forwardLimits = new();
+            forwardLimits.LimitFiringOnly = ForwardLimits.LimitFiringOnly;
+            forwardLimits.LeftAngle = ForwardLimits.LeftAngle;
+            forwardLimits.RightAngle = ForwardLimits.RightAngle;
+            forwardLimits.UseElevationLimit = ForwardLimits.UseElevationLimit;
+            forwardLimits.ElevationAngle = 180 - ForwardLimits.ElevationAngle;
+            return forwardLimits;
+        }
+        set => ForwardLimits = value;
+    }
+
+}
+
+public class CustomTraversalLimits : MonoBehaviour
+{
+    public TraversalLimits ForwardLimits = new();
+    public HullSocket socket;
+    public virtual TraversalLimits PublicForwardLimits { get => ForwardLimits; set => ForwardLimits = value; }
+
+    public bool Blocked => socket?.Component == null;
+}
+
 //[HarmonyPatch(typeof(TurretController), nameof(TurretController.TargetWithinLimits))]
 class TurretControllerTargetWithinLimits
 {
@@ -83,19 +111,51 @@ class TurretControllerTargetWithinLimits
     }
 }
 
-//[HarmonyPatch(typeof(TurretController), nameof(TurretController.FaceTarget))]
+[HarmonyPatch(typeof(TurretController), nameof(TurretController.FaceTarget))]
 class TurretControllerFaceTarget
 {
-    static TraversalLimits? _forwardLimits = null;
 
-    static void Prefix(TurretController __instance)
+    static void Postfix(TurretController __instance)
+    {
+         
+        if (__instance.gameObject.transform.GetComponentInParent<CustomTraversalLimits>() is not CustomTraversalLimits customlimits)
+        {
+            return;
+        }
+        if(!customlimits.Blocked)
+        {
+            Common.SetVal<bool>(__instance, "_insideForwardLimits", false);
+            return;
+
+        }
+        TraversalLimits _forwardLimits = customlimits.ForwardLimits;
+        Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
+        Transform _body = Common.GetVal<Transform>(__instance, "_body"); ;
+        Transform _barrel = Common.GetVal<Transform>(__instance, "_barrel"); ;
+        
+        float traverse = MathHelpers.ConvertAngle360to180(_body.localRotation.eulerAngles.y);
+        float elevation = MathHelpers.ConvertAngle360to180(_barrel.localRotation.eulerAngles.x) * -1;
+        Debug.LogError("Limits test "  + _forwardLimits.LeftAngle * -1 + " " + _forwardLimits.RightAngle + " " +  (int)traverse);
+        Debug.LogError("Limits test "  + (traverse > (_forwardLimits.LeftAngle * -1)) + " " + (traverse < _forwardLimits.RightAngle) + " " +  (int)traverse);
+        //Debug.LogError("Elevation test " + (int)elevation);
+        if (traverse > (_forwardLimits.LeftAngle * -1) && traverse < _forwardLimits.RightAngle)
+        {
+            if (!_forwardLimits.UseElevationLimit || elevation < _forwardLimits.ElevationAngle)
+                Common.SetVal<bool>(__instance, "_insideForwardLimits", false);
+            //Debug.LogError("Outside Limits");
+        }
+    }
+}
+/* This is the version that messed with vanilla 
+   
+  static void Prefix(TurretController __instance)
     {
         _forwardLimits = Common.GetVal<TraversalLimits?>(__instance, "_forwardLimits");
         Common.SetVal<TraversalLimits?>(__instance, "_forwardLimits", (TraversalLimits?)null);
         Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
 
     }
-
+     
     static void Postfix(TurretController __instance)
     {
 
@@ -137,3 +197,4 @@ class TurretControllerFaceTarget
         _forwardLimits = null;
     }
 }
+*/

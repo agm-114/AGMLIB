@@ -213,39 +213,66 @@ class SocketOutlineManagerDrawShapes
         }
         for (int i = 0; i < _sockets.Length; i++)
         {
-            HullSocket socket2 = _sockets[i];
-            if (socket2.Type != 0)
+            HullSocket socket = _sockets[i];
+            if (socket.Type != 0)
             {
                 continue;
             }
-            using (Draw.Command(cam, CustomPassInjectionPoint.AfterPostProcess))
+            if (socket.Component != null && socket.Component.UseTraversalArcs)
             {
-                Draw.LineGeometry = LineGeometry.Volumetric3D;
-                Draw.ThicknessSpace = ThicknessSpace.Noots;
-                Draw.Thickness = _arcThickness;
-                Draw.UseDashes = true;
-                Draw.DashSpace = DashSpace.Meters;
-                Draw.DashSize = _arcDashScale;
-                Draw.DashSpacing = _arcDashSpacing;
-                Draw.LineEndCaps = LineEndCap.Round;
-                Draw.Matrix = socket2.transform.localToWorldMatrix;
-                Vector3Int socketSize = socket2.Size.Dimensions;
-                float arcRadius = (float)Mathf.Max(socketSize.x, socketSize.z) * 0.25f * _arcRadiusBuffer;
-                Vector3 attach = socket2.AttachPoint / 10f * _arcLift;
-                if (socket2.Component != null && socket2.Component.UseTraversalArcs)
+                void DrawArc(Quaternion rot, float angleStart, float angleEnd, bool circle = false)
                 {
-                    if (socket2.TraverseLimits.HasValue)
+                    using (Draw.Command(cam, CustomPassInjectionPoint.AfterPostProcess))
                     {
-                        Draw.Color = socket2.TraverseLimits.Value.LimitFiringOnly ? _arcSoftLimit : _arcHardLimit;
-                        Draw.Arc(attach, Quaternion.Euler(0f, -90f, 0f) * Quaternion.LookRotation(Vector3.up), arcRadius, (0f - socket2.TraverseLimits.Value.LeftAngle) * ((float)Math.PI / 180f), socket2.TraverseLimits.Value.RightAngle * ((float)Math.PI / 180f));
-                    }
-                    else
-                    {
+                        Draw.LineGeometry = LineGeometry.Volumetric3D;
+                        Draw.ThicknessSpace = ThicknessSpace.Noots;
+                        Draw.Thickness = _arcThickness;
+                        Draw.UseDashes = true;
+                        Draw.DashSpace = DashSpace.Meters;
+                        Draw.DashSize = _arcDashScale;
+                        Draw.DashSpacing = _arcDashSpacing;
+                        Draw.LineEndCaps = LineEndCap.Round;
+                        Draw.Matrix = socket.transform.localToWorldMatrix;
+                        Vector3Int socketSize = socket.Size.Dimensions;
+                        float arcRadius = (float)Mathf.Max(socketSize.x, socketSize.z) * 0.25f * _arcRadiusBuffer;
+                        Vector3 attach = socket.AttachPoint / 10f * _arcLift;
                         Draw.Color = _arcSoftLimit;
-                        Draw.Ring(attach, Vector3.up, arcRadius, _arcThickness);
+                        if (circle)
+                        {
+                            Draw.Ring(attach, Vector3.up, arcRadius, _arcThickness);
+                            return;
+                        }
+
+                        Draw.Color = socket.TraverseLimits.Value.LimitFiringOnly ? _arcSoftLimit : _arcHardLimit;
+
+                        Draw.Arc(attach, rot * Quaternion.LookRotation(Vector3.up), arcRadius, angleStart * ((float)Math.PI / 180f), angleEnd * ((float)Math.PI / 180f));
                     }
+
                 }
+                //x = 90 makes elevation
+                if (socket.TraverseLimits is not TraversalLimits _rearLimits)
+                {
+                    DrawArc(Quaternion.identity, 0, 0, true);
+                    continue;
+                }
+                if (socket.gameObject.transform.GetComponent<CustomTraversalLimits>()?.PublicForwardLimits is  not TraversalLimits _forwardLimits || !socket.gameObject.transform.GetComponent<CustomTraversalLimits>().Blocked)
+                {
+                    DrawArc(Quaternion.Euler(0f, -90f, 0f), (0f - _rearLimits.LeftAngle), _rearLimits.RightAngle);
+                    continue;
+                }
+                //Debug.LogError("Rear arc");
+                //Debug.LogError(_rearLimits.LeftAngle + " " + _rearLimits.RightAngle);
+                //Debug.LogError("Front arc");
+                //Debug.LogError(_forwardLimits.LeftAngle + " " + _forwardLimits.RightAngle);
+                //Draw.Arc(attach, Quaternion.Euler(0f, 0f, 0f) * Quaternion.LookRotation(Vector3.up), arcRadius, (0f - socket2.TraverseLimits.Value.LeftAngle) * ((float)Math.PI / 180f), (socket2.TraverseLimits.Value.RightAngle - 90f) * ((float)Math.PI / 180f));
+
+                //Draw.Arc(attach, Quaternion.Euler(0f, 0f, 0f) * Quaternion.LookRotation(Vector3.up), arcRadius, (90f - _forwardLimits.RightAngle) * ((float)Math.PI / 180f), (socket2.TraverseLimits.Value.RightAngle - 90f) * ((float)Math.PI / 180f));
+                DrawArc(Quaternion.Euler(0f, 0f, 0f), (-90f + _forwardLimits.RightAngle), socket.TraverseLimits.Value.RightAngle - 90f);
+                DrawArc(Quaternion.Euler(0f, 0f, 180f), (-90f + _forwardLimits.LeftAngle), socket.TraverseLimits.Value.LeftAngle - 90f);
+
+
             }
+
         }
         return false;
     }
