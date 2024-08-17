@@ -8,9 +8,6 @@ using UnityEngine;
 
 namespace AGMLIB.Munitions.LightweightMunition.Basic
 {
-    internal class 
-    {
-    }
     [CreateAssetMenu(fileName = "New LW Modular Kinetic Shell", menuName = "Nebulous/LW Shells/Modular Kinetic Shell")]
     public class ModularLightweightKineticShell : LightweightKineticShell, IModular
     {
