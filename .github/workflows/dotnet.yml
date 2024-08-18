@@ -43,9 +43,9 @@ jobs:
         with:
           tag_name: ${{ github.sha }}  # Use the commit SHA as the tag name
           body: "Automated release from commit ${{ github.sha }}"  # Provide a default release description
-      - uses: actions/upload-artifact@v3.2.0
+      - uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
-          path: |  # Upload project artifacts, adjust paths as needed
+          path: |
             bin/  # Example path for built binaries
-            test-results/  # Example path for test reports
+
