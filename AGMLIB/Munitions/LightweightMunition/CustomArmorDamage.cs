@@ -67,7 +67,7 @@ namespace AGMLIB.Munitions.LightweightMunition
             doarmordamage = true;
             armordamage = armor * damage.ArmorStripPercentage;
             
-            Debug.LogError("Armor "  + armor + " % " + damage.ArmorStripPercentage + " armordamage " + armordamage);
+            //Debug.LogError("Armor "  + armor + " % " + damage.ArmorStripPercentage + " armordamage " + armordamage);
         }
 
         public static bool doarmordamage = false;
@@ -82,7 +82,7 @@ namespace AGMLIB.Munitions.LightweightMunition
             if (ShipControllerApplyArmorDamage.doarmordamage)
                 damage = ShipControllerApplyArmorDamage.armordamage;
             ShipControllerApplyArmorDamage.doarmordamage = false;
-            Debug.LogError("Custom Armor Damage" + damage);
+            //Debug.LogError("Custom Armor Damage" + damage);
         }
 
     }
