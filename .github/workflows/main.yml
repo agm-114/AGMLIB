@@ -1,0 +1,64 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+  release:
+    needs: build  # This job depends on the successful completion of build-and-test
+    permissions: write-all
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Get Short SHA
+        run: |
+          short_sha=$(echo "${{ github.sha }}" | cut -c -7)
+          echo "::set-output name=short_sha::$short_sha"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: Automatic
+          release_name: Release ${{ steps.get_short_sha.outputs.short_sha }}
+          body: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+      - name: Upload DLL
+        uses: actions/upload-artifact@v3
+        with:
+          name: AGMLIB.dll
+          path: C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB\Debug\net481\AGMLIB.dll
