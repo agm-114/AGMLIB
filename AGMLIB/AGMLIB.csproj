@@ -194,9 +194,6 @@
     </None>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call neblaunch.bat" />
-  </Target>
 
   <ItemGroup>
     <Reference Update="mscorlib">
