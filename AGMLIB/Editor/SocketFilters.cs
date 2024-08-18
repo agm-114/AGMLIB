@@ -303,24 +303,25 @@ class ShipEditorPaneSetShip
         }
         foreach (string value in types)
         {
-            GameObject gameObject = UnityEngine.Object.Instantiate(____socketGroupingPrefab, ____scrollPaneContent);
-            gameObject.transform.SetAsFirstSibling();
-            Accordion component = gameObject.GetComponent<Accordion>();
-            HeaderItem componentInChildren = gameObject.GetComponentInChildren<HeaderItem>();
+            GameObject socketgroupgo = UnityEngine.Object.Instantiate(____socketGroupingPrefab, ____scrollPaneContent);
+            socketgroupgo.transform.SetAsFirstSibling();
+            Accordion accordion = socketgroupgo.GetComponent<Accordion>();
+            HeaderItem componentInChildren = socketgroupgo.GetComponentInChildren<HeaderItem>();
             componentInChildren.SetText(value);
             foreach (HullSocket item3 in allSockets)
             {
                 SocketFilters filter = item3.GetComponent<SocketFilters>() ?? new();
                 if (filter.CustomType == value)
                 {
-                    GameObject gameObject2 = UnityEngine.Object.Instantiate(____socketItemPrefab, component.Content);
-                    SocketItem item = gameObject2.GetComponent<SocketItem>();
+                    GameObject socketitemgo = UnityEngine.Object.Instantiate(____socketItemPrefab, accordion.Content);
+                    SocketItem item = socketitemgo.GetComponent<SocketItem>();
                     item.SetSocket(____currentShip, __instance, item3);
-                    Button component2 = gameObject2.GetComponent<Button>();
-                    component2.onClick.AddListener(delegate
+                    Button socketbutton = socketitemgo.GetComponent<Button>();
+                    socketbutton.onClick.AddListener(delegate
                     {
                         __instance.OpenPalette(item.Socket);
                     });
+                    //break;
                 }
             }
         }
