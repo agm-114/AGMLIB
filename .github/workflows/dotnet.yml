@@ -28,7 +28,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal
   release:
     needs: build  # This job depends on the successful completion of build-and-test
-
+    permissions: write-all
     name: Create Release
     runs-on: ubuntu-latest
     steps:
