@@ -28,7 +28,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal
   release:
     # Only run the release job when a push to master occurs
-    needs: build-and-test  # This job depends on the successful completion of build-and-test
+    needs: build  # This job depends on the successful completion of build-and-test
 
     runs-on: ubuntu-latest
 
