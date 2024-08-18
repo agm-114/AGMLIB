@@ -26,3 +26,26 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+  release:
+    # Only run the release job when a push to master occurs
+    needs: build-and-test  # This job depends on the successful completion of build-and-test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install release tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip release
+      - name: Create a release draft
+        uses: nwetland/release-draft@v1
+        with:
+          tag_name: ${{ github.sha }}  # Use the commit SHA as the tag name
+          body: "Automated release from commit ${{ github.sha }}"  # Provide a default release description
+      - uses: actions/upload-artifact@v3.2.0
+        with:
+          name: release-artifacts
+          path: |  # Upload project artifacts, adjust paths as needed
+            bin/  # Example path for built binaries
+            test-results/  # Example path for test reports
