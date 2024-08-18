@@ -38,7 +38,23 @@ public class CustomTraversalLimits : MonoBehaviour
     public HullSocket socket;
     public virtual TraversalLimits PublicForwardLimits { get => ForwardLimits; set => ForwardLimits = value; }
 
-    public bool Blocked => socket?.Component == null;
+    public bool Blocked
+    {
+        get
+        {
+            if (socket == null)
+            {
+                //Debug.LogError("No locked socket");
+                return false; 
+            }
+            if(socket.Component == null)
+            {
+                //Debug.LogError("No Blocking component");
+                return false;
+            }
+            return true;
+        }
+    }
 }
 
 //[HarmonyPatch(typeof(TurretController), nameof(TurretController.TargetWithinLimits))]
@@ -135,8 +151,8 @@ class TurretControllerFaceTarget
         
         float traverse = MathHelpers.ConvertAngle360to180(_body.localRotation.eulerAngles.y);
         float elevation = MathHelpers.ConvertAngle360to180(_barrel.localRotation.eulerAngles.x) * -1;
-        Debug.LogError("Limits test "  + _forwardLimits.LeftAngle * -1 + " " + _forwardLimits.RightAngle + " " +  (int)traverse);
-        Debug.LogError("Limits test "  + (traverse > (_forwardLimits.LeftAngle * -1)) + " " + (traverse < _forwardLimits.RightAngle) + " " +  (int)traverse);
+        //Debug.LogError("Limits test "  + _forwardLimits.LeftAngle * -1 + " " + _forwardLimits.RightAngle + " " +  (int)traverse);
+        //Debug.LogError("Limits test "  + (traverse > (_forwardLimits.LeftAngle * -1)) + " " + (traverse < _forwardLimits.RightAngle) + " " +  (int)traverse);
         //Debug.LogError("Elevation test " + (int)elevation);
         if (traverse > (_forwardLimits.LeftAngle * -1) && traverse < _forwardLimits.RightAngle)
         {
