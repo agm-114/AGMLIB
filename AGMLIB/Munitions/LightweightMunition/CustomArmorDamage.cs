@@ -18,7 +18,8 @@ namespace AGMLIB.Munitions.LightweightMunition
     [CreateAssetMenu(fileName = "New CustomArmorDamage", menuName = "Nebulous/LW Shells/CustomArmorDamage")]
     public class CustomArmorDamage : ScriptableObject
     {
-        public float ArmorStripPercentage = 1;
+        public bool StripBaseArmor = true;
+        public float ArmorStripMultiplier = 1;
         public bool MaxThickness = true;
     }
     [HarmonyPatch(typeof(ShipController), "ApplyArmorDamage")]
@@ -44,8 +45,8 @@ namespace AGMLIB.Munitions.LightweightMunition
             {
                 _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
                 doarmordamage = true;
-                //Debug.LogError("Armor Sections ")
-                armordamage = _dynamicArmor.FirstOrDefault().Thickness * damage.ArmorStripPercentage;
+                //Debug.LogError("Armor Sections " + _dynamicArmor.FirstOrDefault().Thickness + " % " + damage.ArmorStripPercentage);
+                armordamage = _dynamicArmor.FirstOrDefault().Thickness * damage.ArmorStripMultiplier;
                 return;
             }
             if (hitInfo.HitCollider is not MeshCollider meshCollider || !hitInfo.HitUV.HasValue)
@@ -65,7 +66,7 @@ namespace AGMLIB.Munitions.LightweightMunition
 
             _dynamicArmor[dynamicArmorIndex].GetHPAtPosition(hitInfo.HitUV.Value, out var armor, out var heat);
             doarmordamage = true;
-            armordamage = armor * damage.ArmorStripPercentage;
+            armordamage = armor * damage.ArmorStripMultiplier;
             
             //Debug.LogError("Armor "  + armor + " % " + damage.ArmorStripPercentage + " armordamage " + armordamage);
         }
@@ -79,10 +80,13 @@ namespace AGMLIB.Munitions.LightweightMunition
     {
         static void Prefix(ShipController __instance, int armorIndex, Vector2 hitUV, ref float damage, float brushSize, float heat)
         {
+            //Debug.LogError("Base Armor Damage" + damage);
+
             if (ShipControllerApplyArmorDamage.doarmordamage)
-                damage = ShipControllerApplyArmorDamage.armordamage;
+                damage = damage + ShipControllerApplyArmorDamage.armordamage;
             ShipControllerApplyArmorDamage.doarmordamage = false;
             //Debug.LogError("Custom Armor Damage" + damage);
+
         }
 
     }
