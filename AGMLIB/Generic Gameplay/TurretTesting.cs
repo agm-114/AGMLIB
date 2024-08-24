@@ -38,7 +38,7 @@ public class CustomTraversalLimits : MonoBehaviour
     public HullSocket socket;
     public virtual TraversalLimits PublicForwardLimits { get => ForwardLimits; set => ForwardLimits = value; }
 
-    public bool Blocked
+    public bool Ignore
     {
         get
         {
@@ -50,9 +50,46 @@ public class CustomTraversalLimits : MonoBehaviour
             if(socket.Component == null)
             {
                 //Debug.LogError("No Blocking component");
-                return false;
+                return true;
             }
-            return true;
+            return false;
+        }
+    }
+}
+
+
+[HarmonyPatch(typeof(TurretController), nameof(TurretController.FaceTarget))]
+class TurretControllerFaceTarget
+{
+
+    static void Postfix(TurretController __instance)
+    {
+         
+        if (__instance.gameObject.transform.GetComponentInParent<CustomTraversalLimits>() is not CustomTraversalLimits customlimits)
+        {
+            return;
+        }
+        if(customlimits.Ignore)
+        {
+            Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
+            return;
+
+        }
+        TraversalLimits _forwardLimits = customlimits.ForwardLimits;
+        Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
+        Transform _body = Common.GetVal<Transform>(__instance, "_body"); ;
+        Transform _barrel = Common.GetVal<Transform>(__instance, "_barrel"); ;
+        
+        float traverse = MathHelpers.ConvertAngle360to180(_body.localRotation.eulerAngles.y);
+        float elevation = MathHelpers.ConvertAngle360to180(_barrel.localRotation.eulerAngles.x) * -1;
+        //Debug.LogError("Limits test " + __instance + " "  + _forwardLimits.LeftAngle * -1 + " " + _forwardLimits.RightAngle + " " +  (int)traverse);
+        //Debug.LogError("Limits test "  + (traverse > (_forwardLimits.LeftAngle * -1)) + " " + (traverse < _forwardLimits.RightAngle) + " " +  (int)traverse);
+        //Debug.LogError("Elevation test " + (int)elevation);
+        if (traverse > (_forwardLimits.LeftAngle * -1) && traverse < _forwardLimits.RightAngle)
+        {
+            if (!_forwardLimits.UseElevationLimit || elevation < _forwardLimits.ElevationAngle)
+                Common.SetVal<bool>(__instance, "_insideForwardLimits", false);
+            //Debug.LogError("Outside Limits");
         }
     }
 }
@@ -127,41 +164,6 @@ class TurretControllerTargetWithinLimits
     }
 }
 
-[HarmonyPatch(typeof(TurretController), nameof(TurretController.FaceTarget))]
-class TurretControllerFaceTarget
-{
-
-    static void Postfix(TurretController __instance)
-    {
-         
-        if (__instance.gameObject.transform.GetComponentInParent<CustomTraversalLimits>() is not CustomTraversalLimits customlimits)
-        {
-            return;
-        }
-        if(!customlimits.Blocked)
-        {
-            Common.SetVal<bool>(__instance, "_insideForwardLimits", false);
-            return;
-
-        }
-        TraversalLimits _forwardLimits = customlimits.ForwardLimits;
-        Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
-        Transform _body = Common.GetVal<Transform>(__instance, "_body"); ;
-        Transform _barrel = Common.GetVal<Transform>(__instance, "_barrel"); ;
-        
-        float traverse = MathHelpers.ConvertAngle360to180(_body.localRotation.eulerAngles.y);
-        float elevation = MathHelpers.ConvertAngle360to180(_barrel.localRotation.eulerAngles.x) * -1;
-        //Debug.LogError("Limits test "  + _forwardLimits.LeftAngle * -1 + " " + _forwardLimits.RightAngle + " " +  (int)traverse);
-        //Debug.LogError("Limits test "  + (traverse > (_forwardLimits.LeftAngle * -1)) + " " + (traverse < _forwardLimits.RightAngle) + " " +  (int)traverse);
-        //Debug.LogError("Elevation test " + (int)elevation);
-        if (traverse > (_forwardLimits.LeftAngle * -1) && traverse < _forwardLimits.RightAngle)
-        {
-            if (!_forwardLimits.UseElevationLimit || elevation < _forwardLimits.ElevationAngle)
-                Common.SetVal<bool>(__instance, "_insideForwardLimits", false);
-            //Debug.LogError("Outside Limits");
-        }
-    }
-}
 /* This is the version that messed with vanilla 
    
   static void Prefix(TurretController __instance)

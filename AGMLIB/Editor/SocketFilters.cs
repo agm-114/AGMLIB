@@ -255,7 +255,7 @@ class SocketOutlineManagerDrawShapes
                     DrawArc(Quaternion.identity, 0, 0, true);
                     continue;
                 }
-                if (socket.gameObject.transform.GetComponent<CustomTraversalLimits>()?.PublicForwardLimits is  not TraversalLimits _forwardLimits || !socket.gameObject.transform.GetComponent<CustomTraversalLimits>().Blocked)
+                if (socket.gameObject.transform.GetComponent<CustomTraversalLimits>()?.PublicForwardLimits is  not TraversalLimits _forwardLimits || socket.gameObject.transform.GetComponent<CustomTraversalLimits>().Ignore)
                 {
                     DrawArc(Quaternion.Euler(0f, -90f, 0f), (0f - _rearLimits.LeftAngle), _rearLimits.RightAngle);
                     continue;
