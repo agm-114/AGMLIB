@@ -28,20 +28,26 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
 {
     public override bool SupportsPositionTargeting => true;
     public override bool RequiresCommunicator => false;
-    public ColorName Color = ColorName.Orange;
+    public ColorName Color => ColorName.Orange;
     public bool MemoryMode = false;
     public bool MultiSensorMemoryMode = false;
     public override string GetSummarySegment()
     {
+        if(MemoryMode)
+            return "<color=" + GetTextColor(Color) + ">GOT</color>";
         return "<color=" + GetTextColor(Color) + ">GOLIS</color>";
     }
     public override string GetDetailSummarySegment()
     {
+        if (MemoryMode)
+            return "GOTO TARGET";
         return "GOTO LOCATION IN SPACE";
     }
 
     public override string GetFunctionalDescriptionSegment()
     {
+        if (MemoryMode)
+            return "predicts target postion based on last good target data";
         return "predicts target postion based on target kinematics before launch";
     }
 
