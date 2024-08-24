@@ -143,6 +143,7 @@ public class KinematicMissile : MonoBehaviour, IMissileFixedUpdate
     public void Start() => _startTime = Time.fixedTime;
     public KinematicMissile Setup(KinematicLauncher launcher)
     {
+        Start();
         if(launcher != null)
             Launcher = launcher;
         return this;
