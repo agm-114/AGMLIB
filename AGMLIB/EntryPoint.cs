@@ -46,9 +46,18 @@ public class EntryPoint : IModEntryPoint
                 new("stock-maps", "Assets/ComAssetBundles/"),
                 new("stock-voice", "Assets/ComAssetBundles/")
 };
-
+    public void HandleLog(string logString, string stackTrace, LogType logType)
+    {
+        logString = $"LOGA: {DateTime.Now}: {logString}";
+        if(!logString.Contains("LOGA"))
+            Debug.LogError(logString);
+    }
     public void PreLoad()
     {
+        Application.logMessageReceived += HandleLog;
+        Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING", "1", EnvironmentVariableTarget.User);
+        Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
+        
         DependencyPatch.window = false;
         //Application.Quit();
         Debug.Log("AGMLIB: 0.16 Preload");

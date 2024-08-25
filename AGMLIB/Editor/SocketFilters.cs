@@ -148,6 +148,7 @@ class SocketOutlineManagerDrawShapes
 
     )
     {
+         //Debug.LogError("Help me I am trapped in a scripting factory ");
          Camera _camera = ____camera;
 
          Color _emptyColor = ____emptyColor;
