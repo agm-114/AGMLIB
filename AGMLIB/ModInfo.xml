@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ModInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<ModName>AGMLIB - Beta</ModName>
+	<ModName>AGMLIB</ModName>
 	<ModDescription>By: AGM</ModDescription>
-	<ModVer>0.3.2.2.6</ModVer>
+	<ModVer>0.3.2.2.12</ModVer>
 	<Assemblies>
-		<string>Debug\net481\AGMLIB.dll</string>
-		<string>Debug\net481\0Harmony.dll</string>
+		<string>Debug/net481/AGMLIB.dll</string>
+		<string>Debug/net481/0Harmony.dll</string>
 	</Assemblies>
 	<GameVer>0.3.2</GameVer>
 </ModInfo>

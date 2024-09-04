@@ -9,14 +9,14 @@ namespace AGMLIB.Server
     internal class Logging
     {
     }
-    public class TimeStampedLogWrapper
+    public class TimeWrapper
     {
         public DateTime Timestamp { get; }
         public object Message { get; }
 
-        public TimeStampedLogWrapper(object message)
+        public TimeWrapper(object message)
         {
-            Timestamp = DateTime.Now;
+            Timestamp = DateTime.UtcNow;
             Message = message;
         }
 
@@ -24,36 +24,48 @@ namespace AGMLIB.Server
         {
             return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Message}";
         }
+
+        public static bool Wrap(ref object message)
+        {
+            //Debug.LogError("Prefix");
+            message = new TimeWrapper(message);
+            return true;
+        }
     }
 
     [HarmonyPatch(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.LogError), new Type[] { typeof(object) })]
-
     class DebugLogError
     {
-        public static bool Prefix(ref object message)
-        {
-            //Debug.LogError("Prefix");
-            message = new TimeStampedLogWrapper(message);
-            return true;
-        }
-
-
-
+        public static bool Prefix(ref object message) => TimeWrapper.Wrap(ref message);
     }
 
     [HarmonyPatch(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.LogError), new Type[] { typeof(object), typeof(Object) })]
     class DebugLogErrorComplex
     {
+        public static bool Prefix(ref object message) => DebugLogError.Prefix(ref message);
+    }
 
+    [HarmonyPatch(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.Log), new Type[] { typeof(object) })]
+    class DebugLog
+    {
+        public static bool Prefix(ref object message) => TimeWrapper.Wrap(ref message);
+    }
 
-        [HarmonyPrefix]
-        public static bool Prefix(ref object message)
-        {
-            //Debug.LogError("Prefix");
-            
-            return DebugLogError.Prefix(ref message);
-        }
+    [HarmonyPatch(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.Log), new Type[] { typeof(object), typeof(Object) })]
+    class DebugLogComplex
+    {
+        public static bool Prefix(ref object message) => DebugLogError.Prefix(ref message);
+    }
+    [HarmonyPatch(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.LogWarning), new Type[] { typeof(object) })]
+    class DebugLogWarning
+    {
+        public static bool Prefix(ref object message) => TimeWrapper.Wrap(ref message);
+    }
 
+    [HarmonyPatch(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.LogWarning), new Type[] { typeof(object), typeof(Object) })]
+    class DebugLogWarningComplex
+    {
+        public static bool Prefix(ref object message) => DebugLogError.Prefix(ref message);
     }
 
 }
