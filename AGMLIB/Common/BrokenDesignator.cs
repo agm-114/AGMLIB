@@ -14,7 +14,7 @@ public class BrokenDesignator : MonoBehaviour
     RezFollowingMuzzle optionaltargeMuzle;
     void Awake()
     {
-        //Debug.LogError("ALIVED");
+        //Debug.LogError("Alive");
         //Dictionary<string, HullComponent> componentDictionary = (Dictionary<string, HullComponent>)GetPrivateField(BundleManager.Instance, "_components");
         IReadOnlyCollection<HullComponent> hullComponents = BundleManager.Instance.AllComponents;
         if (optionaltargeMuzle == null)
@@ -24,14 +24,36 @@ public class BrokenDesignator : MonoBehaviour
         if (optionaltargeMuzle == null)
             optionaltargeMuzle = gameObject.GetComponentInParent<RezFollowingMuzzle>();
         if (optionaltargeMuzle == null)
+        {
+            Debug.LogError("Could not find muzzle on weapon");
             return;
+        }
+
+
         
-        HullComponent goodewar = hullComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
+        HullComponent goodewar = BundleManager.Instance.GetHullComponent(PrefabName);
+        if (goodewar == null)
+        {
+            Debug.LogError("Could not find prefab with savekey " + PrefabName);
+            return;
+        }
         //Debug.LogError("Found Target " + goodewar.SaveKey);
         RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
+        if (goodmuzzel == null)
+        {
+            Debug.LogError("Could not find rez following muzzle on indicated prefab " + PrefabName);
+            return;
+        }
         GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
+        if (prefab == null)
+        {
+            Debug.LogError("Could not find following prefab in rez following muzzle on indicated prefab " + PrefabName);
+            return;
+        }
         if (prefab != null && optionaltargeMuzle != null)
-            Common.SetVal(prefab, "_followingPrefab", prefab);
-
+            Common.SetVal(optionaltargeMuzle, "_followingPrefab", prefab);
+        else
+            Debug.LogError("Jammer Setup Failure");
+        Destroy(this);
     }
 }
