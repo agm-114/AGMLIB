@@ -54,14 +54,14 @@ public class EntryPoint : IModEntryPoint
     }
     public void PreLoad()
     {
-        Application.logMessageReceived += HandleLog;
+        //Application.logMessageReceived += HandleLog;
         Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING",   "1", EnvironmentVariableTarget.User);
         Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
         
         DependencyPatch.window = false;
         //Application.Quit();
         //Debug.Log("AGMLIB: 0.3.2.2.10 Preload"); OLD
-        Debug.LogError("AGMLIB: 0.3.2.2.12 Preload");
+        Debug.Log("AGMLIB: 0.3.2.2.12 Preload");
         if (Harmony.HasAnyPatches("neb.lib.harmony.product")) {
             //Debug.LogError("Illegal Load Order");
             return;
