@@ -5,6 +5,7 @@ using Munitions;
 using Munitions.InstancedDamagers;
 using Munitions.ModularMissiles.Descriptors.Support;
 using Ships;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,16 +16,46 @@ using UnityEngine;
 
 namespace AGMLIB.Munitions.LightweightMunition
 {
+    public class ArmorDamage : ScriptableObject { }
+    public class CustomArmorDamage : MultiplierArmorDamage { }
     [CreateAssetMenu(fileName = "New CustomArmorDamage", menuName = "Nebulous/LW Shells/CustomArmorDamage")]
-    public class CustomArmorDamage : ScriptableObject
+    public class MultiplierArmorDamage : ArmorDamage
     {
-        public bool StripBaseArmor = true;
         public float ArmorStripMultiplier = 1;
         public bool MaxThickness = true;
+    }
+    [CreateAssetMenu(fileName = "New CustomArmorDamage", menuName = "Nebulous/LW Shells/FixedArmorDamage")]
+    public class FixedArmorDamage : ArmorDamage
+    {
+        public float ArmorDamageAmount = 1;
+        public bool ClampArmorDamage = true;
     }
     [HarmonyPatch(typeof(ShipController), "ApplyArmorDamage")]
     public class ShipControllerApplyArmorDamage
     {
+        static bool GetArmorThickness(MunitionHitInfo hitInfo, ShipController controller, out float armor)
+        {
+            IArmorSection[] _dynamicArmor;
+            armor = 0;
+            if (hitInfo.HitCollider is not MeshCollider meshCollider || !hitInfo.HitUV.HasValue)
+            {
+                return true;
+            }
+            int dynamicArmorIndex = controller.Ship.Hull.GetDynamicArmorIndex(meshCollider.sharedMesh);
+            if (dynamicArmorIndex < 0)
+            {
+                return true;
+            }
+            _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
+            if (dynamicArmorIndex >= _dynamicArmor.Length)
+            {
+                return true;
+            }
+
+            _dynamicArmor[dynamicArmorIndex].GetHPAtPosition(hitInfo.HitUV.Value, out armor, out var heat);
+            return false;
+        }
+
         static void Prefix(ShipController __instance, MunitionHitInfo hitInfo, IDamageDealer character, bool neverRicochet) {
             IModular modular = character as IModular;
             if (modular == null && character is BaseThrowawayDamager damager)
@@ -35,39 +66,43 @@ namespace AGMLIB.Munitions.LightweightMunition
             }
             if (modular == null)
                 return;
-            var test = modular.Modules.OfType<CustomArmorDamage>();
+            var test = modular.Modules.OfType<ArmorDamage>();
             if (!test.Any())
                 return;
-            CustomArmorDamage damage = test.First();
+            ArmorDamage model = test.First();
             ShipController controller = __instance;
-            IArmorSection[] _dynamicArmor;
-            if (damage.MaxThickness)
+           
+            if(model is MultiplierArmorDamage mult)
             {
-                _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
+                if (mult.MaxThickness)
+                {
+                    IArmorSection[] _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
+                    doarmordamage = true;
+                    //Debug.LogError("Armor Sections " + _dynamicArmor.FirstOrDefault().Thickness + " % " + damage.ArmorStripPercentage);
+                    armordamage = _dynamicArmor.FirstOrDefault().Thickness * mult.ArmorStripMultiplier;
+                    return;
+                }
+                if(GetArmorThickness(hitInfo, controller, out float armor))
+                    return;
                 doarmordamage = true;
-                //Debug.LogError("Armor Sections " + _dynamicArmor.FirstOrDefault().Thickness + " % " + damage.ArmorStripPercentage);
-                armordamage = _dynamicArmor.FirstOrDefault().Thickness * damage.ArmorStripMultiplier;
-                return;
-            }
-            if (hitInfo.HitCollider is not MeshCollider meshCollider || !hitInfo.HitUV.HasValue)
-            {
-                return;
-            }
-            int dynamicArmorIndex = controller.Ship.Hull.GetDynamicArmorIndex(meshCollider.sharedMesh);
-            if (dynamicArmorIndex < 0)
-            {
-                return;
-            }
-            _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
-            if (dynamicArmorIndex >= _dynamicArmor.Length)
-            {
+                armordamage = armor * mult.ArmorStripMultiplier;
                 return;
             }
 
-            _dynamicArmor[dynamicArmorIndex].GetHPAtPosition(hitInfo.HitUV.Value, out var armor, out var heat);
-            doarmordamage = true;
-            armordamage = armor * damage.ArmorStripMultiplier;
-            
+            if (model is FixedArmorDamage fixeddamage)
+            {
+                if (fixeddamage.ClampArmorDamage)
+                {
+
+                    armordamage = fixeddamage.ArmorDamageAmount;
+                    return;
+                }
+                if (GetArmorThickness(hitInfo, controller, out float armor))
+                    return;
+                doarmordamage = true;
+                armordamage = Mathf.Min(armor, fixeddamage.ArmorDamageAmount);
+                return;
+            }
             //Debug.LogError("Armor "  + armor + " % " + damage.ArmorStripPercentage + " armordamage " + armordamage);
         }
 
