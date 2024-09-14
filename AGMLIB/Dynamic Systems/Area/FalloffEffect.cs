@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace AGMLIB.Dynamic_Systems.Area
 {
-    public class FalloffEffect<TargetObject> : BasicEffect<TargetObject>where TargetObject : MonoBehaviour
+    public class FalloffEffect<TargetObject> : GenericBasicEffect<TargetObject> where TargetObject : MonoBehaviour
     {
 
         public AnimationCurve DistanceCurve = new(new Keyframe(0f, 1f), new Keyframe(1f, 1f));

@@ -47,11 +47,11 @@ namespace AGMLIB.Dynamic_Systems.Area
             float sG = SensorMath.PowerDensityAtDistance(RadiatedPower, R, Gain);
             return sG;
         }
-        public NetworkIdentity NetID => Ship.netIdentity;
+        public NetworkIdentity NetID => AreaEffect.Ship.netIdentity;
         public bool ShowJammingLOB => ShowLOB;
         public Vector3 Position => transform.position;
-        public Vector3 PlatformPosition => Ship.transform.position;
-        public ISensorTrackable Platform => ShipController.Trackable;
+        public Vector3 PlatformPosition => AreaEffect.Ship.transform.position;
+        public ISensorTrackable Platform => AreaEffect.ShipController.Trackable;
     }
 
     public class ShipJammingEffect : JammingEffect<Ship>

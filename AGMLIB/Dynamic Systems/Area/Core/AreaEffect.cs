@@ -60,7 +60,11 @@ public class AreaEffect : ActiveSettings
 
     public Material Material => _followingInstance.GetComponentInChildren<MeshRenderer>().material;
 
-    public List<BasicEffect<MonoBehaviour>> Effects = new();
+    //public List<BasicEffect<Ship>> ShipEffects = new();
+    //public List<BasicEffect<ModularMissile>> ModularMissileEffects = new();
+
+
+    public List<BasicEffect> Effects;
 
     public void Fire()
     {
@@ -132,7 +136,7 @@ public class AreaEffect : ActiveSettings
 
         if (_laststate == null || _laststate != active)
         {
-            foreach (BasicEffect<MonoBehaviour> basicEffect in Effects)
+            foreach (BasicEffect basicEffect in Effects)
             {
                 basicEffect.AreaUpdate();
             }

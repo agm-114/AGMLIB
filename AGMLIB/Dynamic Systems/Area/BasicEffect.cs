@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AGMLIB.Dynamic_Systems.Area
 {
-    public class BasicEffect<TargetObject> : ShipState where TargetObject : MonoBehaviour
+    public class BasicEffect : MonoBehaviour
     {
         [HideInInspector]
         public AreaEffect AreaEffect;
@@ -18,6 +18,16 @@ namespace AGMLIB.Dynamic_Systems.Area
 
         public float Range = 0;
         protected bool _active => AreaEffect.active;
+
+        public virtual void AreaUpdate()
+        {
+
+        }
+    }
+
+    public class GenericBasicEffect<TargetObject> : BasicEffect where TargetObject : MonoBehaviour
+    {
+
 
         [HideInInspector]
         public HashSet<TargetObject> Targets;
@@ -32,7 +42,7 @@ namespace AGMLIB.Dynamic_Systems.Area
             
         }
 
-        public virtual void AreaUpdate()
+        public override void AreaUpdate()
         {
             foreach(TargetObject target in Targets)
             {
