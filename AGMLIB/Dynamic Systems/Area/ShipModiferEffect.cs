@@ -10,10 +10,12 @@ namespace AGMLIB.Dynamic_Systems.Area
 
     public class ShipModiferEffect : FalloffEffect<Ship>
     {
-        protected List<StatModifier> Modifiers = new(1);
+        public List<StatModifier> Modifiers = new(1);
         protected List<FreeModifierSource> _modifierssources = new();
 
-        public override void Enter(Ship target)
+
+
+        public override void ApplyEffect(Ship target)
         {
             if (!_active)
             {
@@ -33,7 +35,7 @@ namespace AGMLIB.Dynamic_Systems.Area
             }
         }
 
-        public override void Exit(Ship ship)
+        public override void ClearEffect(Ship ship)
         {
             foreach (FreeModifierSource freeModifierSource in _modifierssources)
                 ship.RemoveStatModifier(freeModifierSource, freeModifierSource.Modifier.StatName);

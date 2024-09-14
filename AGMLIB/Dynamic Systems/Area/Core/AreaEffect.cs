@@ -33,6 +33,7 @@ using Game;
 using Random = UnityEngine.Random;
 using Munitions.ModularMissiles.Descriptors.Seekers;
 using AGMLIB.Dynamic_Systems.Area;
+using System.Reflection;
 
 public class AreaEffect : ActiveSettings
 {
@@ -43,7 +44,7 @@ public class AreaEffect : ActiveSettings
     protected bool? _laststate = null;
     protected Guid Guid = Guid.NewGuid();
 
-    public bool UseTrigger = true;
+    //public bool UseTrigger = true;
     public Collider Trigger;
     public float Radius = 100f;
 
@@ -121,20 +122,6 @@ public class AreaEffect : ActiveSettings
 
 
     }
-    [StructLayout(LayoutKind.Sequential, Size = 1)]
-    protected struct ColliderComparer : IEqualityComparer<Collider>
-    {
-        public bool Equals(Collider x, Collider y)
-        {
-            return x.transform.root.gameObject == y.transform.root.gameObject;
-        }
-
-        public int GetHashCode(Collider obj)
-        {
-            return ((object)obj).GetHashCode();
-        }
-    }
-    protected static ColliderComparer _colliderComparer = new();
 
     // Update is called once per frame
     protected override void FixedUpdate()
@@ -147,11 +134,8 @@ public class AreaEffect : ActiveSettings
         {
             foreach (BasicEffect<MonoBehaviour> basicEffect in Effects)
             {
-                basicEffect.AreaEffectStateChange();
+                basicEffect.AreaUpdate();
             }
-
-
-
 
         }
                 
@@ -177,18 +161,15 @@ public class AreaEffect : ActiveSettings
 
 
     void UpdateDetectedList(Ship target, bool applicationarg = true)
-    {  
+    {
         //if(_detectedships.Contains(target) )
-        if (Filter?.ValidTarget(target) ?? true && applicationarg == true)
+        if (applicationarg == true  && (Filter?.ValidTarget(target) ?? true))
         {
-
             _detectedmonobhaviors.Add(target);
             _laststate = null;
         }
         else if(target != null)
         {
-
-
             _detectedmonobhaviors.Remove(target);
         }
 
@@ -199,15 +180,11 @@ public class AreaEffect : ActiveSettings
         //if(_detectedships.Contains(target) )
         if (applicationarg == true)
         {
-            if (!_detectedmonobhaviors.Contains(target))
-                Debug.LogError(target.name + $" is a valid missile target");
             _detectedmonobhaviors.Add(target);
             _laststate = null;
         }
         else if(target != null)
         {
-
-            Debug.LogError(target.name + $" is not a valid target");
             _detectedmonobhaviors.Remove(target);
         }
 
@@ -224,8 +201,7 @@ public class AreaEffect : ActiveSettings
         //Debug.LogError(target.name);
         //foreach (MonoBehaviour behaviour in target.GetComponents<MonoBehaviour>())
         //    Debug.LogError(behaviour.GetType().Name);
-        if (UseTrigger)
-            UpdateDetectedList(target?.GetComponent<Ship>(), applicationarg);
+        UpdateDetectedList(target?.GetComponent<Ship>(), applicationarg);
         UpdateDetectedList(target?.GetComponent<ModularMissile>(), applicationarg);
     }
 
@@ -239,6 +215,20 @@ public class AreaEffect : ActiveSettings
         areaeffect?.OnTrigger(targetmono?.transform, applicationarg);
     }
 
+    [StructLayout(LayoutKind.Sequential, Size = 1)]
+    protected struct ColliderComparer : IEqualityComparer<Collider>
+    {
+        public bool Equals(Collider x, Collider y)
+        {
+            return x.transform.root.gameObject == y.transform.root.gameObject;
+        }
+
+        public int GetHashCode(Collider obj)
+        {
+            return ((object)obj).GetHashCode();
+        }
+    }
+    protected static ColliderComparer _colliderComparer = new();
 
 
 }

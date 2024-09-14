@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telepathy;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -58,46 +59,65 @@ namespace AGMLIB.Dynamic_Systems.Area
 
     }
 
-    public class MissileJammingEffect : JammingEffect<ModularMissile>
+    public class GenericSeekerEffect : JammingEffect<ModularMissile>
     {
-        public List<SignatureType> SoftKillWavelengths = new(3) { SignatureType.PassiveRadar | SignatureType.Radar | SignatureType.NoSignature };
-        public float SoftKillRecycle = 1;
-        public float FailChance = 1;
-        public bool FailValidators = true;
-        public bool JamSeekers = true;
-        public bool SoftKillAntiJamVals = true;
+        public List<SignatureType> ImpactedWavelengths = new(3) { SignatureType.PassiveRadar | SignatureType.Radar | SignatureType.NoSignature };
+        
+
         public bool JamAntiJam = true;
 
-
-        public override void AreaEffectState()
+        public bool ValidSeeker(RuntimeMissileSeeker seeker)
         {
-            foreach (RuntimeMissileSeeker seeker in target.GetComponentsInChildren<RuntimeMissileSeeker>())
+            bool antijam = seeker.Descriptor is PassiveSeekerDescriptor passive && passive.CanPursueJamming;
+            if (antijam && !JamAntiJam)
+                return false;
+            if (ImpactedWavelengths.Contains(seeker.DecoySigType))
+                return true;
+
+            return false;
+        }
+        public IEnumerable<RuntimeMissileSeeker> GetSeekers(ModularMissile missile)
+        {
+            return missile.GetComponentsInChildren<RuntimeMissileSeeker>().Where(seeker => ValidSeeker(seeker));
+        }
+    }
+
+    public class MissileSoftkillEffect : GenericSeekerEffect
+    {
+        public float FailChance = 1;
+        public float SoftKillRecycle = 1;
+        public bool FailValidators = true;
+
+        public bool SoftKillAntiJamVals = true;
+        public override void ApplyEffect(ModularMissile target)
+        {
+            foreach (RuntimeMissileSeeker seeker in GetSeekers(target))
             {
-                bool antijam = seeker.Descriptor is PassiveSeekerDescriptor passive && passive.CanPursueJamming;
-                if (!SoftKillWavelengths.Contains(seeker.DecoySigType))
-                    return;
                 Debug.LogError("Softkilling " + target.gameObject.name);
                 if (SoftKillAntiJamVals && FailChance >= Random.Range(0.0f, 1f))
                 {
-                    if (antijam && !SoftKillAntiJamVals)
-                        continue;
                     Common.SetVal(seeker, "_validationReliable", false);
                 }
-
-
-                if (JamSeekers)
-                {
-                    if (antijam && !JamAntiJam)
-                        continue;
-                    ReceivedJamming jammming = Common.GetVal<ReceivedJamming>(seeker, "_jammingSources");
-                    if (_active)
-                        jammming.AddSource(this);
-                    else
-                        jammming.RemoveSource(this);
-                }
-
-
             }
+        }
+    }
+
+    public class MissileJammingEffect : GenericSeekerEffect
+    {
+
+        public ReceivedJamming GetJammingSources(RuntimeMissileSeeker seeker) => Common.GetVal<ReceivedJamming>(seeker, "_jammingSources");
+
+
+        public override void ApplyEffect(ModularMissile target)
+        {
+            foreach (RuntimeMissileSeeker seeker in GetSeekers(target))
+                GetJammingSources(seeker).AddSource(this);
+        }
+
+        public override void ClearEffect(ModularMissile target)
+        {
+            foreach (RuntimeMissileSeeker seeker in GetSeekers(target))
+                GetJammingSources(seeker).RemoveSource(this);
         }
 
     }
