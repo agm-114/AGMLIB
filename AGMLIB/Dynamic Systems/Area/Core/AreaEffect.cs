@@ -46,7 +46,7 @@ public class AreaEffect : ActiveSettings
 
     //public bool UseTrigger = true;
     public Collider Trigger;
-    public float Radius = 100f;
+    public float Radius = 1000f;
 
     public bool CustomVFX = true;
     public ColorName Color = ColorName.Orange;
@@ -109,8 +109,12 @@ public class AreaEffect : ActiveSettings
     // Start is called before the first frame update
     void Start()
     {
-
-        if(Trigger == null)
+        foreach (BasicEffect effect in Effects)
+        {
+            effect.AreaEffect = this;
+            effect.Setup();
+        }
+        if (Trigger == null)
         {
             SphereCollider sphereCollider = gameObject.GetOrAddComponent<SphereCollider>();
             Trigger = sphereCollider;
@@ -118,7 +122,7 @@ public class AreaEffect : ActiveSettings
         }
         else if(Trigger is SphereCollider sphere)
         {
-            Radius = sphere.radius;
+            //Radius = sphere.radius;
         }
 
         Trigger.isTrigger = true;
@@ -132,12 +136,16 @@ public class AreaEffect : ActiveSettings
     {
         base.FixedUpdate();
 
-
+        foreach(BasicEffect basicEffect in  Effects)
+        {
+            basicEffect.FixedUpdate();
+        }
 
         if (_laststate == null || _laststate != active)
         {
-            foreach (BasicEffect basicEffect in Effects)
+            foreach (BasicEffect basicEffect in Effects.Where(a => a != null))
             {
+                basicEffect.enabled = true;
                 basicEffect.AreaUpdate();
             }
 
@@ -169,12 +177,14 @@ public class AreaEffect : ActiveSettings
         //if(_detectedships.Contains(target) )
         if (applicationarg == true  && (Filter?.ValidTarget(target) ?? true))
         {
-            _detectedmonobhaviors.Add(target);
+            foreach(var effect in Effects)
+                effect.Enter(target);
             _laststate = null;
         }
         else if(target != null)
         {
-            _detectedmonobhaviors.Remove(target);
+            foreach (var effect in Effects)
+                effect.Exit(target);
         }
 
     }
@@ -184,12 +194,14 @@ public class AreaEffect : ActiveSettings
         //if(_detectedships.Contains(target) )
         if (applicationarg == true)
         {
-            _detectedmonobhaviors.Add(target);
+            foreach (var effect in Effects)
+                effect.Enter(target);
             _laststate = null;
         }
         else if(target != null)
         {
-            _detectedmonobhaviors.Remove(target);
+            foreach (var effect in Effects)
+                effect.Exit(target);
         }
 
     }

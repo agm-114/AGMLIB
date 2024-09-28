@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 namespace AGMLIB.Dynamic_Systems.Area
 {
@@ -17,9 +18,27 @@ namespace AGMLIB.Dynamic_Systems.Area
         public virtual bool RequireRange => false;
 
         public float Range = 0;
-        protected bool _active => AreaEffect.active;
+        protected bool Active => AreaEffect.active;
 
         public virtual void AreaUpdate()
+        {
+
+        }
+        public virtual void Enter(MonoBehaviour target)
+        {
+
+        }
+
+        public virtual void Exit(MonoBehaviour target)
+        {
+
+        }
+
+        public virtual void Setup()
+        {
+
+        }
+        public virtual void FixedUpdate()
         {
 
         }
@@ -30,36 +49,52 @@ namespace AGMLIB.Dynamic_Systems.Area
 
 
         [HideInInspector]
-        public HashSet<TargetObject> Targets;
+        public HashSet<TargetObject> Targets = new();
 
-        public virtual void Enter(TargetObject target)
+        public override void Enter(MonoBehaviour target)
         {
-            Targets.Add(target);
+            if (target is TargetObject targetObject)
+                Targets.Add(targetObject);
         }
 
         public virtual void ApplyEffect(TargetObject target)
         {
-            
+
         }
 
         public override void AreaUpdate()
         {
-            foreach(TargetObject target in Targets)
+            foreach (TargetObject target in Targets)
             {
-                if (_active)
+                if (Active)
                     this.ApplyEffect(target);
                 else
                     this.ClearEffect(target);
             }
+        }
+
+        public override void FixedUpdate()
+        {
+            if(Active)
+                foreach (TargetObject target in Targets)
+                {
+                    TargetFixedUpdate(target);
+                }
+        }
+
+        public virtual void TargetFixedUpdate(TargetObject target)
+        {
+
         }
         public virtual void ClearEffect(TargetObject target)
         {
             
         }
 
-        public virtual void Exit(TargetObject target)
+        public override void Exit(MonoBehaviour target)
         {
-            Targets.Remove(target);
+            if (target is TargetObject targetObject)
+                Targets.Remove(targetObject);
         }
 
 
