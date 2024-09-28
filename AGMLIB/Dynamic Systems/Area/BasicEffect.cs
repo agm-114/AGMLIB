@@ -78,6 +78,8 @@ namespace AGMLIB.Dynamic_Systems.Area
             if(Active)
                 foreach (TargetObject target in Targets)
                 {
+                    if (target == null)
+                        continue;
                     TargetFixedUpdate(target);
                 }
         }
