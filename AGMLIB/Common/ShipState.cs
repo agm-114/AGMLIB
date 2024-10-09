@@ -5,49 +5,51 @@ using Ships;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.UI.Extensions;
 using Utility;
 #pragma warning disable IDE1006 // Naming Styles
-public class ShipState : MonoBehaviour
+[System.Serializable]
+public enum ConditionalState
 {
+    Ignore,
+    Enabled,
+    Disabled
 
-    [System.Serializable]
-    public enum State
-    {
-        Ignore,
-        Enabled,
-        Disabled
+}
 
-    }
+public class InternalShipState : MonoBehaviour
+{
+    public ShipState ShipState;
+
     // Start is called before the first frame update
-    protected State flankState => ShipController.Throttle == MovementSpeed.Flank ? State.Enabled : State.Disabled;
-    protected State battleshortState => ShipController.BattleShortEnabled == true ? State.Enabled : State.Disabled;
-    protected State controlState => ShipController.CommandState == CommandFunctions.None ? State.Disabled : State.Enabled;
-    protected State elimnatedState => ShipController.IsEliminated ? State.Disabled : State.Enabled;
-    [Space]
-    [Header("Activation Conditions")]
-    [Space]
-    //[TextArea]
-    //[Header("Ship State Settings")]
-    //[TextArea]
-    [Tooltip("Arbitary text message")]
-    //[TextArea]
-    [HideInInspector]
+    public ConditionalState FlankState => ShipController.Throttle == MovementSpeed.Flank ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState BattleshortState => ShipController.BattleShortEnabled == true ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState ControlState => ShipController.CommandState == CommandFunctions.None ? ConditionalState.Disabled : ConditionalState.Enabled;
+    public ConditionalState ElimnatedState => ShipController.IsEliminated ? ConditionalState.Disabled : ConditionalState.Enabled;
+
+
+
+    protected Dictionary<string, ShipInfoButton> _buttons = new();
+
+    public ShipInfoButton GetButton(string key)
+    {
+        if (!_buttons.TryGetValue(key, out ShipInfoButton button))
+        {
+            ShipInfoButton shipInfoButton = ShipInfoButton.FindButton(ShipController, key);
+            _buttons.Add(key, ShipInfoButton.FindButton(ShipController, key));
+            return shipInfoButton;
+        }
+        return button;
+    }
+
     public Ship Ship;
-    [HideInInspector]
     public ShipController ShipController;
-    [HideInInspector]
     public ResourceComponent ResourceComponent;
-    [HideInInspector]
-    public HullComponent Module;
-    [HideInInspector]
-    public WeaponComponent Weapon;
-    [HideInInspector]
     public EditorShipController EditorShipController;
-    [HideInInspector]
     public Hull Hull;
     private Rigidbody _rigidbody = null;
-    [HideInInspector]
-    public Rigidbody? Rigidbody
+    public Rigidbody Rigidbody
     {
         get
         {
@@ -57,10 +59,11 @@ public class ShipState : MonoBehaviour
         }
 
     }
-    public float velocity => Rigidbody?.velocity.magnitude ?? 0;
+    public float Velocity => Rigidbody?.velocity.magnitude ?? 0;
     public bool InEditor => EditorShipController != null;
-    public bool InGame => !InEditor;
-    protected virtual void Awake()
+    public bool InGame => EditorShipController == null;
+
+    public void Awake()
     {
         if (EditorShipController == null)
             EditorShipController = transform.gameObject.GetComponentInParent<EditorShipController>();
@@ -94,12 +97,7 @@ public class ShipState : MonoBehaviour
         if (ResourceComponent == null)
             ResourceComponent = Ship.gameObject.GetComponentInParent<ResourceComponent>();
 
-        Module = gameObject.GetComponent<HullComponent>();
-        if (Module == null)
-            Module = gameObject.GetComponentInParent<HullComponent>();
-        Weapon = gameObject.GetComponent<WeaponComponent>();
-        if (Weapon == null)
-            Weapon = gameObject.GetComponentInParent<WeaponComponent>();
+
 
         if (Hull == null)
             Hull = transform.gameObject.GetComponentInParent<Hull>();
@@ -108,8 +106,58 @@ public class ShipState : MonoBehaviour
         if (Hull == null)
             Hull = transform.gameObject.GetComponentInChildren<Hull>();
 
-
+        ShipState = Ship.GetComponent<ShipState>();
+        if (ShipState == null)
+        {
+            ShipState = Ship.gameObject.AddComponent<ShipState>();
+            ShipState.Awake();
+        }
         //module = gameObject.GetComponent<HullComponent>();
+    }
+
+    public static InternalShipState GetInternalShipState(Ship ship)
+    {
+        InternalShipState state = ship.gameObject.GetComponentInParent<InternalShipState>();
+        if (state == null)
+        {
+            state = ship.gameObject.AddComponent<InternalShipState>();
+            state.Awake();
+        }
+        return state;
+    }
+}
+
+public class ShipState : MonoBehaviour
+{
+    public ConditionalState FlankState => InternalShipState.FlankState;
+    public ConditionalState BattleshortState => InternalShipState.BattleshortState;
+    public ConditionalState ControlState => InternalShipState.ControlState;
+    public ConditionalState ElimnatedState => InternalShipState.ElimnatedState;
+
+    private InternalShipState InternalShipState;
+    public float Velocity => InternalShipState.Velocity;
+    public ShipInfoButton GetButton(string key) => InternalShipState.GetButton(key);
+    public Ship Ship => InternalShipState.Ship;
+    public ShipController ShipController => InternalShipState.ShipController;
+    public Hull Hull => InternalShipState.Hull;
+    public ResourceComponent ResourceComponent => InternalShipState.ResourceComponent;
+    public EditorShipController EditorShipController => InternalShipState.EditorShipController;
+    public Rigidbody Rigidbody => InternalShipState.Rigidbody;
+    public bool InEditor => InternalShipState.InEditor;
+    public bool InGame => InternalShipState.InGame;
+
+
+    public virtual void Awake()
+    {
+        Ship ship = transform.gameObject.GetComponentInParent<Ship>();
+        InternalShipState = InternalShipState.GetInternalShipState(ship);
+    }
+
+
+    public static ShipState GetShipState(Ship ship)
+    {
+        InternalShipState state = InternalShipState.GetInternalShipState(ship);
+        return state.ShipState;
     }
 }
 #pragma warning restore IDE1006 // Naming Styles
