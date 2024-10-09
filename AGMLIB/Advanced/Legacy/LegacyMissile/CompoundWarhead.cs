@@ -1,28 +1,4 @@
-﻿using Game.Intel;
-using Game;
-using Munitions;
-using UnityEngine;
-
-using Game.Units;
-using Mirror;
-
-using Modding;
-
-using Debug = UnityEngine.Debug;
-using HarmonyLib;
-
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Utility;
-using UnityEngine.PlayerLoop;
-using System.Xml.Serialization;
-using System.Runtime.CompilerServices;
-using static Game.WaypointPath;
-using Pixelplacement;
-using UnityEngine.UI.Extensions;
-
+﻿
 public class CompoundWarhead : MissileWarhead
 {
     [SerializeField]

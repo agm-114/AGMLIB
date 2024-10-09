@@ -1,16 +1,4 @@
-﻿using FleetEditor;
-using Game;
-using Game.Units;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-//using System.Diagnostics;
-using UnityEngine;
-using Utility;
-
-[HarmonyPatch(typeof(ShipController), nameof(ShipController.HasOffensiveAbility))]
+﻿[HarmonyPatch(typeof(ShipController), nameof(ShipController.HasOffensiveAbility))]
 class HasOffensiveAbilityTweak
 {
     static void Update(ShipController __instance, ref bool __result)

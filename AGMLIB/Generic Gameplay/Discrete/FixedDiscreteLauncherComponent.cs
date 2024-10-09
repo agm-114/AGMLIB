@@ -1,18 +1,4 @@
-﻿using Bundles;
-using FleetEditor;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Utility;
-
-public class BlockingWeapon : MonoBehaviour
+﻿public class BlockingWeapon : MonoBehaviour
 {
     public bool InEditor => GetComponentInParent<EditorShipController>() != null;
     ComponentActivity Status => gameObject.GetComponentInChildren<HullComponent>().GetActivityStatus();

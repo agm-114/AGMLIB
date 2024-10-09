@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Game.Map;
-using UnityEngine;
-using Sound;
-using Ships;
-
-public class PulsedLineBeamMuzzleEffects : LineBeamMuzzleEffects
+﻿public class PulsedLineBeamMuzzleEffects : LineBeamMuzzleEffects
 {
     
     public override void StopEffect()

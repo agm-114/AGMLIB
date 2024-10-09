@@ -5,7 +5,7 @@ using Bundles;
 using static Utility.GameColors;
 using Munitions.ModularMissiles;
 using System.Runtime.InteropServices;
-using AGMLIB.Dynamic_Systems.Area;
+using AGMLIB.DynamicSystems.Area;
 
 
 public class AreaEffect : ActiveSettings

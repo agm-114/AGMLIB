@@ -1,19 +1,4 @@
-﻿using Effects;
-using Game;
-using Shapes;
-using Ships;
-using Sound;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.VFX;
-
-public class BeamEffectModule : MonoBehaviour, IEffectModule
+﻿public class BeamEffectModule : MonoBehaviour, IEffectModule
 {
     public ShortDurationEffect Effect => gameObject.GetComponentInChildren<ShortDurationEffect>();
     public LineBeamMuzzleEffects LineBeamMuzzleEffects => gameObject.GetComponentInChildren<LineBeamMuzzleEffects>();

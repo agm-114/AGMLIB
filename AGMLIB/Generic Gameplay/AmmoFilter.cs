@@ -1,20 +1,4 @@
-﻿using FleetEditor;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.Serialization;
-using Utility;
-
-//patch GetNextMuzzle
-
-public class AmmoFilter : MonoBehaviour, ICoreFilter
+﻿public class AmmoFilter : MonoBehaviour, ICoreFilter
 {
     public bool AllowMissiles = true;
     public List<string> WhiteList = new();
@@ -84,8 +68,6 @@ public class AmmoFilter : MonoBehaviour, ICoreFilter
     {
 
     }
-
-
     public static bool IsAmmoCompatible(IMunition ammo, HullComponent component, out bool value, bool debugmode = false)
     {
         value = true;

@@ -1,17 +1,4 @@
-﻿using Sound;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.VFX;
-using UnityEngine;
-using Ships;
-using System.Collections;
-using UnityEngine.UI;
-using Utility;
-using System.Reflection;
-public class DynamicButtonState : ActiveSettings
+﻿public class DynamicButtonState : ActiveSettings
 {
     // Start is called before the first frame update
     public enum ButtonLockState

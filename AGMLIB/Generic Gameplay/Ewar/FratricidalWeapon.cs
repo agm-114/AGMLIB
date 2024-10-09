@@ -1,18 +1,4 @@
-﻿using FleetEditor;
-using Game;
-using Game.EWar;
-using Game.Sensors;
-using Game.Units;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-//using System.Diagnostics;
-using UnityEngine;
-using UnityEngine.UI.Extensions;
-using Utility;
+﻿using UnityEngine.UI.Extensions;
 
 [HarmonyPatch(typeof(ActiveJammingEffect), "CheckTargetValidity")]
 class CheckTargetValidityTweak

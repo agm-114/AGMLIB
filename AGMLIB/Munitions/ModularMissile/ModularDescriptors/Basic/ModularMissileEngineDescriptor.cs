@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using Munitions.ModularMissiles.Descriptors;
-using System.Collections.Generic;
+﻿using Munitions.ModularMissiles.Descriptors;
+
 [CreateAssetMenu(fileName = "New Modular Missile Engine", menuName = "Nebulous/Missiles/Modular Engine Component")]
 public class ModularMissileEngineDescriptor : MissileEngineDescriptor, IModular
 {

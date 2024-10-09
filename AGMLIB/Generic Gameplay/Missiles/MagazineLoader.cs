@@ -1,25 +1,10 @@
-﻿using Bundles;
-using FleetEditor;
-using Game.Units;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using Ships.Serialization;
-using System.Collections.Generic;
-using System.Linq;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-using Utility;
-using static Ships.BaseCellLauncherComponent;
+﻿using static Ships.BaseCellLauncherComponent;
 using static Ships.BulkMagazineComponent;
 
 public class MagazineLoader : MonoBehaviour
 {
     bool PullFromMagazines = true;
 }
-
 
 [HarmonyPatch(typeof(BaseCellLauncherComponent))]//, nameof(BaseCellLauncherComponent.)
 [HarmonyPatch("NeedsExternalAmmoFeed", MethodType.Getter)]
@@ -47,7 +32,6 @@ class SettingsMagazineLoadoutSet
         Mags[__instance] = _provider;
     }
 }
-
 
 [HarmonyPatch(typeof(SettingsMagazineLoadout), nameof(SettingsMagazineLoadout.UpdateQuantities))]
 class SettingsMagazineLoadoutUpdateQuantities
@@ -78,7 +62,6 @@ class SettingsMagazineLoadoutUpdateQuantities
         //else
         //    Debug.LogError("Postfix Good");
 
-
         int maxCapacity = base_provider.MaxCapacity;
         int usedCapacity = base_provider.UsedCapacity;
         float remainingCapacity = base_provider.RemainingCapacity;
@@ -95,9 +78,6 @@ class SettingsMagazineLoadoutUpdateQuantities
 
     }
 }
-
-
-
 
 [HarmonyPatch(typeof(BaseCellLauncherComponent), nameof(BaseCellLauncherComponent.GetDesignWarnings))]
 class BaseCellLauncherComponentGetDesignWarnings
@@ -122,8 +102,6 @@ class BaseCellLauncherComponentGetDesignWarnings
     }
 }
 
-
-
 [HarmonyPatch(typeof(BaseHull), nameof(BaseHull.EditorDoesAnyWeaponUseAmmoType))]
 class EditorDoesAnyWeaponUseAmmoType
 {
@@ -139,8 +117,6 @@ class EditorDoesAnyWeaponUseAmmoType
                 __result = true;
                 return;
             }
-
-
         }
     }
 }
@@ -156,7 +132,6 @@ class ShipLoadFromSave
             //Debug.LogError("In Editor");
             return;
         }
-
 
         foreach (SerializedHullSocket item in saved.SocketMap)
         {
@@ -195,15 +170,10 @@ class ShipLoadFromSave
                 }
                 magdata.Load.RemoveAll(a => launcher.IsAmmoCompatible(____hull.MyShip.Fleet.AvailableMunitions.GetMunition(a.MunitionKey)));
 
-
-
             }
-
-
         }
         //Debug.LogError("InEditor " + __instance.GetComponent<ShipController>().enabled);
         //Debug.LogError("found L");
-
 
         //__instance.GetComponentInChildren<FixedCellLauncherComponent>().Slurp();
         //__instance.GetComponentInChildren<FixedCellLauncherComponent>().OnAmmoQuantityChanged.Invoke()

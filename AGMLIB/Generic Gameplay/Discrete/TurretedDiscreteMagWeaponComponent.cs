@@ -1,18 +1,4 @@
-﻿using FleetEditor;
-using Game.Sensors;
-using Munitions;
-using Ships.Controls;
-using Ships.Serialization;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Utility;
-
-public class TurretedDiscreteMagWeaponComponent : TurretedDiscreteWeaponComponent, IMagazineProvider, IConfigurableMagazineLoadout
+﻿public class TurretedDiscreteMagWeaponComponent : TurretedDiscreteWeaponComponent, IMagazineProvider, IConfigurableMagazineLoadout
 {
 
 

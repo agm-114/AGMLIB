@@ -1,33 +1,4 @@
-﻿using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using FleetEditor;
-using Munitions;
-using System.Linq;
-using System.Reflection;
-using Utility;
-using HarmonyLib;
-using System.Diagnostics;
-
-using UI;
-using Debug = UnityEngine.Debug;
-using static UnityEngine.ParticleSystem;
-using Bundles;
-using static UnityEngine.EventSystems.EventTrigger;
-using System.Runtime.CompilerServices;
-using Game;
-using Ships.Serialization;
-using Game.Units;
-using Mirror;
-using System.Xml.Linq;
-using Factions;
-using Procedural.Naming;
-using Steamworks;
-using System;
-using UnityEngine.UI;
-
-public class Escort : MonoBehaviour
+﻿public class Escort : MonoBehaviour
 {
 
     public bool disableremoval = false;
@@ -105,6 +76,7 @@ class FleetEditorFleetCompositionSubmodeController
 }
 
 //[HarmonyPatch(typeof(FleetListPane), "HandleShipAdded")]
+/*
 class FleetListPaneHandleShipAdded : MonoBehaviour
 {
     static bool Prefix(FleetListPane __instance, Ship ship, Fleet fleet, GameObject ____shipItemPrefab, RectTransform ____scrollPaneContent, FleetCompositionSubmodeController ____controller)
@@ -139,7 +111,7 @@ class FleetListPaneHandleShipAdded : MonoBehaviour
         return false;
     }
 }
-
+*/
 /*
 [HarmonyPatch(typeof(SkirmishGameManager), "CoroutineSpawnPlayerFleet")]
 class SkirmishGameManagerCoroutineSpawnPlayerFleet

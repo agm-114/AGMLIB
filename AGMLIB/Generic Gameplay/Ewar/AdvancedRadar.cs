@@ -1,17 +1,4 @@
-﻿using Game;
-using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Ships;
-using Game.Sensors;
-using Mirror;
-using System.Security.AccessControl;
-using Utility;
-using Game.EWar;
+﻿using Mirror;
 using UnityEngine.Profiling;
 
 public class AdvancedRadar : ShipState

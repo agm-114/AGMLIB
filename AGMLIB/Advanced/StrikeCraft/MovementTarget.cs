@@ -1,12 +1,3 @@
-using Ships;
-using System.Collections.Generic;
-using UnityEngine;
-using System;
-using System.Linq;
-using Munitions;
-using System.Collections;
-using Object = System.Object;
-
 public class MovementTarget : MonoBehaviour
 {
     public static HashSet<MovementTarget> Instances = new ();

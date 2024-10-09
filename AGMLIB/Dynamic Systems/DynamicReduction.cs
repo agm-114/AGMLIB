@@ -1,18 +1,4 @@
-﻿using Bundles;
-using HarmonyLib;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using Utility;
-using Munitions;
-using UnityEngine.UI.Extensions;
-using static Utility.GameColors;
-using FleetEditor;
-using TMPro;
-using System.Runtime.InteropServices;
-
+﻿using UnityEngine.UI.Extensions;
 public class DynamicReduction : ActiveSettings
 {
     public String ResourceName = "";

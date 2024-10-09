@@ -1,43 +1,4 @@
-﻿using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using FleetEditor;
-using Munitions;
-using System.Linq;
-using System.Reflection;
-using Utility;
-using HarmonyLib;
-using System.Diagnostics;
-
-using UI;
-using Debug = UnityEngine.Debug;
-using static UnityEngine.ParticleSystem;
-using Bundles;
-using static UnityEngine.EventSystems.EventTrigger;
-using System.Runtime.CompilerServices;
-using Game;
-using Ships.Serialization;
-using Game.Units;
-using Mirror;
-using System.Xml.Linq;
-using Factions;
-using Procedural.Naming;
-using Steamworks;
-using System;
-using UnityEngine.UI;
-using Munitions.ModularMissiles;
-using FleetEditor.MissileEditor;
-using Munitions.ModularMissiles.Descriptors.Seekers;
-using Munitions.ModularMissiles.Descriptors;
-using Munitions.ModularMissiles.Descriptors.Controls;
-using Game.Orders.Tasks;
-using static UI.SequentialButton;
-using UnityEngine.Serialization;
-using System.Configuration;
-using Steamworks.Ugc;
-
-public class IndexedSocketFilter : MonoBehaviour, IFilterIndexed
+﻿public class IndexedSocketFilter : MonoBehaviour, IFilterIndexed
 {
     [SerializeField]
     protected List<string> _whitelist = new();

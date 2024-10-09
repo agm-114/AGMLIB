@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Game;
-using Munitions;
-using UnityEngine;
-using Utility;
-
-namespace AGMLIB.Munitions.LightweightMunition
+﻿namespace AGMLIB.Munitions.LightweightMunition
 {
     public class LightweightGenericShell : LightweightKineticShell
     {

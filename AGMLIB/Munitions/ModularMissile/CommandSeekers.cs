@@ -1,21 +1,8 @@
-﻿using Game.Sensors;
-using Munitions.ModularMissiles.Runtime.Seekers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Game.EWar.Communicator;
-using Utility;
-using UnityEngine;
+﻿using Munitions.ModularMissiles.Runtime.Seekers;
 using Munitions.ModularMissiles.Descriptors.Seekers;
-using Game.EWar;
 using Munitions.ModularMissiles;
-using UnityEngine.PlayerLoop;
 using static Utility.GameColors;
 using Munitions.ModularMissiles.Descriptors;
-using Ships;
-
 
 public class AdvancedModularMissile : ModularMissile
 {

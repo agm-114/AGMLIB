@@ -1,9 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using Munitions.ModularMissiles.Descriptors.Seekers;
-
-
-[CreateAssetMenu(fileName = "New Modular Position Seeker", menuName = "Nebulous/Missiles/Seekers/Modular Position")]
+﻿[CreateAssetMenu(fileName = "New Modular Position Seeker", menuName = "Nebulous/Missiles/Seekers/Modular Position")]
 public class ModularPositionSeekerDescriptor : PositionSeekerDescriptor, IModular
 {
     [Header("Modular Components")]

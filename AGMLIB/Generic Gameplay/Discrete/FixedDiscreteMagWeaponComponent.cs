@@ -1,27 +1,4 @@
-﻿using FleetEditor;
-using Munitions;
-using Ships.Controls;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Utility;
-using System.Security.Cryptography;
-using Ships.Serialization;
-using static Ships.BulkMagazineComponent;
-using HarmonyLib;
-using static Ships.BaseCellLauncherComponent;
-using Game.Sensors;
-using static Networking.SkirmishDedicatedServerConfig;
-using static Ships.MissileEjector;
-using System.Data;
-
-
-
-// Need to patch InitializeStatValues
+﻿// Need to patch InitializeStatValues
 public class FixedDiscreteMagWeaponComponent : FixedDiscreteWeaponComponent, IMagazineProvider, IConfigurableMagazineLoadout 
 {
 

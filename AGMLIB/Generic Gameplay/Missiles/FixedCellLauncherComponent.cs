@@ -1,25 +1,4 @@
-﻿using Bundles;
-using FleetEditor;
-using Game.Units;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using Ships.Serialization;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEditor.VersionControl;
-using UnityEngine;
-using Utility;
-using static Ships.BaseCellLauncherComponent;
-using static Ships.BulkMagazineComponent;
-
-public class FixedCellLauncherComponent : CellLauncherComponent, IFixedWeapon
+﻿public class FixedCellLauncherComponent : CellLauncherComponent, IFixedWeapon
 {
     //public override int Capacity => 10;
 

@@ -1,34 +1,17 @@
-﻿using Game;
-using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Ships;
-using UI;
-using Game.UI;
-using static UI.SequentialButton;
-using UnityEngine.UI;
-using TMPro;
-using Utility;
-using Game.Units;
-using UnityEngine.UI.Extensions;
+﻿using static UI.SequentialButton;
 using TooltipTrigger = UI.TooltipTrigger;
-using System.Xml.Linq;
 
 public class ShipInfoButton : ShipState
 {
     
     public string ButtonName = "BTN";
-    public StringFormatter Tooltip;
+    public StringFormatter? Tooltip;
     public String TooltipString => Tooltip?.ToString() ?? ""; 
     public List<string> States = new() { "ACTV", "DEAD"};
     public List<GameColors.ColorName> Colors = new() { GameColors.ColorName.Red, GameColors.ColorName.Green };
     public int SelectedOption = 1;
     public bool Override = false;
-    public ButtonData Data;
+    public ButtonData? Data;
     public SequentialButton Button => Data?.Button;
     public static ShipInfoButton FindButton(ShipController shipController, string buttonname) => shipController.GetComponentsInChildren<ShipInfoButton>().Where(a => a.ButtonName == buttonname).First();
     public static SequenceOption CreateOption(string name, GameColors.ColorName color)

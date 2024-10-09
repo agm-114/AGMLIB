@@ -1,33 +1,3 @@
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using FleetEditor;
-using Munitions;
-using System.Linq;
-using System.Reflection;
-using Utility;
-using HarmonyLib;
-using System.Diagnostics;
-
-using UI;
-using Debug = UnityEngine.Debug;
-using static UnityEngine.ParticleSystem;
-using Bundles;
-using static UnityEngine.EventSystems.EventTrigger;
-using System.Runtime.CompilerServices;
-using Game;
-using Ships.Serialization;
-using Game.Units;
-using Mirror;
-using System.Xml.Linq;
-using Factions;
-using Procedural.Naming;
-using Steamworks;
-using System;
-using UnityEngine.UI;
-using Game.UI;
-
 public class KeyDebugger : ShipState
 {
     // Start is called before the first frame update

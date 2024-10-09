@@ -1,19 +1,4 @@
-﻿using Game.EWar;
-using Game.Sensors;
-using HarmonyLib;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UI;
-using UnityEngine;
-using UnityEngine.Profiling;
-using Utility;
-
-
-public class CustomTartTraversalLimits : CustomTraversalLimits
+﻿public class CustomTartTraversalLimits : CustomTraversalLimits
 {
     public override TraversalLimits PublicForwardLimits
     {

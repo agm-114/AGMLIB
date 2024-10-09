@@ -1,23 +1,4 @@
-﻿using FleetEditor;
-using Ships.Controls;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Munitions;
-using Game.Sensors;
-using static HarmonyLib.Code;
-using System.Reflection;
-using Utility;
-using Game.Units;
-using Game.EWar;
-using HarmonyLib;
-using UnityEngine.Profiling;
-
-public class DiscreteWeaponEjectors : MonoBehaviour
+﻿public class DiscreteWeaponEjectors : MonoBehaviour
 {
 
     [SerializeField]

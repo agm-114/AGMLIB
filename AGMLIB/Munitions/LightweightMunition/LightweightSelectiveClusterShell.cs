@@ -1,19 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Munitions;
-using UnityEngine;
-
-namespace AGMLIB.Munitions.LightweightMunition
+﻿namespace AGMLIB.Munitions.LightweightMunition
 {
-
-    
-
     public class LightweightSelectiveClusterShell : LightweightClusterShell
-    {
-
+    {   
 
         [SerializeField]
         private float TriggerRadius => Common.GetVal<float>(this, "_lookaheadSphereRadius");

@@ -1,13 +1,4 @@
-﻿using Game;
-using Munitions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
-namespace AGMLIB.Munitions.LightweightMunition
+﻿namespace AGMLIB.Munitions.LightweightMunition
 {
     public class Burst : ScriptableObject
     {

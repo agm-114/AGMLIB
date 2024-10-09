@@ -1,15 +1,4 @@
-﻿using Ships;
-using Ships.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Ships.DiscreteWeaponComponent;
-using UnityEngine;
-using Utility;
-
-namespace AGMLIB.Generic_Gameplay.Continuous
+﻿namespace AGMLIB.Generic_Gameplay.Continuous
 {
 
     public class CasemateContinuousWeaponComponent : FixedContinuousWeaponComponent
@@ -87,14 +76,15 @@ namespace AGMLIB.Generic_Gameplay.Continuous
             }
         }
 
-        public override string GetFormattedStats(bool full, int groupSize = 1)
+        public override void GetFormattedStats(List<(string, string)> rows, bool full, int groupSize = 1)
         {
+            base.GetFormattedStats(rows, full, groupSize);
             if (_turretController != null)
             {
-                string baseStats = base.GetFormattedStats(full, groupSize);
-                return baseStats + _statTraverseRate.FullTextWithLink + "\n" + _statElevationRate.FullTextWithLink + "\n" + _turretController.GetFormattedStats(full);
+                rows.Add(_statTraverseRate.FullTextWithLinkRow);
+                rows.Add(_statElevationRate.FullTextWithLinkRow);
+                _turretController.GetFormattedStats(rows, full);
             }
-            return base.GetFormattedStats(full, groupSize);
         }
 
         protected override void BearToTarget(Vector3 aimPoint)

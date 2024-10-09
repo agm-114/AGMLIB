@@ -1,16 +1,4 @@
-﻿using FleetEditor;
-using Munitions;
-using Ships.Controls;
-using Ships.Serialization;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Ships.BulkMagazineComponent;
-using UnityEngine;
-using Utility;
+﻿using static Ships.BulkMagazineComponent;
 
 public class DiscreteMagazine : IMagazineProvider
 {

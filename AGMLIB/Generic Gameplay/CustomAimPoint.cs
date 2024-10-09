@@ -1,16 +1,4 @@
-﻿using Game.Sensors;
-using HarmonyLib;
-using Ships;
-using Ships.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Utility;
-
-public class CustomAimPoint : ShipState
+﻿public class CustomAimPoint : ShipState
 {
     /*
     protected new Vector3? GetAimPoint(out bool ignoreRange)

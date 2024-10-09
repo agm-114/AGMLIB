@@ -1,23 +1,4 @@
-﻿using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using FleetEditor;
-using Munitions;
-using System.Linq;
-using System.Reflection;
-using Utility;
-using HarmonyLib;
-using System.Diagnostics;
-
-using UI;
-using Debug = UnityEngine.Debug;
-using static UnityEngine.ParticleSystem;
-using Bundles;
-using static UnityEngine.EventSystems.EventTrigger;
-using System.Runtime.CompilerServices;
-using System;
-using Object = UnityEngine.Object;
+﻿using Object = UnityEngine.Object;
 
 public class ChildSocket : MonoBehaviour
 {

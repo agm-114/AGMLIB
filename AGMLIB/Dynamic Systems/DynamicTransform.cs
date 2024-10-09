@@ -1,15 +1,4 @@
-﻿using Ships;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Utility;
-
-public class DynamicTransform : ActiveSettings
+﻿public class DynamicTransform : ActiveSettings
 {
     // Start is called before the first frame update
     [Space]

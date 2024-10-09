@@ -1,17 +1,4 @@
-﻿using Ships;
-using Sound;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.VFX;
-using UnityEngine.VFX.Utility;
-using UnityEngine.Serialization;
-using Utility;
-using Game.Map;
-
+﻿using Game.Map;
 public class PulsedThrusterPart : ThrusterPart
 {
     private bool EffectPlaying => Common.GetVal<bool>(this, "_effectPlaying");

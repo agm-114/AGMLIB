@@ -51,7 +51,7 @@ public class AdvancedShellWarhead : MissileWarhead
         for (int i = 0; i < _spawnCount; i++)
         {
             Vector3 forward = base.transform.forward;
-            forward = _omnidirectional ? Random.onUnitSphere : ((!_selectRandomPointInTarget || hitObject == null || hitInfo == null) ? MathHelpers.RandomRayInCone(forward, _launchAngle).normalized : base.transform.position.To(hitInfo.HitObject.transform.root.TransformPoint(hitObject.RandomPointInBounds())).normalized);
+            forward = _omnidirectional ? UnityEngine.Random.onUnitSphere : ((!_selectRandomPointInTarget || hitObject == null || hitInfo == null) ? MathHelpers.RandomRayInCone(forward, _launchAngle).normalized : base.transform.position.To(hitInfo.HitObject.transform.root.TransformPoint(hitObject.RandomPointInBounds())).normalized);
             StartCoroutine(CoroutineLaunch(forward));
         }
 

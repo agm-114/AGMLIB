@@ -1,16 +1,4 @@
-﻿using Game.Units;
-using Ships;
-using Ships.Controls;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using static Game.CapturableFlag;
-
-public class ResourceModule : ActiveSettings
+﻿public class ResourceModule : ActiveSettings
 {
     public enum GenerationScaling
     {

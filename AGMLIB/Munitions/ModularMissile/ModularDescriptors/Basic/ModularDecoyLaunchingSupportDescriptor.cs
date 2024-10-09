@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using Munitions.ModularMissiles.Descriptors.Support;
+﻿using Munitions.ModularMissiles.Descriptors.Support;
 [CreateAssetMenu(fileName = "New Modular Decoy Support", menuName = "Nebulous/Missiles/Support/Modular Decoy Launcher")]
 public class ModularDecoyLaunchingSupportDescriptor : DecoyLaunchingSupportDescriptor, IModular
 {

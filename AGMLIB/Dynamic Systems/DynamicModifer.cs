@@ -1,23 +1,3 @@
-using System;
-using System.IO;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.VFX;
-using Bundles;
-using Utility;
-using Ships;
-using Modding;
-using Munitions;
-using Game.Units;
-//using ICSharpCode.NRefactory.Ast;
-using static Game.Sensors.SensorTrackableObject.SavedSTOState;
-using static UnityEngine.ParticleSystem;
-using System.Linq;
-//using Game.Ships;
 public class DynamicModifer : ActiveSettings
 {
     //public float launcherindex = 0;

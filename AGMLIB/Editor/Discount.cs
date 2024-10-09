@@ -1,20 +1,4 @@
-﻿using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using HarmonyLib;
-using Utility;
-using System.Runtime.CompilerServices;
-using Steamworks;
-using System.Runtime.InteropServices;
-using static Utility.GameColors;
-using FleetEditor;
-using System.Reflection;
-using UI;
-
+﻿using static Utility.GameColors;
 
 public class SimpleDiscount : MonoBehaviour
 {

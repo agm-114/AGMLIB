@@ -1,13 +1,3 @@
-using Game.UI;
-using Game.Units;
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Reflection;
-using UnityEngine;
-using UnityEngine.UI;
 using Image = UnityEngine.UI.Image;
 
 public class ResourceBar : MonoBehaviour

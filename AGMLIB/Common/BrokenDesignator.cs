@@ -1,12 +1,3 @@
-using Bundles;
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
-using UnityEngine.Rendering;
-using System.Linq;
 public class BrokenDesignator : MonoBehaviour
 {
     // Start is called before the first frame update

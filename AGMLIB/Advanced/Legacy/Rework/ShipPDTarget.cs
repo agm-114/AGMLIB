@@ -6,17 +6,7 @@ using UnityEngine;
 using Game.Units;
 using Mirror;
 
-using Modding;
-
-using Debug = UnityEngine.Debug;
-using HarmonyLib;
-
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Utility;
-
+#pragma warning disable
 public class ShipPDTarget : DumbfireRocket, IDamageable
 {
     //[HideInInspector]
@@ -49,6 +39,7 @@ public class ShipPDTarget : DumbfireRocket, IDamageable
         destroyed = false;
         //Debug.LogError("Doing " + character.ComponentDamage + " Damage");
         //Debug.LogError("End Stucture " + ShipController.Ship.Hull._structure.CurrentHealth);
+        /*
         if (ShipController.Ship.Hull._structure.CurrentHealth > 0)
             ((ISubDamageable)ShipController.Ship.Hull._structure).DoDamage(character.ComponentDamage, character, hitInfo);
         else
@@ -63,6 +54,7 @@ public class ShipPDTarget : DumbfireRocket, IDamageable
 
             }
         }
+        */
         //Debug.LogError("Start Stucture " + ShipController.Ship.Hull._structure.CurrentHealth);
         damageDone = character.ComponentDamage;
         return HitResult.Penetrated;

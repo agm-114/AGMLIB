@@ -1,10 +1,4 @@
 using Game.Orders.Tasks;
-using Game.Units;
-using Ships;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using Utility;
 public class FormationManager : ShipState
 {
     [SerializeField]
@@ -14,10 +8,11 @@ public class FormationManager : ShipState
     
     protected List<MovementTarget> _targets;
     protected Vector3 targetpos;
-    protected override void Awake()
+    public override void Awake()
     {
-        targetpos = transform.position;
         base.Awake();
+        targetpos = transform.position;
+
         if(movementtargetroot == null)
             movementtargetroot = gameObject;
         _targets = movementtargetroot.GetComponentsInChildren<MovementTarget>().ToList();

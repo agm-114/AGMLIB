@@ -1,11 +1,4 @@
-﻿using UnityEngine;
-using Munitions.ModularMissiles.Descriptors.Controls;
-using System.Collections.Generic;
-using System.Linq;
-using System;
-using Munitions;
-using System.Data;
-using static Munitions.ModularMissiles.Descriptors.Controls.DirectGuidanceDescriptor;
+﻿using Munitions.ModularMissiles.Descriptors.Controls;
 
 [CreateAssetMenu(fileName = "New Modular Missile Avionics", menuName = "Nebulous/Missiles/Avionics/Modular Cruise")]
 public class ModularCruiseGuidanceDescriptor : CruiseGuidanceDescriptor, IModular, ILimited

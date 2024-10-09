@@ -1,11 +1,3 @@
-using Game.Units;
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Utility;
-
 public class DynamicDamage : ActiveSettings
 {
     //public float launcherindex = 0;

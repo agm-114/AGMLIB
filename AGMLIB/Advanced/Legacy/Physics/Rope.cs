@@ -124,6 +124,7 @@ public class Rope : MonoBehaviour
 
     private void DrawRope()
     {
+
         float lineWidth = this.lineWidth;
         visualline.startWidth = lineWidth;
         visualline.endWidth = lineWidth;
@@ -146,7 +147,7 @@ public class Rope : MonoBehaviour
     {
         public Vector3 posNow;
         public Vector3 posOld;
-
+        
         public RopeSegment(Vector3 pos)
         {
             this.posNow = pos;

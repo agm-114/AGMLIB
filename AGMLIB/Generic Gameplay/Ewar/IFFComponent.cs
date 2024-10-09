@@ -1,20 +1,3 @@
-using Game.Units;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
-using Utility;
-
-using UnityEngine;
-
-using System.Reflection;
-using Game.EWar;
-using Steamworks.Data;
-
 public class IFFComponent : MonoBehaviour
 {
     private HashSet<LoiteringMissile> _detectedmines = new();

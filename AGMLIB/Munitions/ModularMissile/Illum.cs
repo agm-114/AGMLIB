@@ -1,22 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Game.EWar;
-using Game.Sensors;
-using HarmonyLib;
-using Munitions.ModularMissiles;
-using Munitions.ModularMissiles.Descriptors;
-using Munitions.ModularMissiles.Descriptors.Support;
-
-using Bundles;
-using Utility;
-using UnityEngine;
-using Ships;
-
-
+﻿using Munitions.ModularMissiles.Descriptors.Support;
 
 [HarmonyPatch(typeof(JammerSupportDescriptor), nameof(JammerSupportDescriptor.SpawnJammingEffect))]
 class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour

@@ -1,12 +1,8 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using Munitions.ModularMissiles.Descriptors.Support;
-using Munitions.ModularMissiles.Runtime.Support;
+﻿using Munitions.ModularMissiles.Descriptors.Support;
 using Munitions.ModularMissiles;
 using Game.EWar;
 using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles.Runtime;
-using static Munitions.ModularMissiles.Runtime.RuntimeMissileBehaviour;
 [CreateAssetMenu(fileName = "New Modular Jammer Support", menuName = "Nebulous/Missiles/Support/Modular Jammer")]
 public class ModularJammerSupportDescriptor : JammerSupportDescriptor, IModular
 {

@@ -1,20 +1,6 @@
-﻿using FleetEditor;
-using Game;
-using HarmonyLib;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using Ships.Serialization;
-using Steamworks.Ugc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using static Ships.BulkMagazineComponent;
+﻿using static Ships.BulkMagazineComponent;
 
-namespace AGMLIB.Dynamic_Systems.Area
+namespace AGMLIB.DynamicSystems.Area
 {
     public class ResupplyEffect : FalloffEffect<Ship>
     {

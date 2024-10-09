@@ -1,14 +1,4 @@
-﻿using HarmonyLib;
-using Munitions;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
-namespace AGMLIB.Generic_Gameplay.Discrete
+﻿namespace AGMLIB.Generic_Gameplay.Discrete
 {
     public class MuzzleList : MonoBehaviour
     {

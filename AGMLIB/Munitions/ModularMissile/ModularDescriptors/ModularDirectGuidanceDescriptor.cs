@@ -1,8 +1,4 @@
-﻿using UnityEngine;
-using Munitions.ModularMissiles.Descriptors.Controls;
-using System.Collections.Generic;
-using System.Linq;
-using System;
+﻿using Munitions.ModularMissiles.Descriptors.Controls;
 
 [CreateAssetMenu(fileName = "New Modular Missile Avionics", menuName = "Nebulous/Missiles/Avionics/Modular Direct")]
 public class ModularDirectGuidanceDescriptor : DirectGuidanceDescriptor, IModular, ILimited
@@ -57,7 +53,6 @@ public class ModularDirectGuidanceDescriptor : DirectGuidanceDescriptor, IModula
 
         base.LoadSettings(data);
     }
-
 
     static protected int _defaultlock = -1;
     [SerializeField]

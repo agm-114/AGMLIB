@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using Munitions.ModularMissiles.Descriptors.Seekers;
+﻿using Munitions.ModularMissiles.Descriptors.Seekers;
 [CreateAssetMenu(fileName = "New Modular Missile Seeker", menuName = "Nebulous/Missiles/Seekers/Modular Command")]
 public class ModularCommandSeekerDescriptor : CommandSeekerDescriptor, IModular
 {

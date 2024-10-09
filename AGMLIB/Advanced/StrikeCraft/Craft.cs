@@ -1,31 +1,4 @@
-using Game;
 using Mirror;
-using Munitions;
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using UnityEngine;
-using Utility;
-using Game.Intel;
-using Game.Units;
-using Modding;
-using Debug = UnityEngine.Debug;
-using HarmonyLib;
-using UnityEngine.PlayerLoop;
-using System.Xml.Serialization;
-using System.Runtime.CompilerServices;
-using static Game.WaypointPath;
-using Pixelplacement;
-using UnityEngine.UI.Extensions;
-using Munitions.ModularMissiles.Descriptors.Warheads;
-using Munitions.ModularMissiles;
-using Munitions.ModularMissiles.Runtime;
-using Shapes;
-using Bundles;
-using Game.Reports;
 public class CraftKinematics2
 {
     public static void MoveTarget(ICraft craft, MovementTarget target = null, float speed = 1)

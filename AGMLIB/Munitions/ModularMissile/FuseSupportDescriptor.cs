@@ -1,15 +1,5 @@
-﻿using Munitions.ModularMissiles.Descriptors;
-using Munitions.ModularMissiles;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors.Support;
-using Munitions.ModularMissiles.Runtime;
-
 public interface IFuse
 {
     //public Vector3 FuseDimensions { get; }

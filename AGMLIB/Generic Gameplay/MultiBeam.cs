@@ -1,26 +1,5 @@
-﻿using FleetEditor;
-using Game.Units;
-using HarmonyLib;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
-using Game.Sensors;
-using Munitions;
-using Ships.Controls;
-using Utility;
-using System.Reflection;
-using Object = System.Object;
-using static Testing.CameraGun;
-using UnityEngine.UI.Extensions;
+﻿using Object = System.Object;
 using static Ships.WeaponComponent;
-using System.ComponentModel;
-using Game;
-using static UnityEngine.Rendering.HighDefinition.CameraSettings;
 using static Ships.ContinuousWeaponComponent;
 
 public class MultiBeam : MonoBehaviour

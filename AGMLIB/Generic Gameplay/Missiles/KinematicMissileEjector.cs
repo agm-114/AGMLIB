@@ -1,25 +1,4 @@
-﻿using Munitions.ModularMissiles;
-using Munitions;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Utility;
-using UnityEngine;
-using Bundles;
-using Game.Units;
-using HarmonyLib;
-using Ships.Serialization;
-using static Ships.BaseCellLauncherComponent;
-using static Ships.BulkMagazineComponent;
-using Game.Sensors;
-using System.Collections;
-using System.CodeDom.Compiler;
-using System.Net.NetworkInformation;
-using Sound;
-
+﻿
 public class KinematicLauncher : ActiveSettings
 {
 

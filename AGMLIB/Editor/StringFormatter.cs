@@ -1,19 +1,4 @@
-﻿using Ships;
-using System.Collections.Generic;
-using UnityEngine;
-using FleetEditor;
-using System.Linq;
-using HarmonyLib;
-using Bundles;
-using UnityEngine.UI;
-using Utility;
-using System;
-using System.Globalization;
-using UnityEngine.Serialization;
-using static Utility.GameColors;
-using System.Drawing.Printing;
-using System.Drawing;
-
+﻿using static Utility.GameColors;
 public enum BasicTag
 {
     None,

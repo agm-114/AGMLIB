@@ -1,21 +1,10 @@
-﻿using Game.EWar;
-using Game.Sensors;
-using Mirror;
-using Munitions;
+﻿using Mirror;
 using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles.Runtime.Seekers;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Telepathy;
-using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace AGMLIB.Dynamic_Systems.Area
+namespace AGMLIB.DynamicSystems.Area
 {
     public class JammingEffect<TargetObject> : FalloffEffect<TargetObject>, IJammingSource where TargetObject : MonoBehaviour
     {

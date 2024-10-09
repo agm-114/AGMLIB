@@ -1,16 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.UIElements;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.UIElements;
-using Ships;
-using System.Reflection;
-using Utility;
-using static AdvancedPaintScheme;
-//using static AdvancedPaintScheme;
-
 [ExecuteAlways]
 [ExecuteInEditMode]
 public class AdvancedPaintScheme : MonoBehaviour

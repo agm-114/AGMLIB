@@ -1,15 +1,4 @@
-﻿using FleetEditor;
-using Game.Units;
-using Munitions;
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.UI.Extensions;
-using Utility;
-#pragma warning disable IDE1006 // Naming Styles
-[System.Serializable]
+﻿[System.Serializable]
 public enum ConditionalState
 {
     Ignore,

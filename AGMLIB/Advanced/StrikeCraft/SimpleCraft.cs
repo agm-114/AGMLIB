@@ -1,15 +1,4 @@
-﻿using Game;
-using Game.Units;
-using Munitions;
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using UnityEngine.Serialization;
-using Utility;
-public class CraftKinematics
+﻿public class CraftKinematics
 {
     [SerializeField]
     protected static float _springStrength = 10;

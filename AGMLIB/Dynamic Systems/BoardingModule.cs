@@ -1,21 +1,5 @@
-﻿using Game.EWar;
-using Game.UI;
-using Game.Units;
-using HarmonyLib;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.UI.Extensions;
-using Utility;
+﻿using UnityEngine.UI.Extensions;
 using Object = UnityEngine.Object;
-
-using System.Collections;
-using UI;
-using UnityEngine.UI;
 using TooltipTrigger = UI.TooltipTrigger;
 public class BoardingModule : MonoBehaviour 
 {

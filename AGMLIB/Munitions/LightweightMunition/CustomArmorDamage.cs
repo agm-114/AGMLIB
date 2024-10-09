@@ -1,19 +1,4 @@
-﻿using Game.Armor;
-using Game.Units;
-using HarmonyLib;
-using Munitions;
-using Munitions.InstancedDamagers;
-using Munitions.ModularMissiles.Descriptors.Support;
-using Ships;
-using Steamworks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
+﻿using Munitions.InstancedDamagers;
 namespace AGMLIB.Munitions.LightweightMunition
 {
     public class ArmorDamage : ScriptableObject { }

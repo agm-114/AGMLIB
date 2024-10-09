@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace AGMLIB.Dynamic_Systems.Area
+namespace AGMLIB.DynamicSystems.Area
 {
     public class PulsedAreaEffect : AreaEffect
     {

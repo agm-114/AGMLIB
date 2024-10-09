@@ -1,10 +1,3 @@
-using Game.UI;
-using Game.Units;
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class ResourceComponent : ActiveSettings
 {
     // Start is called before the first frame update

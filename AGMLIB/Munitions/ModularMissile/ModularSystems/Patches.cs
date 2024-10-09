@@ -1,15 +1,6 @@
-﻿using Factions;
-using FleetEditor.MissileEditor;
-using HarmonyLib;
+﻿using FleetEditor.MissileEditor;
 using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UI;
-using UnityEngine;
 
 [HarmonyPatch(typeof(ModularMissile), "InstallSocketModuleInternal")]
 class MissileComponentDescriptorInstallSocketModuleInternal
@@ -45,7 +36,6 @@ class MissileComponentDescriptorInstallSocketModuleInternal
                     Common.SetVal(component, "_factionKey", null);
                     //Debug.LogError("Patching Faction");
 
-
                 }
             }
             if (!((socket.SocketType & Component.FitsSocketType) == 0))
@@ -62,12 +52,9 @@ class MissileComponentDescriptorInstallSocketModuleInternal
                     socket.SocketType = Component.FitsSocketType;
                     //Debug.LogError("Patching Type");
 
-
                 }
             }
-
         }
-
     }
 
     static void Postfix(ModularMissile __instance, MissileSocket socket, MissileComponentDescriptor component)
@@ -85,7 +72,6 @@ class MissileComponentDescriptorInstallSocketModuleInternal
 
     }
 }
-
 
 [HarmonyPatch(typeof(MissileComponentPalette), nameof(MissileComponentPalette.SetEditingSocket))]
 class MissileComponentPaletteSetEditingSocket
@@ -133,7 +119,6 @@ class MissileComponentPaletteSetEditingSocket
                     else if (componentfilters.AllowIllegal && componentfilters.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
                 }
-
             }
             else if (socketfilter.Blacklisteverything || componentfilters.Blacklisteverything)
                 buttonGO.SetActive(value: false);
@@ -163,8 +148,6 @@ class MissileSettingsPaneOpenSettingsPanel
                 _launchButton?.SetOverride(null);
                 _launchButton?.SetEnabled(enabled: true);
             }
-
-
         }
         if (component == null)
         {
