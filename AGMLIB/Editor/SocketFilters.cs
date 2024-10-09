@@ -1,35 +1,28 @@
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using FleetEditor;
-using Munitions;
-using System.Linq;
-using System.Reflection;
-using Utility;
-using HarmonyLib;
-using System.Diagnostics;
-using UI;
-using Bundles;
-
 using Shapes;
-using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
-using Debug = UnityEngine.Debug;
-using UnityEngine.UI;
 
 /*
     <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
       <HintPath>libs\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
     </Reference>
  */
-
-public interface IFilter
+public interface ICoreFilter
 {
-    public List<string> Whitelist { get;}
+    public List<string> Whitelist { get; }
+
+    public List<string> Blacklist { get; }
+}
+
+public interface ISimpleFilter: ICoreFilter
+{
+    public bool Default { get; }
+}
+
+public interface IFilter : ICoreFilter
+{
     public bool Whitelisteverything { get; }
-    public List<string> Blacklist { get;}
+
     public bool Blacklisteverything { get;}
 }
 public interface IFilterIndexed : IFilter
@@ -48,6 +41,16 @@ public enum RenderShape
     Sphere,
     Cone,
     Torus
+}
+
+public class SimpleFilter : MonoBehaviour, ISimpleFilter
+{
+    [SerializeField] protected List<string> _whitelist = new();
+    [SerializeField] protected List<string> _blacklist = new();
+    [SerializeField] protected bool _default = true;
+    public bool Default => _default;
+    public List<string> Whitelist => _whitelist;
+    public List<string> Blacklist => _blacklist;
 }
 
 public class SocketFilters : MonoBehaviour, IFilter
@@ -118,14 +121,12 @@ public class SocketFilters : MonoBehaviour, IFilter
             return true;
         else if (socketFilters.Blacklist.Contains(hullComponent.Type.ToString()) || componentFilters.Blacklist.Contains(socket.Type.ToString()))
             return false;
-#pragma warning disable IDE0046 // Convert to conditional expression
         else if (socketFilters.Whitelisteverything || componentFilters.Whitelisteverything)
             return true;
         else if (socketFilters.Blacklisteverything || componentFilters.Blacklisteverything)
             return false;
         //Debug.LogError("Check Fit ");
         else return hullComponent.TestSocketFit(socket.Size);
-#pragma warning restore IDE0046 // Convert to conditional expression
     }
 }
 
@@ -268,8 +269,8 @@ class SocketOutlineManagerDrawShapes
                 //Draw.Arc(attach, Quaternion.Euler(0f, 0f, 0f) * Quaternion.LookRotation(Vector3.up), arcRadius, (0f - socket2.TraverseLimits.Value.LeftAngle) * ((float)Math.PI / 180f), (socket2.TraverseLimits.Value.RightAngle - 90f) * ((float)Math.PI / 180f));
 
                 //Draw.Arc(attach, Quaternion.Euler(0f, 0f, 0f) * Quaternion.LookRotation(Vector3.up), arcRadius, (90f - _forwardLimits.RightAngle) * ((float)Math.PI / 180f), (socket2.TraverseLimits.Value.RightAngle - 90f) * ((float)Math.PI / 180f));
-                DrawArc(Quaternion.Euler(0f, 0f, 0f), (-90f + _forwardLimits.RightAngle), socket.TraverseLimits.Value.RightAngle - 90f);
-                DrawArc(Quaternion.Euler(0f, 0f, 180f), (-90f + _forwardLimits.LeftAngle), socket.TraverseLimits.Value.LeftAngle - 90f);
+                DrawArc(Quaternion.Euler(0f, 0f, 0f), -90f + _forwardLimits.RightAngle, socket.TraverseLimits.Value.RightAngle - 90f);
+                DrawArc(Quaternion.Euler(0f, 0f, 180f), -90f + _forwardLimits.LeftAngle, socket.TraverseLimits.Value.LeftAngle - 90f);
 
 
             }
@@ -284,6 +285,7 @@ class ShipEditorPaneSetShip
 {
     static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
     {
+        return;
         foreach (SocketItem child in ____scrollPaneContent.GetComponentsInChildren<SocketItem>().Where(socketitem => socketitem.Socket != null))
         {
 
@@ -397,8 +399,17 @@ class HullSocketPatch
     static bool Prefix(HullSocket __instance, ref HullComponent componentPrefab)
     {
         HullSocket socket = __instance;
+        if (socket.Component is HullComponent _component)
+        {
+            _component.SetSocket(null);
+            CheckDepedends(socket, true, true);
+            _component.enabled = false;
+            UnityEngine.Object.Destroy(_component.gameObject);
+            //SetPrivateField(_component, "_size", _component);
+            socket.UpdateColliderActive();
+        }
         //Debug.LogError(componentPrefab.Category);
-        
+
         //Debug.LogError("Set Component Prefix");
         SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
         //if(componentPrefab != null)
@@ -414,15 +425,7 @@ class HullSocketPatch
         if (socket.GetComponent<SocketFilters>() == null && componentPrefab.GetComponent<SocketFilters>() == null)
             return true;
 
-        HullComponent _component = socket.Component;
-        if (_component != null)
-        {
-            _component.SetSocket(null);
-            CheckDepedends(socket, true, true);
-            UnityEngine.Object.Destroy(_component.gameObject);
-            //SetPrivateField(_component, "_size", _component);
-            socket.UpdateColliderActive();
-        }
+
         /*
         if (!CheckDepedends(socket))
         {
@@ -453,7 +456,11 @@ class HullSocketPatch
         CheckDepedends(socket, true);
         SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
         if (socketFilters == null)
-            return;
+        {
+            Finalize(__instance);
+            return ;
+        }
+
         if (socketFilters.Resized && socketFilters.Size != null)
         {
             Common.SetVal(__instance, "_size", socketFilters.Size);
@@ -469,6 +476,12 @@ class HullSocketPatch
             HullComponent componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
             socket.SetComponent(componentPrefab);
         }
+        Finalize(__instance);
+    }
+    public static void Finalize(HullSocket __instance)
+    {
+        //Needed for dynamic reduction
+        //__instance.GetComponentInParent<Ship>().EditorRecalcCrewAndResources();
     }
     
     static bool CheckDepedends(HullSocket socket, bool write = false, bool remove = false)

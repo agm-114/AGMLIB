@@ -1,32 +1,11 @@
 using Modding;
-using Munitions;
-using UnityEngine;
-using UnityEngine.VFX;
-//using System;
-using System.Reflection;
-using System.Collections.Generic;
-using Ships;
 using Bundles;
-using System;
-using System.Threading.Tasks;
-using System.Threading;
-using Utility;
 using Steamworks.Ugc;
 using UI;
 using System.Diagnostics;
-using Debug = UnityEngine.Debug;
-using HarmonyLib;
-using System.Linq;
-using Steamworks;
-using UnityEngine.PlayerLoop;
-using System.IO;
-using Missions.Nodes;
-using UnityEditor;
 using Shapes;
 using System.Text;
-using static Game.Sensors.SensorTrackableObject.SavedSTOState;
-using static UnityEngine.ParticleSystem;
-using System.Net.NetworkInformation;
+using AGMLIB.DynamicSystems.Area;
 
 public class EntryPoint : IModEntryPoint 
 {
@@ -57,11 +36,23 @@ public class EntryPoint : IModEntryPoint
         //Application.logMessageReceived += HandleLog;
         Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING",   "1", EnvironmentVariableTarget.User);
         Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
-        
+
+        //Debug.LogError(nameof(LookaheadMunition.UseableByFaction));
+
         DependencyPatch.window = false;
         //Application.Quit();
         //Debug.Log("AGMLIB: 0.3.2.2.10 Preload"); OLD
-        Debug.Log("AGMLIB: 0.3.2.2.12 Preload");
+        //Debug.LogError("AGMLIB: 0.3.2.2.12 Preload");
+        foreach (var hullComponent in BundleManager.Instance.AllComponents)
+        {
+            foreach (BasicEffect basicEffect in hullComponent.GetComponentsInChildren<BasicEffect>(includeInactive: true))
+            {
+                {
+                    //Debug.LogError("Effect Type: " + basicEffect.GetType().Name + " Active: " + basicEffect.isActiveAndEnabled + " Gameobject " + basicEffect.gameObject.activeInHierarchy);
+
+                }
+            }
+        }
         if (Harmony.HasAnyPatches("neb.lib.harmony.product")) {
             //Debug.LogError("Illegal Load Order");
             return;
@@ -91,9 +82,12 @@ public class EntryPoint : IModEntryPoint
         return;
         foreach (var path in _stockBundles.Zip(_compressedBundles, (n, w) => new { Source = n, Dest = w }))
         {
+            if (File.Exists(path.Dest.FullPath))
+                continue;
             Debug.LogError("Recompiling Assetbundle at " + path.Source.FullPath);
             FilePath test = new("Assets/ComAssetBundles/");
             Directory.CreateDirectory(test.FullPath);
+            
             AssetBundle.RecompressAssetBundleAsync(path.Source.FullPath, path.Dest.FullPath, BuildCompression.LZ4Runtime);
         }
 
@@ -233,7 +227,7 @@ public class EntryPoint : IModEntryPoint
             newLine += tocsv("(" + _hull.HullClassification + " Class)" );
             //image = _hull.HullScreenshot;
             newLine += tocsv(_hull.LongDescription);
-            newLine += tocsv(_hull.EditorFormatHullStats(showBreakdown: false)); ;
+            //newLine += tocsv(_hull.EditorFormatHullStats(showBreakdown: false)); ;
             newLine += tocsv("<b>Modifiers:</b>\n" + _hull.EditorFormatHullBuffs());
             newLine += tocsv("<i><color=#FFEF9E>" + _hull.FlavorText+ "</color></i>");
             csv.AppendLine(newLine);
@@ -246,7 +240,7 @@ public class EntryPoint : IModEntryPoint
             newLine += toheader("Description");
             newLine += (_hull.LongDescription) + "\n";
             newLine += toheader("Stats");
-            newLine += (_hull.EditorFormatHullStats(showBreakdown: false)) + "\n";
+            //newLine += (_hull.EditorFormatHullStats(showBreakdown: false)) + "\n";
             newLine += toheader("Hull Buffs");
             newLine += _hull.EditorFormatHullBuffs() + "\n";
             newLine += toheader("Flavor Text");

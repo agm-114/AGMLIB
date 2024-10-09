@@ -2,11 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net481</TargetFramework>
-    <ImplicitUsings>false</ImplicitUsings>
-    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <BaseOutputPath>C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB</BaseOutputPath>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-	<LangVersion>9.0</LangVersion>
+	<LangVersion>12.0</LangVersion>
+	<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+	<AnalysisLevel>latest-all</AnalysisLevel>
+	<SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
@@ -192,6 +195,10 @@
     <None Update="ModInfo.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -252,6 +259,45 @@
     <Reference Update="System.Xml.Linq">
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Using Include=" UnityEngine.VFX" />
+    <Using Include="Bundles" />
+    <Using Include="Effects" />
+    <Using Include="Factions" />
+    <Using Include="FleetEditor" />
+    <Using Include="Game.Armor" />
+    <Using Include="Game.EWar" />
+    <Using Include="Game.Sensors" />
+    <Using Include="Game.UI" />
+    <Using Include="Ships.Controls" />
+    <Using Include="Ships.Serialization" />
+    <Using Include="FleetEditor" />
+    <Using Include="Game.Units" />
+    <Using Include="Game" />
+    <Using Include="HarmonyLib" />
+    <Using Include="Munitions" />
+    <Using Include="Ships" />
+    <Using Include="Sound" />
+    <Using Include="System.Collections" />
+    <Using Include="TMPro" />
+    <Using Include="UI" />
+    <Using Include="UnityEngine" />
+    <Using Include="UnityEngine.Debug">
+      
+      <Alias>Debug</Alias>
+    </Using>
+    <Using Include="UnityEngine.UI" />
+    <Using Include="Utility" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>
