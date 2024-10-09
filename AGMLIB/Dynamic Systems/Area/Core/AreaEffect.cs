@@ -1,39 +1,12 @@
-﻿using Game.Units;
-using Munitions;
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Utility;
-using UnityEngine;
-using Mirror;
-using UnityEngine.UI.Extensions;
-using System.Xml.Linq;
+﻿using UnityEngine.UI.Extensions;
 using Game.EWar;
 using Game.Sensors;
-using HarmonyLib;
 using Bundles;
-using static System.Net.Mime.MediaTypeNames;
-using Missions.Nodes;
-using Shapes;
-using static XNode.NodePort;
-using System.Data;
-using System.Security.Cryptography;
-using System.Diagnostics;
-using Debug = UnityEngine.Debug;
 using static Utility.GameColors;
-using Munitions.ModularMissiles.Runtime;
 using Munitions.ModularMissiles;
-using Munitions.ModularMissiles.Runtime.Seekers;
-using Steamworks;
-using static UnityEngine.Rendering.HighDefinition.CameraSettings;
 using System.Runtime.InteropServices;
-using Game;
-using Random = UnityEngine.Random;
-using Munitions.ModularMissiles.Descriptors.Seekers;
 using AGMLIB.Dynamic_Systems.Area;
-using System.Reflection;
+
 
 public class AreaEffect : ActiveSettings
 {
@@ -128,17 +101,24 @@ public class AreaEffect : ActiveSettings
         Trigger.isTrigger = true;
 
 
-
+  
     }
 
     // Update is called once per frame
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
+        if (InEditor)
+            return;
+        //Debug.LogError("Core Fixed Update");
 
         foreach(BasicEffect basicEffect in  Effects)
         {
-            basicEffect.FixedUpdate();
+            //if(!basicEffect.isActiveAndEnabled)
+            //    Debug.LogError("Effect Type: " + basicEffect.GetType().Name + " Active: " + basicEffect.isActiveAndEnabled);
+            //basicEffect.enabled = true;
+
+            //basicEffect.FixedUpdate();
         }
 
         if (_laststate == null || _laststate != active)
@@ -154,7 +134,7 @@ public class AreaEffect : ActiveSettings
         _laststate = active;
 
         _updateAccum += Time.fixedDeltaTime;
-        if(CustomVFX && InGame)
+        if(CustomVFX)
         {
 
             if (active && _followingInstance == null)

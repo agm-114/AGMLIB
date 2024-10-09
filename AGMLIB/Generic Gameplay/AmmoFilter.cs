@@ -14,16 +14,14 @@ using Utility;
 
 //patch GetNextMuzzle
 
-public class AmmoFilter : MonoBehaviour, IFilter
+public class AmmoFilter : MonoBehaviour, ICoreFilter
 {
     public bool AllowMissiles = true;
     public List<string> WhiteList = new();
     public List<string> Blacklist = new();
-
-    public List<string> Whitelist => new();
-    public bool Whitelisteverything => false;
-    List<string> IFilter.Blacklist => new();
-    public bool Blacklisteverything => false;
+    public bool Default = false;
+    List<string> ICoreFilter.Whitelist => WhiteList;
+    List<string> ICoreFilter.Blacklist => Blacklist;
 
     public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false)
     {
@@ -79,10 +77,8 @@ public class AmmoFilter : MonoBehaviour, IFilter
             return true;
         else if (Blacklist.Contains(ammo?.Tags.Class))
             return false;
-        else if(Whitelisteverything)
-            return true;
         else 
-            return Blacklisteverything;
+            return Default;
     }
     public class AmmoCompatiblity : AmmoFilter
     {

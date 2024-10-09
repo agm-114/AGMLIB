@@ -1,4 +1,5 @@
-﻿using Munitions.ModularMissiles;
+﻿using FleetEditor;
+using Munitions.ModularMissiles;
 using Ships;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace AGMLIB.Dynamic_Systems.Area
         public virtual bool RequireRange => false;
 
         public float Range = 0;
-        protected bool Active => AreaEffect.active;
+        protected bool Active => AreaEffect.active && AreaEffect.InGame;
 
         public virtual void AreaUpdate()
         {
@@ -40,13 +41,13 @@ namespace AGMLIB.Dynamic_Systems.Area
         }
         public virtual void FixedUpdate()
         {
-
+            //Debug.LogError("Default Fixed Update");
         }
     }
 
     public class GenericBasicEffect<TargetObject> : BasicEffect where TargetObject : MonoBehaviour
     {
-
+        
 
         [HideInInspector]
         public HashSet<TargetObject> Targets = new();
@@ -73,16 +74,27 @@ namespace AGMLIB.Dynamic_Systems.Area
             }
         }
 
+  
         public override void FixedUpdate()
         {
-            if(Active)
+            //Debug.LogError($"Fixed Update Active:{Active} Ingame:{AreaEffect.InGame} Shipcontroller Null:{AreaEffect.EditorShipController == null}");
+            //if(AreaEffect.InGame)
+            //    Debug.LogError($"Formation:{AreaEffect.EditorShipController.InFormation}");
+
+            if (Active)
+            {
+                //Debug.LogError("Generic Fixed Update");
+
                 foreach (TargetObject target in Targets)
                 {
                     if (target == null)
                         continue;
                     TargetFixedUpdate(target);
                 }
+            }
+
         }
+        
 
         public virtual void TargetFixedUpdate(TargetObject target)
         {

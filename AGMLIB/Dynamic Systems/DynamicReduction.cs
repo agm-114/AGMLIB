@@ -11,6 +11,7 @@ using UnityEngine.UI.Extensions;
 using static Utility.GameColors;
 using FleetEditor;
 using TMPro;
+using System.Runtime.InteropServices;
 
 public class DynamicReduction : ActiveSettings
 {
@@ -19,9 +20,7 @@ public class DynamicReduction : ActiveSettings
     private ResourceType Res => ResourceDefinitions.Instance.GetResource(ResourceName);
     private ResourceValue[] _requiredResources;
 
-    public List<string> Blacklist = new();
-    public List<string> Whitelist = new();
-    protected bool Default = true;
+    public SimpleFilter Filter;
 
     protected override void FixedUpdate()
     {
@@ -34,21 +33,27 @@ public class DynamicReduction : ActiveSettings
 
     public bool TargetedComponent(HullComponent hullComponent) 
     {
-        if(hullComponent is not WeaponComponent weaponComponent) 
-            return Default;
+        if (!Module.isActiveAndEnabled)
+            return false;
+
+        if (Filter == null)
+            return true;
+
+        if (hullComponent is not WeaponComponent weaponComponent) 
+            return Filter.Default;
 
         MunitionTags[] _compatibleAmmoTags = Common.GetVal<MunitionTags[]>(weaponComponent, "_compatibleAmmoTags");
         IEnumerable<string> taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Subclass);
-        if(Blacklist.Intersect(taglist).Any())
+        if(Filter.Blacklist.Intersect(taglist).Any())
             return false;
-        if(Whitelist.Intersect(taglist).Any() ) 
+        if(Filter.Whitelist.Intersect(taglist).Any() ) 
             return true;
         taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Class);
-        if (Blacklist.Intersect(taglist).Any())
+        if (Filter.Blacklist.Intersect(taglist).Any())
             return false;
-        if (Whitelist.Intersect(taglist).Any())
+        if (Filter.Whitelist.Intersect(taglist).Any())
             return true;
-        return Default;
+        return Filter.Default;
     }
 
     public static ResourceValue Reduce(ResourceValue basevalue, HullComponent hullComponent)
@@ -58,24 +63,65 @@ public class DynamicReduction : ActiveSettings
             return basevalue;
         return new ResourceValue(basevalue.Resource, (int)(float)(basevalue.AmountRequired * multiplier), basevalue.OnlyWhenOperating);
     }
+    public static IEnumerable<DynamicReduction> GetReductions(HullComponent hullComponent)
+    {
+        return hullComponent?.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList().Where(reduction => reduction.TargetedComponent(hullComponent));
+
+    }
 
     public static float TotalMultiplier(ResourceType type, HullComponent hullComponent)
     {
-        IEnumerable<DynamicReduction> reductions = hullComponent?.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList(); ;
+        IEnumerable<DynamicReduction> reductions = GetReductions(hullComponent); 
         reductions = reductions.Where(reduction => type.Name == reduction.ResourceName);
         reductions = reductions.Where(reduction => reduction.TargetedComponent(hullComponent));
         if (!reductions?.Any() ?? false)
             return 1;
         return reductions.ConvertAll(reduction => reduction.Multiplier).Aggregate(1f, (a, x) => a * x);
     }
+
+    public static void UpdateResources(HullComponent hullComponent)
+    {
+        IEnumerable<DynamicReduction> _reduced = GetReductions(hullComponent);
+        RequiredResources vals = hullComponent.gameObject.GetOrAddComponent<RequiredResources>();
+        vals?.Setup(hullComponent);
+
+        if (_reduced == null || _reduced.Count() <= 0)
+        {
+            return;
+        }
+
+
+        ResourceValue[] ModifiedRequiredResources = vals.Base.ConvertAll(element => DynamicReduction.Reduce(element, hullComponent)).ToArray();
+        //reduction.Setup(__instance, ____requiredResources);
+        vals.SetRequireResoures(ModifiedRequiredResources);
+    }
 }
-public class OldResourceVals : MonoBehaviour
+public class RequiredResources : MonoBehaviour
 {
-    public ResourceValue[] RequiredResources;
+    HullComponent _hullComponent;
+    public ResourceValue[] Base;
+
+    public ResourceValue[] Current => Common.GetVal<ResourceValue[]>(_hullComponent, "_requiredResources");
+
+    public void SetRequireResoures(ResourceValue[] resourceValues)
+    {
+        Common.SetVal(_hullComponent, "_requiredResources", resourceValues);
+
+    }
     public void Setup(HullComponent hullComponent)
     {
-        if (RequiredResources == null)
-            RequiredResources = Common.GetVal<ResourceValue[]>(hullComponent, "_requiredResources");
+        _hullComponent = hullComponent;
+        if (Base == null)
+            Base = Current;
+        SetRequireResoures(Base);
+
+    }
+
+
+
+    public void Reset()
+    {
+
     }
 }
 
@@ -85,14 +131,7 @@ class HullComponentConsumeResources
 
     public static void Prefix(HullComponent __instance, ResourcePool pool)
     {
-        List<DynamicReduction> _reduced = __instance?.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList();
-        if (_reduced == null || _reduced.Count <= 0)
-            return;
-        OldResourceVals vals = __instance.gameObject.GetOrAddComponent<OldResourceVals>();
-        vals.Setup(__instance);
-        ResourceValue[] ModifiedRequiredResources = vals.RequiredResources.ConvertAll(element => DynamicReduction.Reduce(element, __instance)).ToArray();
-        //reduction.Setup(__instance, ____requiredResources);
-        Common.SetVal(__instance, "_requiredResources", ModifiedRequiredResources);
+        DynamicReduction.UpdateResources(__instance);
     }
 
 }
@@ -103,7 +142,7 @@ class HullComponentGetResourceDemand
 {
     static void Prefix(HullComponent __instance, ResourcePool pool)
     {
-        HullComponentConsumeResources.Prefix(__instance, pool);
+        DynamicReduction.UpdateResources(__instance);
     }
 
 }
@@ -113,10 +152,19 @@ class ResourcePoolCalculateDemandForEditor
 {
     static void Postfix(ResourcePool __instance)
     {
+        //Debug.LogError("calc demends");
+
+
         ResourcePool pool = __instance;
 
         List<HullComponent> _providers = Common.GetVal<List<HullComponent>>(pool, "_providers");
 	    List<HullComponent> _consumers = Common.GetVal<List<HullComponent>>(pool, "_consumers");
+        //IEnumerable<DynamicReduction> reductions = _consumers?.First()?.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList();
+        //foreach(DynamicReduction reduction in reductions)
+        //{
+            //Debug.LogError(reduction.ToString());
+        //}
+
         pool.Reset();
         pool.SortConsumers();
         string text = "";
