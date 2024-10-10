@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI.Extensions;
+﻿using Lib.Editor;
+using UnityEngine.UI.Extensions;
 public class DynamicReduction : ActiveSettings
 {
     public String ResourceName = "";
@@ -26,7 +27,7 @@ public class DynamicReduction : ActiveSettings
             return true;
 
         if (hullComponent is not WeaponComponent weaponComponent) 
-            return Filter.Default;
+            return Filter.DefaultFilterMode;
 
         MunitionTags[] _compatibleAmmoTags = Common.GetVal<MunitionTags[]>(weaponComponent, "_compatibleAmmoTags");
         IEnumerable<string> taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Subclass);
@@ -39,7 +40,7 @@ public class DynamicReduction : ActiveSettings
             return false;
         if (Filter.Whitelist.Intersect(taglist).Any())
             return true;
-        return Filter.Default;
+        return Filter.DefaultFilterMode;
     }
 
     public static ResourceValue Reduce(ResourceValue basevalue, HullComponent hullComponent)

@@ -10,6 +10,7 @@
 	<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 	<AnalysisLevel>latest-all</AnalysisLevel>
 	<SignAssembly>False</SignAssembly>
+	<RootNamespace>Lib</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
 ﻿namespace AGMLIB.Munitions.LightweightMunition
 {
-    public class Burst : ScriptableObject
+    public class LightWeightShellBurst : ScriptableObject
     {
         public int Count = 10;
     }

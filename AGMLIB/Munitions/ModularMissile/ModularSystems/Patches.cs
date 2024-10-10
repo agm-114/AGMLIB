@@ -1,6 +1,7 @@
 ﻿using FleetEditor.MissileEditor;
 using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles;
+using Lib.Editor;
 
 [HarmonyPatch(typeof(ModularMissile), "InstallSocketModuleInternal")]
 class MissileComponentDescriptorInstallSocketModuleInternal
