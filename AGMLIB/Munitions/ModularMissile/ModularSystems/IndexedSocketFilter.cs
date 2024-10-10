@@ -1,4 +1,6 @@
-﻿public class IndexedSocketFilter : MonoBehaviour, IFilterIndexed
+﻿using Lib.Editor;
+
+public class IndexedSocketFilter : MonoBehaviour, IFilterIndexed
 {
     [SerializeField]
     protected List<string> _whitelist = new();
@@ -8,9 +10,9 @@
     protected List<string> _blacklist = new();
     [SerializeField]
     protected bool _blacklisteverything = false;
-    public List<string> Whitelist => _whitelist;
+    public IList<string> Whitelist => _whitelist;
     public bool Whitelisteverything => _whitelisteverything;
-    public List<string> Blacklist => _blacklist;
+    public IList<string> Blacklist => _blacklist;
     public bool Blacklisteverything => _blacklisteverything;
     [SerializeField]
     protected bool _allowIllegal = false;

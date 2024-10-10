@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Lib.Editor;
+using System.Text.RegularExpressions;
 
 [CreateAssetMenu(fileName = "New Scriptable Filter", menuName = "Nebulous/New Filter")]
 public class ScriptableFilter : ScriptableObject, IFilterIndexed
@@ -15,9 +16,9 @@ public class ScriptableFilter : ScriptableObject, IFilterIndexed
     protected int _index = 0;
     [SerializeField]
     protected bool _allindexes = false;
-    public List<string> Whitelist => _whitelist;
+    public IList<string> Whitelist => _whitelist;
     public bool Whitelisteverything => _whitelisteverything;
-    public List<string> Blacklist => _blacklist;
+    public IList<string> Blacklist => _blacklist;
     public bool Blacklisteverything => _blacklisteverything;
     public int Index => _index;
     public bool AllIndexes => _allindexes;

@@ -1,11 +1,13 @@
-﻿public class AmmoFilter : MonoBehaviour, ICoreFilter
+﻿using Lib.Editor;
+
+public class AmmoFilter : MonoBehaviour, ICoreFilter
 {
     public bool AllowMissiles = true;
     public List<string> WhiteList = new();
     public List<string> Blacklist = new();
     public bool Default = false;
-    List<string> ICoreFilter.Whitelist => WhiteList;
-    List<string> ICoreFilter.Blacklist => Blacklist;
+    IList<string> ICoreFilter.Whitelist => WhiteList;
+    IList<string> ICoreFilter.Blacklist => Blacklist;
 
     public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false)
     {
