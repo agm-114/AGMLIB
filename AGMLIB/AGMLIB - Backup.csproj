@@ -13,7 +13,7 @@
     <RootNamespace>Lib</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 
-    <VersionPrefix>3.2.4.94</VersionPrefix>
+    <VersionPrefix>3.2.4.28</VersionPrefix>
 
     <Copyright>≽^•⩊•^≼</Copyright>
     <ModName>AGMLIB</ModName>
@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="YamlDotNet" Version="16.1.3" />
   </ItemGroup>
 
@@ -150,9 +151,6 @@
       <HintPath>libs\UnityEditor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEditor.CoreModule">
-      <HintPath>libs\UnityEditor.CoreModule.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor.UIElementsModule">
       <HintPath>libs\UnityEditor.UIElementsModule.dll</HintPath>
       <Private>False</Private>
@@ -176,9 +174,6 @@
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>libs\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.JSONSerializeModule">
-      <HintPath>libs\UnityEngine.JSONSerializeModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>libs\UnityEngine.ParticleSystemModule.dll</HintPath>
