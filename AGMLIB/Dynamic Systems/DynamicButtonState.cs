@@ -29,7 +29,7 @@
 
     protected void Start()
     {
-
+       
         for (int i = 0; i < LockButtonNames.Count; i++)
         {
             ForcedButtonState newstate = new();
@@ -76,6 +76,7 @@
             }
             if (forcedButtonState.Index < 0 && forcedButtonState.State.Length > 0)
                 forcedButtonState.Index = button.States.FindIndex(a => a == forcedButtonState.State);
+            //Debug.LogError("forcing state change");
             button.ForceButtonChange(forcedButtonState.Index);
         }
 
