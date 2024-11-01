@@ -4,7 +4,7 @@ using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles.Runtime.Seekers;
 using Random = UnityEngine.Random;
 
-namespace AGMLIB.DynamicSystems.Area
+namespace AGMLIB.Dynamic_Systems.Area
 {
     public class JammingEffect<TargetObject> : FalloffEffect<TargetObject>, IJammingSource where TargetObject : MonoBehaviour
     {
@@ -82,7 +82,7 @@ namespace AGMLIB.DynamicSystems.Area
         {
             foreach (RuntimeMissileSeeker seeker in GetSeekers(target))
             {
-                Debug.LogError("Softkilling " + target.gameObject.name);
+                //Debug.LogError("Softkilling " + target.gameObject.name);
                 if (SoftKillAntiJamVals && FailChance >= Random.Range(0.0f, 1f))
                 {
                     Common.SetVal(seeker, "_validationReliable", false);

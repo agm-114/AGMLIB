@@ -1,6 +1,6 @@
 ﻿using Munitions.ModularMissiles;
 
-namespace AGMLIB.DynamicSystems.Area
+namespace AGMLIB.Dynamic_Systems.Area
 {
     public class EffectFilter : ShipState
     {

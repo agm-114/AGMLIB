@@ -187,7 +187,7 @@ public class AOEModifer : ActiveSettings, IJammingSource
                     bool antijam = seeker.Descriptor is PassiveSeekerDescriptor passive && passive.CanPursueJamming;
                     if (!SoftKillWavelengths.Contains(seeker.DecoySigType))
                         return;
-                    Debug.LogError("Softkilling " + missile.gameObject.name);
+                    //Debug.LogError("Softkilling " + missile.gameObject.name);
                     if(SoftKillAntiJamVals && FailChance >= Random.Range(0.0f, 1f))
                     {
                         if (antijam && !SoftKillAntiJamVals)

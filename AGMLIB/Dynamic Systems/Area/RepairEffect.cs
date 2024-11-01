@@ -1,4 +1,4 @@
-﻿namespace AGMLIB.DynamicSystems.Area
+﻿namespace AGMLIB.Dynamic_Systems.Area
 {
 
     public class RestoreStatus : MonoBehaviour

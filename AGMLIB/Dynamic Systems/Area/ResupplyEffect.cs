@@ -1,6 +1,6 @@
 ﻿using static Ships.BulkMagazineComponent;
 
-namespace AGMLIB.DynamicSystems.Area
+namespace AGMLIB.Dynamic_Systems.Area
 {
     public class ResupplyEffect : FalloffEffect<Ship>
     {
@@ -50,9 +50,10 @@ namespace AGMLIB.DynamicSystems.Area
 
                 foreach (IMagazine mag in hullComponent.Missiles)
                 {
-                    dirtymissiles = true;
                     if (mag.QuantityAvailable < mag.PeakQuantity)
                     {
+                        dirtymissiles = true;
+
                         magazineProvider.AddToMagazine(mag.AmmoType, 1);
                         AreaEffect.Hull.MyShip.AmmoFeed.GetAmmoSource(mag.AmmoType).Withdraw(1);
                     }
