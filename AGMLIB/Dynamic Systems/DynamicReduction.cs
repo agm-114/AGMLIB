@@ -1,4 +1,4 @@
-﻿using Lib.Editor;
+﻿
 using UnityEngine.UI.Extensions;
 public class DynamicReduction : ActiveSettings
 {

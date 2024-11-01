@@ -1,16 +1,16 @@
 using Shapes;
+using System.Runtime.InteropServices;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using static Utility.GameColors;
+using Random = System.Random;
 
-namespace Lib.Editor
-{
-
-    /*
-        <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
-          <HintPath>libs\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
-        </Reference>
-     */
-    public interface ICoreFilter
+/*
+    <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
+      <HintPath>libs\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+    </Reference>
+ */
+public interface ICoreFilter
     {
         public IList<string> Whitelist { get; }
 
@@ -66,6 +66,8 @@ namespace Lib.Editor
         public bool ShowInShipPane = true;
         public bool AllowHighlight = true;
         public bool AllowIllegal = true;
+        public Color DrawColor = Color.clear;
+
         //public bool EditorOutline = false;
         public RenderShape Shape = RenderShape.Default;
         public float Radius = 1f;
@@ -90,6 +92,7 @@ namespace Lib.Editor
 
         public static bool CheckLegal(HullSocket socket, HullComponent hullComponent)
         {
+            //Debug.Log(hullComponent.SaveKey);
             SocketFilters componentFilters = hullComponent.GetComponent<SocketFilters>() ?? new SocketFilters();
             SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
             if (!socketFilters.AllowNullComponent && hullComponent == null)
@@ -144,6 +147,8 @@ namespace Lib.Editor
     [HarmonyPatch(typeof(SocketOutlineManager), nameof(SocketOutlineManager.DrawShapes))]
     class SocketOutlineManagerDrawShapes
     {
+        static Random random = new Random();
+
         static bool Prefix(SocketOutlineManager __instance, Camera cam,
             Camera ____camera,
             Color ____emptyColor, Color ____filledColor, Color ____selectedColor, Color ____arcHardLimit, Color ____arcSoftLimit,
@@ -191,11 +196,22 @@ namespace Lib.Editor
                     Draw.RadiusSpace = ThicknessSpace.Meters;
                     Draw.ZTest = CompareFunction.Always;
                     Draw.Matrix = socket.transform.localToWorldMatrix;
+                    List<Color> numbers = new List<Color> { Color.green, Color.blue, Color.white, Color.black, Color.yellow, Color.cyan, Color.magenta };
 
+
+                    //Draw.Color = numbers[random.Next(numbers.Count)];
                     Draw.Color = socket == _selectedSocket
-                        ? _selectedColor
-                        : socket == _hoveredSocket ? _selectedColor : socket.Component != null ? _filledColor : _emptyColor;
-                    SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
+                            ? _selectedColor
+                            : socket == _hoveredSocket ? _selectedColor : socket.Component != null ? _filledColor : _emptyColor;
+
+                    //Draw.Color = numbers[random.Next(numbers.Count)];
+
+                //Testing
+
+                //End testing
+
+
+                SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
                     Draw.Radius = socketFilters.Radius;
                     switch (socketFilters.Shape)
                     {
@@ -216,6 +232,24 @@ namespace Lib.Editor
                         default:
                             break;
                     }
+                    if(socketFilters.DrawColor != Color.clear)
+                    {
+                        Color GetDebugColor(HullSocket socket)
+                        {
+                            return socket.Type switch
+                            {
+                                HullSocketType.Surface => Color.red,
+                                HullSocketType.Compartment => Color.yellow,
+                                HullSocketType.Module => Color.cyan,
+                                _ => Color.white,
+                            };
+                        }
+                        Color newcolor = GetDebugColor(socket);
+                        newcolor.a = Draw.Color.a;
+                        Draw.Color = newcolor;
+                    }
+
+
                 }
             }
             for (int i = 0; i < _sockets.Length; i++)
@@ -257,7 +291,7 @@ namespace Lib.Editor
                     if (socket.TraverseLimits is not TraversalLimits _rearLimits)
                     {
                         DrawArc(Quaternion.identity, 0, 0, true);
-                        continue;
+                        continue; 
                     }
                     if (socket.gameObject.transform.GetComponent<CustomTraversalLimits>()?.PublicForwardLimits is not TraversalLimits _forwardLimits || socket.gameObject.transform.GetComponent<CustomTraversalLimits>().Ignore)
                     {
@@ -285,22 +319,31 @@ namespace Lib.Editor
     {
         static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
         {
+
+            //Debug.LogError("Setting Ship");
             foreach (SocketItem child in ____scrollPaneContent.GetComponentsInChildren<SocketItem>().Where(socketitem => socketitem.Socket != null))
             {
 
-                HullSocket? socket = child?.GetComponent<SocketItem>()?.Socket;
+                HullSocket? socket = child?.Socket;
+
                 SocketFilters? filter = socket?.GetComponent<SocketFilters>();
                 if (!(filter?.ShowInShipPane ?? true))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
+                {
+                //Debug.LogError("removing socket " + socket?.ShortName) ;
+                    List<SocketItem> _sockets = Common.GetVal<List<SocketItem>>(__instance, "_sockets");
+                    _sockets.Remove(child);
                     UnityEngine.Object.Destroy(child?.gameObject);
 
+                }
+
             }
-            List<string> types = [];
+            HashSet<string> types = [];
 
             IReadOnlyCollection<HullSocket> allSockets = ____currentShip.Ship.Hull.AllSockets;
             foreach (HullSocket socket in allSockets)
             {
                 SocketFilters filter = socket.GetComponent<SocketFilters>() ?? new();
-                if (filter.CustomType.Length > 0 && !types.Contains(filter.CustomType))
+                if (filter.CustomType.Length > 0)
                     types.Add(filter.CustomType);
             }
             foreach (string value in types)
@@ -348,11 +391,25 @@ namespace Lib.Editor
         }
     }
 
-    [HarmonyPatch(typeof(ShipEditorPane), nameof(ShipEditorPane.OpenPalette))]
-    class ShipEditorPanePatch
+[HarmonyPatch(typeof(ShipEditorPane), nameof(ShipEditorPane.OpenPalette))]
+class ShipEditorPanePatch
+{
+    static bool Prefix(ShipEditorPane __instance, HullSocket socket, ComponentPalette ____palette)
     {
-        static bool Prefix(ShipEditorPane __instance, HullSocket socket)
+        //
+
+
         {
+            List<SelectableListItem> validComponents = ____palette.GetItemsForSocket(socket);
+            foreach (SelectableListItem item in validComponents)
+            {
+                //if (item.Data is not HullComponent component)
+                //    continue;
+                //Debug.Log("plt " +  component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category);
+
+            }
+
+            //
             SimpleDiscount.UISocket = socket;
             SocketFilters socketFilters = socket.GetComponent<SocketFilters>();
             return socketFilters == null || socketFilters.ShowPalette;
@@ -402,16 +459,20 @@ namespace Lib.Editor
     {
         static bool Prefix(HullSocket __instance, ref HullComponent componentPrefab)
         {
+
+            //Debug.LogError("Socket Filter Prefix Start");
             HullSocket socket = __instance;
-            if (socket.Component is HullComponent _component)
+            if (socket.Component is HullComponent _component && false)
             {
                 _component.SetSocket(null);
                 CheckDepedends(socket, true, true);
                 _component.enabled = false;
                 UnityEngine.Object.Destroy(_component.gameObject);
+                Common.SetVal(socket, "_component", null);
                 //SetPrivateField(_component, "_size", _component);
                 socket.UpdateColliderActive();
             }
+            //return true;
             //Debug.LogError(componentPrefab.Category);
 
             //Debug.LogError("Set Component Prefix");
@@ -453,6 +514,7 @@ namespace Lib.Editor
 
         static void Postfix(HullSocket __instance)
         {
+            //Debug.LogError("Socket Filter Postfix Start");
             HullSocket socket = __instance;
             //Debug.LogError("Set Component Postfix");
 
@@ -475,6 +537,7 @@ namespace Lib.Editor
                 socket.SetComponent(componentPrefab);
             }
             Finalize(__instance);
+
         }
         public static void Finalize(HullSocket __instance)
         {
@@ -488,6 +551,7 @@ namespace Lib.Editor
                 return true;
             ComponentDependencies? componentDependencies = socket.Component?.GetComponent<ComponentDependencies>();
             if (componentDependencies == null) return true;
+            //Debug.LogError("Checking depdends");
             HullSocket[] sockets = socket.gameObject.transform.parent.GetComponentsInChildren<HullSocket>();
 
             bool returnval = true;

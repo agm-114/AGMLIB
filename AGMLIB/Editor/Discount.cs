@@ -11,7 +11,7 @@ public class SimpleDiscount : MonoBehaviour
     {
         HullSocket currentsocket = Common.GetVal<HullSocket>(component, "_socket") ?? CostingSocket ?? UISocket ;
         //Debug.LogError("Discount Calc for " + existingCount + "th " + component.ComponentName);
-        List<SimpleDiscount> discounts = component?.GetComponents<SimpleDiscount>()?.ToList() ?? new();
+        List<SimpleDiscount> discounts = component?.GetComponents<SimpleDiscount>()?.ToList() ?? new(); 
         if (currentsocket != null)
             discounts.AddRange(currentsocket?.GetComponents<SimpleDiscount>()?.ToList() ?? new());
 

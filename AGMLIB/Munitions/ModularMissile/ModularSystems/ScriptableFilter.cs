@@ -1,5 +1,4 @@
-﻿using Lib.Editor;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 [CreateAssetMenu(fileName = "New Scriptable Filter", menuName = "Nebulous/New Filter")]
 public class ScriptableFilter : ScriptableObject, IFilterIndexed
@@ -27,7 +26,7 @@ public class ScriptableFilter : ScriptableObject, IFilterIndexed
     public bool AllowIllegal => _allowIllegal;
     [SerializeField]
     protected bool _bypassFactionRestrictions = false;
-    public bool BypassFactionRestrictions => _bypassFactionRestrictions;
+    public bool BypassFactionRestrictions => _bypassFactionRestrictions; 
 }
 
 [CreateAssetMenu(fileName = "New Faction", menuName = "Nebulous/Modular Faction Description")]
@@ -48,7 +47,7 @@ public class ModularFactionDescription : FactionDescription, IModular
     [SerializeField]
     private string[] _sharedEquipmentPatternsblacklist = new string[0];
 
-    public string[] SharedFactionAll => Common.GetVal<string[]>(this, "_sharedFactionAll");
+    public string[] SharedFactionAll => Common.GetVal<string[]>(this, "_sharedFactionAll"); 
 
     public string[] SharedEquipmentList => Common.GetVal<string[]>(this, "_sharedFactionAll");
 

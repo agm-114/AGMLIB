@@ -1,5 +1,4 @@
-﻿using Lib.Editor;
-
+﻿
 public class IndexedSocketFilter : MonoBehaviour, IFilterIndexed
 {
     [SerializeField]

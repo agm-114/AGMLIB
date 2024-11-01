@@ -1,4 +1,4 @@
-﻿using Lib.Editor;
+﻿
 public enum WeaponRole
 {
     Unlocked = -1,
