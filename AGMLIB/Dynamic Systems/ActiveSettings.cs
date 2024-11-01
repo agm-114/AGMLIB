@@ -137,6 +137,8 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
             objectactive = false;
         else if (activateEliminatedState != ConditionalState.Ignore && activateEliminatedState != state.ElimnatedState)
             objectactive = false;
+        else if (activateResourceState != ConditionalState.Ignore && activateResourceState != ShipResourceState)
+            objectactive = false;
         else
             objectactive = true;
         return objectactive;
