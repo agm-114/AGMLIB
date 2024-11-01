@@ -75,4 +75,9 @@ public static class CommonNonStatic
         }
 
     }
+
+    public static IEnumerable<TSource> WhereNotNull<TSource>(this IEnumerable<TSource> source)
+    {
+        return source.Where(item => item != null);
+    }
 }
