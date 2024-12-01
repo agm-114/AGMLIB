@@ -1,7 +1,9 @@
 using Shapes;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using static UnityEditorInternal.ReorderableList;
 using static Utility.GameColors;
 using Random = System.Random;
 
@@ -17,9 +19,12 @@ public interface ICoreFilter
         public IList<string> Blacklist { get; }
     }
 
-    public interface ISimpleFilter : ICoreFilter
+    public interface ISimpleFilter
     {
-        public bool DefaultFilterMode { get; }
+    
+        public bool CheckComponent(HullComponent hullComponent);
+
+        public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false);
     }
 
     public interface IFilter : ICoreFilter
@@ -46,15 +51,144 @@ public interface ICoreFilter
         Torus
     }
 
-    public class SimpleFilter : MonoBehaviour, ISimpleFilter
+    public class SimpleAndFilter : MonoBehaviour, ISimpleFilter
     {
+        [SerializeField] protected List<ISimpleFilter> _filters = [];
+
+        public bool CheckComponent(HullComponent hullComponent)
+        {
+            foreach (ISimpleFilter filter in _filters)
+            {
+                if (!filter.CheckComponent(hullComponent))
+                    return false;
+            }
+            return true;
+        }
+
+        public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false) => throw new NotImplementedException();
+}
+
+public abstract class BaseFilter : MonoBehaviour, ISimpleFilter
+{
+    abstract public bool CheckComponent(HullComponent hullComponent);
+    abstract public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false);
+}
+
+
+public class SimpleFilter : BaseFilter, ISimpleFilter
+{
         [SerializeField] protected List<string> _whitelist = [];
         [SerializeField] protected List<string> _blacklist = [];
-        [SerializeField] protected bool _default = true;
-        public bool DefaultFilterMode => _default;
+        [SerializeField] protected bool _defaultvalue = false;
         public IList<string> Whitelist => _whitelist;
         public IList<string> Blacklist => _blacklist;
+
+        public ISimpleFilter CopyFilter(ICoreFilter filter, bool newdefault = true)
+        {
+            _whitelist = filter.Whitelist.ToList();
+            _blacklist = filter.Blacklist.ToList();
+            _defaultvalue = newdefault;
+
+            return this;
+        }
+
+        override public bool CheckComponent(HullComponent hullComponent)
+        {
+
+
+
+            if (hullComponent is not WeaponComponent weaponComponent)
+                return _defaultvalue;
+
+            MunitionTags[] _compatibleAmmoTags = Common.GetVal<MunitionTags[]>(weaponComponent, "_compatibleAmmoTags");
+            IEnumerable<string> taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Subclass);
+            string _statGroupSubtype = Common.GetVal<string>(weaponComponent, "_statGroupSubtype");
+            if (Blacklist.Intersect(taglist).Any())
+                return false;
+            if (Whitelist.Intersect(taglist).Any())
+                return true;
+            taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Class);
+            if (Blacklist.Intersect(taglist).Any())
+                return false;
+            if (Whitelist.Intersect(taglist).Any())
+                return true;
+            if (Blacklist.Contains(weaponComponent.Category))
+                return false;
+            if (Whitelist.Contains(weaponComponent.Category))
+                return true;
+            if (Blacklist.Contains(_statGroupSubtype))
+                return false;
+            if (Whitelist.Contains(_statGroupSubtype))
+                return true;
+            if (Blacklist.Contains(weaponComponent.CostBreakdownClass.ToString()))
+                return false;
+            if (Whitelist.Contains(weaponComponent.CostBreakdownClass.ToString()))
+                return true;
+            if (Blacklist.Contains(weaponComponent.CompoundingCostClass))
+                return false;
+            if (Whitelist.Contains(weaponComponent.CompoundingCostClass))
+                return true;
+            return _defaultvalue;
+        }
+
+    override public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false)
+    {
+
+        if (ammo == null)
+        {
+            return true;
+        }
+        if (debugmode && false)
+        {
+            //Debug.LogError(String.Join(", ", Whitelist));
+            //Debug.LogError(ammo.Tags.Class);
+            //Debug.LogError(ammo.Tags.Subclass);
+        }
+
+        //Debug.LogError(ammo.MunitionName);
+        //Debug.LogError("Parse int: " + ammo?.Tags.Subclass.Substring(1));
+        //Debug.LogError("Value: " + int.Parse(ammo?.Tags.Subclass.Substring(1)));
+
+        if (Whitelist.Contains(ammo?.MunitionName))
+            return true;
+        else if (Blacklist.Contains(ammo?.MunitionName))
+            return false;
+        else if (Whitelist.Contains(ammo?.SaveKey))
+            return true;
+        else if (Blacklist.Contains(ammo?.SaveKey))
+            return false;
+        else if (Whitelist.Contains(ammo?.Type.ToString()))
+            return true;
+        else if (Blacklist.Contains(ammo?.Type.ToString()))
+            return false;
+        else if (Whitelist.Contains(ammo?.SimMethod.ToString()))
+            return true;
+        else if (Blacklist.Contains(ammo?.SimMethod.ToString()))
+            return false;
+        else if (Whitelist.Contains(ammo?.Role.ToString()))
+            return true;
+        else if (Blacklist.Contains(ammo?.Role.ToString()))
+            return false;
+        else if (Whitelist.Contains(ammo?.UtilityRole.ToString()))
+            return true;
+        else if (Blacklist.Contains(ammo?.UtilityRole.ToString()))
+            return false;
+        else if (Whitelist.Contains(ammo?.FactionKey))
+            return true;
+        else if (Blacklist.Contains(ammo?.FactionKey))
+            return false;
+        else if (Whitelist.Contains(ammo?.Tags.Subclass))
+            return true;
+        else if (Blacklist.Contains(ammo?.Tags.Subclass))
+            return false;
+        else if (Whitelist.Contains(ammo?.Tags.Class))
+            return true;
+        else if (Blacklist.Contains(ammo?.Tags.Class))
+            return false;
+        else
+            return _defaultvalue;
     }
+}
 
 #pragma warning disable CA1708 // Identifiers should differ by more than case
     public class SocketFilters : MonoBehaviour, IFilter
@@ -329,7 +463,7 @@ public interface ICoreFilter
                 SocketFilters? filter = socket?.GetComponent<SocketFilters>();
                 if (!(filter?.ShowInShipPane ?? true))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
                 {
-                //Debug.LogError("removing socket " + socket?.ShortName) ;
+                   // Debug.LogError("removing socket " + socket?.ShortName) ;
                     List<SocketItem> _sockets = Common.GetVal<List<SocketItem>>(__instance, "_sockets");
                     _sockets.Remove(child);
                     UnityEngine.Object.Destroy(child?.gameObject);
