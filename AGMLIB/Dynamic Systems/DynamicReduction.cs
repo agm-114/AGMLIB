@@ -1,4 +1,5 @@
 ﻿
+using System.Linq;
 using UnityEngine.UI.Extensions;
 public class DynamicReduction : ActiveSettings
 {
@@ -7,7 +8,7 @@ public class DynamicReduction : ActiveSettings
     private ResourceType Res => ResourceDefinitions.Instance.GetResource(ResourceName);
     private ResourceValue[] _requiredResources;
 
-    public SimpleFilter Filter;
+    public ISimpleFilter Filter;
 
     protected override void FixedUpdate()
     {
@@ -22,25 +23,7 @@ public class DynamicReduction : ActiveSettings
     {
         if (!Module.isActiveAndEnabled)
             return false;
-
-        if (Filter == null)
-            return true;
-
-        if (hullComponent is not WeaponComponent weaponComponent) 
-            return Filter.DefaultFilterMode;
-
-        MunitionTags[] _compatibleAmmoTags = Common.GetVal<MunitionTags[]>(weaponComponent, "_compatibleAmmoTags");
-        IEnumerable<string> taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Subclass);
-        if(Filter.Blacklist.Intersect(taglist).Any())
-            return false;
-        if(Filter.Whitelist.Intersect(taglist).Any() ) 
-            return true;
-        taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Class);
-        if (Filter.Blacklist.Intersect(taglist).Any())
-            return false;
-        if (Filter.Whitelist.Intersect(taglist).Any())
-            return true;
-        return Filter.DefaultFilterMode;
+        return Filter?.CheckComponent(hullComponent) ?? true;
     }
 
     public static ResourceValue Reduce(ResourceValue basevalue, HullComponent hullComponent)
@@ -112,12 +95,35 @@ public class RequiredResources : MonoBehaviour
     }
 }
 
+public class PastConsumption : MonoBehaviour
+{
+    public Dictionary<ResourcePool, int> AmountExtra = new();
+}
+
+
+[HarmonyPatch(typeof(Ship), nameof(Ship.RunResourceTick))]
+class ShipRunResourceTick
+{
+
+    public static void Prefix(Ship __instance)
+    {
+        //
+        PastConsumption pastConsumption = __instance.GetComponent<PastConsumption>() ?? __instance.gameObject.AddComponent<PastConsumption>();
+        pastConsumption.AmountExtra = Common.GetVal<Dictionary<string, ResourcePool>>(__instance, "_resources").Values.ToDictionary(pool => pool, pool => pool.AmountRemaining);
+
+        
+    }
+
+}
+
+
 [HarmonyPatch(typeof(HullComponent), nameof(HullComponent.ConsumeResources))]
 class HullComponentConsumeResources
 {
 
     public static void Prefix(HullComponent __instance, ResourcePool pool)
     {
+        //Debug.LogError("ticking consumer");
         DynamicReduction.UpdateResources(__instance);
     }
 
