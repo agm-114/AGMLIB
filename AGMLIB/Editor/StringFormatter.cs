@@ -20,6 +20,27 @@ public enum BasicTag
     Superscript
 }
 
+public enum CustomColor
+{
+    Red,
+    Orange,
+    Yellow,
+    Green,
+    LightBlue,
+    DarkBlue,
+    Purple,
+    Gray,
+    White,
+    LightGray,
+    RedTextColor,
+    OrangeTextColor,
+    YellowTextColor,
+    GreenTextColor,
+    LightBlueTextColor,
+    DarkBlueTextColor,
+    FlavorTextColor
+}
+
 public class StringFormatter : MonoBehaviour
 {
     static protected BasicTag[] _defaultlist = { BasicTag.Bold, BasicTag.Italic };
@@ -30,12 +51,19 @@ public class StringFormatter : MonoBehaviour
     [SerializeField]
     protected ColorName _color = ColorName.White;
     [SerializeField]
+    protected CustomColor _textcolor = CustomColor.White;
+    public CustomColor Color { get => _textcolor; set { _textcolor = value; _colortext = true; } }
+    public string Text { get => _text; set => _text = value; }
+
+    [SerializeField]
     protected List<StringFormatter> _prefixes = new();
     [TextArea(5, 10)]
     [SerializeField]
     protected string _text = "";//https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/RichText.html
     [SerializeField]
     protected List<StringFormatter> _postfixes = new();
+    [SerializeField] protected TMP_FontAsset? _font;
+    public TMP_FontAsset? Font => _font;
     public static string GetCoreTag(BasicTag tag) => tag switch
     {
         BasicTag.None => "",
@@ -77,11 +105,36 @@ public class StringFormatter : MonoBehaviour
             returnstring += sb.ToString();
         return returnstring;
     }
+
+    public string GetColorTag()
+    {
+        return _textcolor switch
+        {
+            CustomColor.Red => GetTextColor(ColorName.Red),
+            CustomColor.Orange => GetTextColor(ColorName.Orange),
+            CustomColor.Yellow => GetTextColor(ColorName.Yellow),
+            CustomColor.Green => GetTextColor(ColorName.Green),
+            CustomColor.LightBlue => GetTextColor(ColorName.LightBlue),
+            CustomColor.DarkBlue => GetTextColor(ColorName.DarkBlue),
+            CustomColor.Purple => GetTextColor(ColorName.Purple),
+            CustomColor.Gray => GetTextColor(ColorName.Gray),
+            CustomColor.LightGray => GetTextColor(ColorName.LightGray),
+            CustomColor.White => GetTextColor(ColorName.White),
+            CustomColor.RedTextColor => GameColors.RedTextColor,
+            CustomColor.OrangeTextColor => GameColors.OrangeTextColor,
+            CustomColor.YellowTextColor => GameColors.YellowTextColor,
+            CustomColor.GreenTextColor => GameColors.GreenTextColor,
+            CustomColor.LightBlueTextColor => GameColors.LightBlueTextColor,
+            CustomColor.DarkBlueTextColor => GameColors.DarkBlueTextColor,
+            CustomColor.FlavorTextColor => GameColors.FlavorTextColor,
+            _ => GetTextColor(ColorName.White),
+        };
+    }
     public override string ToString()
     {
         string returnstring = string.Empty;
-        if (_colortext)
-            returnstring += "<color=" + GetTextColor(_color) + ">";
+        if (_colortext || _textcolor != CustomColor.White)
+            returnstring += "<color=" + GetColorTag() + ">";
         foreach (BasicTag tag in _taglist)
             returnstring += GetEntryTag(tag);
         returnstring += MergeStrings(_prefixes);
@@ -92,5 +145,11 @@ public class StringFormatter : MonoBehaviour
         if (_colortext)
             returnstring += "</color>";
         return returnstring;
+    }
+
+    void Awake()
+    {
+        if (_color != ColorName.White)
+            Common.Hint(this, " has as string formatter that is using the color field, this has been depricated please use the text color field and set the color field to white");
     }
 }
