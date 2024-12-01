@@ -1,11 +1,14 @@
-using Modding;
+﻿using Modding;
 using Bundles;
 using Steamworks.Ugc;
 using UI;
 using System.Diagnostics;
 using Shapes;
 using System.Text;
-using AGMLIB.DynamicSystems.Area;
+using AGMLIB.Dynamic_Systems.Area;
+using Steamworks;
+using Networking;
+using System.Reflection;
 
 public class EntryPoint : IModEntryPoint 
 {
@@ -34,14 +37,40 @@ public class EntryPoint : IModEntryPoint
     public void PreLoad()
     {
         //Application.logMessageReceived += HandleLog;
-        Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING",   "1", EnvironmentVariableTarget.User);
-        Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
+
+        //SteamManager.SetActivityDetails("map_name", "guys help Im trapped in a dll factory its not much longer before I hit the char limit but you have to send help");
+        //SteamManager.SetActivity(RichPresenceActivity.Skirmish);
+        //Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING",   "1", EnvironmentVariableTarget.User);
+        //Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
+        string box = @" A box (plural: boxes) is a container with rigid sides used for the storage or transportation of its contents. Most boxes have flat, parallel, rectangular sides (typically rectangular prisms). Boxes can be very small (like a matchbox) or very large (like";
+        string CAT = @"
+                     ／＞　 フ
+                    | 　_　_| 
+                  ／` ミ＿xノ 
+                 /　　　　 |
+                /　 ヽ　　 ﾉ
+                │　　|　|　|
+            ／￣|　　 |　|　|
+            (￣ヽ＿_ヽ_)__)
+            ＼二)";
+        for (int i = 1; i <= box.Length; i++)
+        {   
+            //SteamManager.SetActivityDetails("map_name", box.Substring(0, i));
+
+        }
+
+
+        //SteamManager.SetActivityDetails("map_name", CAT);
+        string newlines = "Newline\n\rTest";
+        //SteamManager.SetActivityDetails("map_name", newlines);
+        //SteamManager.SetActivityDetails("map_name", "with weird bugs ≽^•⩊•^≼");
+
 
         //Debug.LogError(nameof(LookaheadMunition.UseableByFaction));
 
         DependencyPatch.window = false;
         //Application.Quit();
-        //Debug.Log("AGMLIB: 0.3.2.2.10 Preload"); OLD
+        Debug.Log($"AGMLIB: {Assembly.GetExecutingAssembly().GetName().Version.ToString()} Preload");
         //Debug.LogError("AGMLIB: 0.3.2.2.12 Preload");
         foreach (var hullComponent in BundleManager.Instance.AllComponents)
         {
@@ -68,8 +97,8 @@ public class EntryPoint : IModEntryPoint
         }
         newtrait.Value.name = "Ship's Cat";
         newtrait.Value.PointCost = 100;
-        newtrait.Value.Description = "Don't be fooled by the purring engines and sunbeam naps. Every vessel in the [Faction Name] fleet boasts a seasoned feline navigator. These furred veterans aren't just mousers � they sn
-        out storms, predict fair winds with a twitch of the tail, and even lend a paw with repairs (mostly by napping strategically on loose wires). So remember, matey, if you see a cat on our decks, show some respect � you might just owe your next fair voyage to a whiskered oracle.\r\n\r\n";
+        newtrait.Value.Description = "Don't be fooled by the purring engines and sunbeam naps. Every vessel in the [Faction Name] fleet boasts a seasoned feline navigator. These furred veterans aren't just mousers – they sn
+        out storms, predict fair winds with a twitch of the tail, and even lend a paw with repairs (mostly by napping strategically on loose wires). So remember, matey, if you see a cat on our decks, show some respect – you might just owe your next fair voyage to a whiskered oracle.\r\n\r\n";
         //newtrait.Value.Modifiers.AddItem(new("test", 0, 1));
         //traits.Add(newtrait.Key, newtrait.Value);
         newtrait.Value.Modifiers[0] = new("hull-crew-cheer", 0, 1);
