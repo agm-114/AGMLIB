@@ -49,7 +49,7 @@ public class InternalShipState : MonoBehaviour
 
     }
     public float Velocity => Rigidbody?.velocity.magnitude ?? 0;
-    public bool InEditor => EditorShipController != null;
+    public bool InEditor => !ShipController.enabled;
     public bool InGame => EditorShipController == null;
 
     public void Awake()

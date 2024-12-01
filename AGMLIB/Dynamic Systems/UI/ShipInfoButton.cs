@@ -4,7 +4,7 @@ using TooltipTrigger = UI.TooltipTrigger;
 
 public class ShipInfoButton : ShipState
 {
-    
+    public bool Unique  = false;
     public string ButtonName = "BTN";
     public StringFormatter? Tooltip;
     public String TooltipString => Tooltip?.ToString() ?? ""; 
@@ -27,14 +27,14 @@ public class ShipInfoButton : ShipState
     public void HandleButtonChanged(int value)
         //Debug.LogError("Button Clicked" + value);
         => SelectedOption = value;
-    public void ForceButtonChange(int value)
+    public void ForceButtonChange(int value, bool mixed = false)
     {
-        if (value == SelectedOption)
-            return;
+        //if (value == SelectedOption)
+        //    return;
         if (value < 0)
             value = SelectedOption;
         HandleButtonChanged(value);
-        Button?.SetOptionWithoutNotify(value);
+        Button?.SetOptionWithoutNotify(value, mixed);
         if (Override)
             Button?.SetOverride(value);
         else
@@ -48,9 +48,12 @@ public class ShipInfoButton : ShipState
 public class ButtonData
 {
     public GameObject GameObject;
-    public ShipInfoButton ButtonState;
+    private ShipInfoButton PrimaryInfoButton;
+    public string ButtonName => PrimaryInfoButton.ButtonName;
+
+    public List<ShipInfoButton> AuxButtonStates = new();
     public SequentialButton? Button => FindButton();
-    SequentialButtonEvent OnValueChanged => Button.OnValueChanged;
+    public SequentialButtonEvent OnValueChanged => Button.OnValueChanged;
     //RectTransform parentTransform => GameObject.transform.parent.GetComponent<RectTransform>();
     //LayoutElement Layout => GameObject.transform.parent.GetComponent<LayoutElement>();
     TextMeshProUGUI Text => GameObject.GetComponentInChildren<TextMeshProUGUI>();
@@ -64,22 +67,52 @@ public class ButtonData
         return GameObject.GetComponentInChildren<SequentialButton>();
     }
 
-    public void Setup(SequentialButton template, ShipInfoButton buttondata)
+    private bool mixed = false;
+    public void Setup(SequentialButton template, ShipInfoButton buttondata, List<ShipController> shipGroup)
     {
-        ButtonState = buttondata;
+
+        PrimaryInfoButton = buttondata;
+
+        IEnumerable<ShipInfoButton>  newAuxButtonStates = shipGroup.ConvertAll(ship => ShipInfoButton.FindButton(ship, PrimaryInfoButton.ButtonName));
+        newAuxButtonStates = newAuxButtonStates.Where(s => s != null);
+
+
         Transform templatetransform = template.gameObject.transform.parent;
         GameObject = UnityEngine.Object.Instantiate(templatetransform.gameObject, templatetransform.parent);
-        ButtonState.Data = this;
-        Text.text       = ButtonState.ButtonName;
-        GameObject.name = ButtonState.ButtonName;
-        Tooltip.Text   =  ButtonState.TooltipString;
+
+        Text.text       = ButtonName;
+        GameObject.name = ButtonName;
+        Tooltip.Text   = PrimaryInfoButton.TooltipString;
         //Layout.minWidth = 550 / 3 * 4;
         OnValueChanged.RemoveAllListeners();
-        Common.SetVal(Button, "_options", ButtonState.Options);
-        Common.SetVal(Button, "_originalTooltip", ButtonState.TooltipString);
-        ButtonState.ForceButtonChange(ButtonState.SelectedOption);
+        Common.GetVal<SequenceOption[]>(Button, "_options");
+
+        Common.SetVal(Button, "_onValueChanged", new SequentialButtonEvent());
+        Common.SetVal(Button, "_options", PrimaryInfoButton.Options);
+
+        Common.SetVal(Button, "_originalTooltip", PrimaryInfoButton.TooltipString);
+        //Debug.LogError(PrimaryInfoButton.ButtonName);
+        //foreach(string state in ButtonState.States)
+        //    Debug.LogError("state: " + state);
+        //Debug.LogError("dflt: " + ButtonState.SelectedOption);
+        mixed = newAuxButtonStates.ConvertAll(s => s.SelectedOption).Any(s => s != PrimaryInfoButton.SelectedOption);
+
+        AddInfoButton(PrimaryInfoButton);
+
+
         //Button.SetOptionWithoutNotify(ButtonState.SelectedOption);
-        OnValueChanged.AddListener(ButtonState.HandleButtonChanged);
+        foreach (ShipInfoButton auxbutton in newAuxButtonStates)
+            AddInfoButton(PrimaryInfoButton);
+
+    }
+    public void AddInfoButton(ShipInfoButton infobutton)
+    {
+        if (AuxButtonStates.Contains(infobutton))
+            return;
+        infobutton.Data = this;
+        infobutton.ForceButtonChange(infobutton.SelectedOption, mixed);
+        OnValueChanged.AddListener(infobutton.HandleButtonChanged);
+        AuxButtonStates.Add(infobutton);
     }
 
     public static void Resize(SequentialButton template, int extrabuttons = 0)
@@ -100,7 +133,9 @@ class ShipInfoBarMatchAllButtons
 
     static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort)
     {
+        //Debug.LogError("buttonmatch");
         ShipController _primaryShip = Common.GetVal<ShipController>(__instance, "_primaryShip");
+        List<ShipController> _shipGroup = Common.GetVal<List<ShipController>>(__instance, "_shipGroup") ?? new();
         foreach (var button in uibuttons)
             if (button.Value != null && button.Value.GameObject != null)
                 UnityEngine.Object.Destroy(button.Value.GameObject);
@@ -112,9 +147,23 @@ class ShipInfoBarMatchAllButtons
 
         foreach (ShipInfoButton infobut in shipbuttons)
         {
+            if(uibuttons.TryGetValue(infobut.ButtonName, out ButtonData? value))
+            {
+                if(infobut.Unique)
+                {
+                    ButtonData newrandombutton = new();
+                    newrandombutton.Setup(____battleshort, infobut, _shipGroup);
+                    uibuttons.Add(newrandombutton.ButtonName, newrandombutton);
+                }
+                else
+                    value.AddInfoButton(infobut);
+                continue;
+
+            }
+
             ButtonData newbutton = new();
-            newbutton.Setup(____battleshort, infobut);
-            uibuttons.Add(newbutton.ButtonState.ButtonName, newbutton);
+            newbutton.Setup(____battleshort, infobut, _shipGroup);
+            uibuttons.Add(newbutton.ButtonName, newbutton);
         }
 
     }

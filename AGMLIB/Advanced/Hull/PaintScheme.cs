@@ -28,7 +28,7 @@ public class PaintScheme : MonoBehaviour
     public string ClassName = "Raines";
     public string SegmentName = "Bow";
     public int Index = -1;
-    private readonly string shaderproperty = "_PaintMask";
+    public string shaderproperty = "_PaintMask";
     private Hull Hull => GetComponentInParent<Hull>();
     //private int count = 0;
     //private Material _originalMaterial;
@@ -50,7 +50,7 @@ public class PaintScheme : MonoBehaviour
     {
         if(ClassName == null || SegmentName == null || Replacementtexture == null)
         {
-            Debug.LogError("Null Value");
+            Common.Hint("Null Value");
             Destroy(this);
             return;
         }
@@ -58,7 +58,7 @@ public class PaintScheme : MonoBehaviour
         {
             if(Hull.ClassName == ClassName && Index >= 0)
             {
-                Debug.LogError(SegmentName + " not found in " + hullsegs.Length + " hull segs named " + string.Join(",", hullsegs.ToList().ConvertAll<string>(a => a.gameObject.name)));
+                Common.Hint(SegmentName + " not found in " + hullsegs.Length + " hull segs named " + string.Join(",", hullsegs.ToList().ConvertAll<string>(a => a.gameObject.name)));
 
             }
             Destroy(this);

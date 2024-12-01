@@ -92,6 +92,10 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
     public override void Awake()
     {
         base.Awake();
+        if (ActiveStates.Any() && activateButtonState == ConditionalState.Ignore)
+            Common.Hint(this, "activateButtonState may be misconfigured");
+        if (!ActiveStates.Any() && activateButtonState != ConditionalState.Ignore)
+            Common.Hint(this, "activateButtonState may be misconfigured");
         Module = gameObject.GetComponent<HullComponent>();
         if (Module == null)
             Module = gameObject.GetComponentInParent<HullComponent>();
