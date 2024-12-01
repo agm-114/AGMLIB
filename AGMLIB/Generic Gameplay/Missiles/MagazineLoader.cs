@@ -157,12 +157,18 @@ class ShipLoadFromSave
                     if (socketdata.MissileLoad.Any(load => load.MunitionKey == data.MunitionKey))
                     {
                         Magazine.MagSaveData existingdata = socketdata.MissileLoad.Find(load => load.MunitionKey == data.MunitionKey);
+                        socketdata.MissileLoad.Remove(data);
                         existingdata.Quantity += data.Quantity;
-                        //Debug.LogError("Loading "+ data.Quantity + " "+ data.MunitionKey + " ");
-
+                        socketdata.MissileLoad.Add(data);
+                        //Debug.LogError("Loading Extra "+ data.Quantity + " "+ existingdata.Quantity + " ");
+                        //Debug.LogError(existingdata);
                     }
                     else
                     {
+                        Magazine.MagSaveData newdata = new();
+                        newdata.MunitionKey = data.MunitionKey;
+                        newdata.Quantity = data.Quantity;
+                        newdata.MagazineKey = data.MagazineKey;
                         socketdata.MissileLoad.Add(data);
                         //Debug.LogError("Loading " + data.MunitionKey);
 
