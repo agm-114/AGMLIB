@@ -31,17 +31,33 @@ public class AreaEffect : ActiveSettings
     private Color? _oldcolor;
     private float _updateAccum = 0f;
 
-    public Material Material => _followingInstance.GetComponentInChildren<MeshRenderer>().material;
+    public Material Material
+    {
+        get
+        {
+            //if (_followingInstance == null)
+            //    Common.Hint("Following Instance Null");
+            MeshRenderer renderer = _followingInstance.GetComponentInChildren<MeshRenderer>();
+            //if (renderer == null)
+            //    Common.Hint("Following mesh Null");
+            //if(_followingInstance.GetComponentInChildren<MeshRenderer>(includeInactive:true).material == null)
+            //    Common.Hint("Following mat Null");
+
+            return _followingInstance.GetComponentInChildren<MeshRenderer>(includeInactive: true).material;
+        }
+    }
 
     //public List<BasicEffect<Ship>> ShipEffects = new();
-    //public List<BasicEffect<ModularMissile>> ModularMissileEffects = new();
+    //public List<BasicEffect<ModularMissile>> ModularMissileEffects = new();     
 
 
     public List<BasicEffect> Effects;
 
     public void Fire()
     {
-        StopFire();//_EmissionColor
+        if (_followingInstance != null)
+            return;
+        //StopFire();//_EmissionColor
         //Debug.LogError("Creating Sphere");
         string PrefabName = "Stock/E70 'Interruption' Jammer";
         HullComponent goodewar = BundleManager.Instance.AllComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
@@ -55,7 +71,7 @@ public class AreaEffect : ActiveSettings
         if(prefab == null)
             Debug.LogError("Did not get following prefab");
         else
-            _followingInstance = NetworkObjectPooler.Instance?.GetNextOrNew(prefab, transform.position, transform.rotation );
+            _followingInstance = NetworkObjectPooler.Instance.GetNextOrNew(prefab, transform.position, transform.rotation);
         if (_followingInstance is ISettableEWarParameters settableEWarParameters)
         {
             settableEWarParameters.SetParams(SignatureType.Radar, omni: true, 360f, Radius, 1, 0, 0, 0f, true);
@@ -69,14 +85,17 @@ public class AreaEffect : ActiveSettings
 
     public void StopFire()
     {
-        if (_followingInstance != null)
-        {
-            if(_oldcolor != null)
-                Material.SetColor(matproperty, _oldcolor.Value);
-            _followingInstance.RepoolSelf();
-            _followingInstance = null;
-            _oldcolor = null;
-        }
+
+        if (_followingInstance == null)
+            return;
+        //Debug.LogError("Stopping Sphere");
+
+        if (_oldcolor != null)
+            Material.SetColor(matproperty, _oldcolor.Value);
+        //DestroyImmediate(_followingInstance);
+        _followingInstance.RepoolSelf();
+        _followingInstance = null;
+        _oldcolor = null;
     }
 
     // Start is called before the first frame update
@@ -86,7 +105,7 @@ public class AreaEffect : ActiveSettings
         {
             effect.AreaEffect = this;
             effect.Setup();
-        }
+        }   
         if (Trigger == null)
         {
             SphereCollider sphereCollider = gameObject.GetOrAddComponent<SphereCollider>();
@@ -95,7 +114,7 @@ public class AreaEffect : ActiveSettings
         }
         else if(Trigger is SphereCollider sphere)
         {
-            //Radius = sphere.radius;
+            Radius = sphere.radius;
         }
 
         Trigger.isTrigger = true;
@@ -108,6 +127,7 @@ public class AreaEffect : ActiveSettings
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
+        //Debug.LogError($"{Buttonstate} current buttonstate | targetbuttonstate {activateButtonState}");
         if (InEditor)
             return;
         //Debug.LogError("Core Fixed Update");
@@ -130,6 +150,7 @@ public class AreaEffect : ActiveSettings
             }
 
         }
+
                 
         _laststate = active;
 
@@ -137,11 +158,12 @@ public class AreaEffect : ActiveSettings
         if(CustomVFX)
         {
 
-            if (active && _followingInstance == null)
+            if (active)
                 Fire();
-            else if (!active)
+            else
                 StopFire();
-            if ((_updateEveryFrame || _updateAccum >= _updateInterval) && _followingInstance != null)
+
+            if (_followingInstance != null && (_updateEveryFrame || _updateAccum >= _updateInterval))
             {
                 _updateAccum = 0f;
                 _followingInstance.transform.position = base.transform.position;

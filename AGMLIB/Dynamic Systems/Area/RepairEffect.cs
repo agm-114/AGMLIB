@@ -46,13 +46,14 @@
         protected float _accum = 0;
         public override void FixedUpdate()
         {
-            //Debug.LogError("Generic Fixed Update");
+            //
             _accum += Time.fixedDeltaTime;
             if(_accum < 1)
                 return;
             _accum -= 1;
             if (Active)
             {
+                //Debug.LogError("Generic repair Fixed Update");
                 IEnumerable<IEnumerable<HullPart>> ships = new List<IEnumerable<HullPart>>();
                 IEnumerable<RestoreStatus> lockers = new List<RestoreStatus>();
                 foreach (Ship target in Targets.Where(target => target != null))
@@ -66,21 +67,20 @@
                         parts = parts.OrderByDescending(h => h.DCPriority);
                         parts = parts.Take(MaxRepairsPerHull);
                     }
-                    if(parts.Count() > 0)
-                        ships.Append(parts);
+                    if(parts.Any())
+                        ships = ships.Append(parts);
                     else
                     {
-                        IEnumerable<RestoreStatus> shiplockers = root.GetComponentsInChildren<DCLockerComponent>().ToList().OrderByDescending(h => h.DCPriority).ConvertAll(locker => RestoreStatus.GetRestoreStatus(locker)).Where(status => status.NeedsRestores).Take(1);
-                        if(shiplockers.Count() > 0)
-                        {
-                            lockers.First();
-                        }
+                        IEnumerable<RestoreStatus>  hulllockers = root.GetComponentsInChildren<DCLockerComponent>().ToList().OrderByDescending(h => h.DCPriority).ConvertAll(locker => RestoreStatus.GetRestoreStatus(locker)).Where(status => status.NeedsRestores).Take(1);
+                        if (hulllockers.Any())
+                            lockers = lockers.Append(hulllockers.First());
                     }
 
                 }
                 float repairsperhull =  RepairPerSecond / (ships.Count() + lockers.Count());
                 foreach(IEnumerable<HullPart> repairparts in ships)
                 {
+                    //continue;
                     float repairsperpart = repairsperhull / repairparts.Count();
 
                     foreach(HullPart hullPart in repairparts)

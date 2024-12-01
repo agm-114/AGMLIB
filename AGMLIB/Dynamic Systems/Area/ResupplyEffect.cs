@@ -1,67 +1,80 @@
 ﻿using static Ships.BulkMagazineComponent;
+using static UnityEngine.UI.CanvasScaler;
 
 namespace AGMLIB.Dynamic_Systems.Area
 {
     public class ResupplyEffect : FalloffEffect<Ship>
     {
+        public float PointsPerSecond = 1;
+
+        private float ReloadPoints = 0;
+
+        public bool BulkMagazines = true;
+        public bool CellLaunchers = true;
+
+        [SerializeField] protected ISimpleFilter _simplefilter;
+
 
         public override void TargetFixedUpdate(Ship target)
         {
+            ReloadPoints += PointsPerSecond * Time.fixedDeltaTime;
             if (target == AreaEffect.Ship)
                 return;
 
             if (AreaEffect.ShipController?.GetIFF(target?.Controller?.OwnedBy) == IFF.Enemy)
                 return;
+
+            Transform targettransform = target.gameObject.transform.root;
             //Debug.LogError("Resupply Ship");
 
             bool dirtymissiles = false;
+            
+            List<IEnumerable<KeyValuePair<IMagazine, HullComponent>>> test1 = new();
+            if(BulkMagazines)
+                test1.AddRange(targettransform.GetComponentsInChildren<BulkMagazineComponent>().ConvertAll(comp => comp.Magazines.Select(mag => new KeyValuePair<IMagazine, HullComponent>(mag, comp))));
+            if(CellLaunchers)
+                test1.AddRange(targettransform.GetComponentsInChildren<CellLauncherComponent>().ConvertAll(comp => comp.Missiles .Select(mag => new KeyValuePair<IMagazine, HullComponent>(mag, comp))));
+            IEnumerable<KeyValuePair<IMagazine, HullComponent>>  test2 = test1.SelectMany(list => list).Where(pair => pair.Key.QuantityAvailable < pair.Key.PeakQuantity);
+            if (_simplefilter != null)
+                test2 = test2.Where(pair => _simplefilter.IsAmmoCompatible(pair.Key.AmmoType));
+            IOrderedEnumerable<KeyValuePair<IMagazine, HullComponent>>  test3 = test2.OrderBy(kvp => kvp.Key.PercentageAvailable);
 
-            foreach (BulkMagazineComponent hullComponent in target.gameObject.transform.root.GetComponentsInChildren<BulkMagazineComponent>())
+
+
+
+            foreach (var kvp in test3)
             {
+                IMagazine sink = kvp.Key;
+                IMagazine source = AreaEffect.Hull.MyShip.AmmoFeed.GetAmmoSource(sink.AmmoType);
+                HullComponent hullComponent = kvp.Value;
 
-                BulkMagazineData magdata = hullComponent.gameObject.GetComponent<StartState>().saveData as BulkMagazineData;
-                List<IMagazine> mags = hullComponent.Magazines.ToList();
+                if (sink.AmmoType.PointCost > ReloadPoints)
+                    return;
 
-                foreach (IMagazine mag in hullComponent.Magazines)
+                uint reloadamount = (uint)Math.Min((uint)Math.Min(source.QuantityAvailable, sink.PeakQuantity - sink.QuantityAvailable), ReloadPoints / (float)sink.AmmoType.PointCost);
+                ReloadPoints -= reloadamount * sink.AmmoType.PointCost;
+                //BulkMagazineData magdata = hullComponent.gameObject.GetComponent<StartState>().saveData as BulkMagazineData;
+                //List<IMagazine> mags = hullComponent.Magazines.ToList();
+
+
+                //Debug.LogError($"{AreaEffect.Ship.gameObject.name} Resupply Ship {target.gameObject.name} {sink.AmmoType.MunitionName} {sink.QuantityAvailable}/{sink.PeakQuantity}");
+                if(hullComponent is BulkMagazineComponent magcomp)
+                    magcomp.AddToMagazine(sink.AmmoType, reloadamount);
+                else if( hullComponent is CellLauncherComponent cellcomp)
                 {
-                    if(mag.QuantityAvailable < mag.PeakQuantity)
-                    {
-                        Debug.LogError($"{AreaEffect.Ship.gameObject.name} Resupply Ship {target.gameObject.name} {mag.AmmoType.MunitionName} {mag.QuantityAvailable}/{mag.PeakQuantity}");
-                        hullComponent.AddToMagazine(mag.AmmoType, 1u);
+                    IMagazineProvider magazineProvider = cellcomp as IMagazineProvider;
+                    //Debug.LogError("movin missiles");
+                    dirtymissiles = true;
 
-                        AreaEffect.Hull.MyShip.AmmoFeed.GetAmmoSource(mag.AmmoType).Withdraw(1u);
-                       
-                    }
+                    magazineProvider.AddToMagazine(sink.AmmoType, reloadamount);
                 }
 
-                foreach (Magazine.MagSaveData targetdata in magdata.Load)
-                {
-                    IMunition munition = AreaEffect.Hull.MyShip.Fleet.AvailableMunitions.GetMunition(targetdata.MunitionKey);
 
-                    IMagazine mag = mags.Find(x => x.AmmoType == munition);
-
-                    //if(mag.)
-                    //hullComponent.AddToMagazine(mags, 1);
-                }
-            }
-            foreach (CellLauncherComponent hullComponent in target.gameObject.transform.root.GetComponentsInChildren<CellLauncherComponent>())
-            {
-                IMagazineProvider magazineProvider = hullComponent as IMagazineProvider;
-
-                foreach (IMagazine mag in hullComponent.Missiles)
-                {
-                    if (mag.QuantityAvailable < mag.PeakQuantity)
-                    {
-                        dirtymissiles = true;
-
-                        magazineProvider.AddToMagazine(mag.AmmoType, 1);
-                        AreaEffect.Hull.MyShip.AmmoFeed.GetAmmoSource(mag.AmmoType).Withdraw(1);
-                    }
-
-
-                }
+                source.Withdraw(reloadamount);
 
             }
+            
+
             //target.BuildMissileGroups();
             if(dirtymissiles)
                 target?.BuildMissileMagazineTracker();
