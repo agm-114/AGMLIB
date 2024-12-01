@@ -7,7 +7,7 @@
     [ShipStat("muzzle-accuracy", "Spread", "MoA", InitializeFrom = "_baseAccuracy", TextValueMultiplier = 3437.75f, PositiveBad = true)]
     protected StatValue _statAccuracy;
     public List<MissileEjector> Cells = new();
-    public AmmoFilter AmmoCompatiblity;
+    public AmmoCompatiblity AmmoCompatiblity;
     public DiscreteWeaponComponent DiscreteWeaponComponent;
     public float TimeBetweenCells = 0.2f;
 

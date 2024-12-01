@@ -6,7 +6,7 @@
 
         public MunitionTags[] CompatibleAmmoTags;
 
-        protected Muzzle[] Muzzles = new Muzzle[1];
+        public Muzzle[] Muzzles = new Muzzle[1];
 
         protected Muzzle[] _muzzles => Common.GetVal< Muzzle[]>(Weapon, "_muzzles");
         private int _currentMuzzle = 0;
