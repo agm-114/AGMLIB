@@ -16,7 +16,7 @@ public class BrokenDesignator : MonoBehaviour
             optionaltargeMuzle = gameObject.GetComponentInParent<RezFollowingMuzzle>();
         if (optionaltargeMuzle == null)
         {
-            Debug.LogError("Could not find muzzle on weapon");
+            Common.Hint("Could not find muzzle on weapon");
             return;
         }
 
@@ -25,26 +25,26 @@ public class BrokenDesignator : MonoBehaviour
         HullComponent goodewar = BundleManager.Instance.GetHullComponent(PrefabName);
         if (goodewar == null)
         {
-            Debug.LogError("Could not find prefab with savekey " + PrefabName);
+            Common.Hint("Could not find prefab with savekey " + PrefabName);
             return;
         }
         //Debug.LogError("Found Target " + goodewar.SaveKey);
         RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
         if (goodmuzzel == null)
         {
-            Debug.LogError("Could not find rez following muzzle on indicated prefab " + PrefabName);
+            Common.Hint("Could not find rez following muzzle on indicated prefab " + PrefabName);
             return;
         }
         GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
         if (prefab == null)
         {
-            Debug.LogError("Could not find following prefab in rez following muzzle on indicated prefab " + PrefabName);
+            Common.Hint("Could not find following prefab in rez following muzzle on indicated prefab " + PrefabName);
             return;
         }
         if (prefab != null && optionaltargeMuzle != null)
             Common.SetVal(optionaltargeMuzle, "_followingPrefab", prefab);
         else
-            Debug.LogError("Jammer Setup Failure");
+            Common.Hint("Jammer Setup Failure");
         Destroy(this);
     }
 }

@@ -1,7 +1,10 @@
 ﻿using System.Reflection;
+using UnityEngine;
 
 class Common
 {
+    public static string Cat = "≽^•⩊•^≼";
+
     public static BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
     public static BindingFlags ValFlags = Flags | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.GetProperty | BindingFlags.GetProperty;
     public static BindingFlags FunFlags = Flags;
@@ -37,6 +40,30 @@ class Common
 
         protectedMethod.Invoke(instance, paramters);
 
+    }
+
+    public static void Hint(object pobject, object error)
+    {
+        string name = string.Empty;
+        if (pobject is HullComponent hullComponent)
+            name += hullComponent.name;
+        else if(pobject is GameObject go)
+        {
+
+            name += go.GetComponentInChildren<HullComponent>()?.ComponentName ?? "";
+            name += go.name;
+
+        }
+
+        Hint(name + " " + error.ToString());
+    }
+
+    public static void Hint(object message)
+    {
+        StringFormatter formatter = new StringFormatter();
+        formatter.Color = CustomColor.LightBlueTextColor;
+        formatter.Text =  message.ToString();
+        Debug.LogError("" + formatter);
     }
 
     //    list: List<T> to resize
