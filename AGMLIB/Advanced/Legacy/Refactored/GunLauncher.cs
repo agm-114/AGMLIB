@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
-public class GunLauncher : AmmoFilter
+public class GunLauncher : AmmoCompatiblity
 {
     public bool ConsumesResourcesWhileCycling;
 
