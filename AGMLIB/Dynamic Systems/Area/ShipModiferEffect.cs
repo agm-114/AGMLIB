@@ -9,11 +9,11 @@
 
          public override void Setup()
         {
-            Debug.LogError("ShipModiferEffect Setup " + Modifiers.Count());
+            //Common.Trace("ShipModiferEffect Setup " + Modifiers.Count());
             foreach (StatModifier modifier in Modifiers)
             {
                 _modifierssources.Add(new FreeModifierSource(Guid.ToString() + modifier.StatName, modifier));
-                Debug.LogError("Setup: " + modifier.StatName.ToString());
+                //Common.Trace("Setup: " + modifier.StatName.ToString());
 
             }
         }
@@ -24,7 +24,7 @@
             Debug.LogError(target.ShipDisplayName + " Ship Being Debuffed");
             if (!Active)
             {
-                Debug.LogError("Ship not active");
+                //Debug.LogError("Ship not active");
 
                 ClearEffect(target);
                 return;
@@ -33,7 +33,7 @@
             foreach (FreeModifierSource freeModifierSource in _modifierssources)
             {
                 StatModifier statModifier = freeModifierSource.Modifier;
-                Debug.LogError("Applying: " + statModifier.StatName.ToString());
+                //Debug.LogError("Applying: " + statModifier.StatName.ToString());
 
                 if (UseFallOff)
                 {

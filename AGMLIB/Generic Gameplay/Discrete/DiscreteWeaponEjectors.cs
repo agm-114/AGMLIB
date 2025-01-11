@@ -87,7 +87,7 @@
         }
         Cells[_index].SetShip(this._controller);
         if (this._controller == null)
-            Debug.LogError("null controller");
+            Common.Hint("null controller");
         Cells[_index].Fire(missile, track, salvoId, null, playerOrder, null);
         Cells[_index].FireEffect(true);
         _myHull.MyShip.AmmoFeed.GetAmmoSource(DiscreteWeaponComponent.SelectedAmmoType).Withdraw(1);

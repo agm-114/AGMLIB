@@ -22,13 +22,13 @@ public class IFFComponent : MonoBehaviour
             if(Common.GetVal<Communicator>(loiteringMissile, "_comms").AnyJamming)
                 jammed = true;
         if (jammed)
-            Debug.LogError("IFF SHIP JAMMED" + jammed);
+            Common.Trace("IFF SHIP JAMMED" + jammed);
         //Debug.LogError("IFF MINES JAMMED" + jammed);
         if (!_shipController.CommsEnabled || (_shipController.SensorsEnabled && !jammed))
         {
             if (disabledsensor != null)
             {
-                Debug.LogError("REENABLING SEARCH RADAR");
+                Common.Trace("REENABLING SEARCH RADAR");
                 disabledsensor.SetSensorEnabled(false);
                 disabledsensor = null;
                 SetAntennaPower(0);
@@ -36,14 +36,14 @@ public class IFFComponent : MonoBehaviour
         }
         else if (disabledsensor == null && (jammed || !_shipController.SensorsEnabled))//(!_shipController.Comms.HasWorkingAntenna)
         {
-                
+
             //if (!_shipController.Comms.HasWorkingAntenna)
             //    antennastatus = false;
-            Debug.LogError("TRIGGERING IFF");
+            Common.Trace("TRIGGERING IFF");
             List<InternalActiveSensorComponent> internals = _shipController.GetComponentsInChildren<InternalActiveSensorComponent>().ToList();
-            Debug.LogError("FINDING TARGET SENSOR");
+            Common.Trace("FINDING TARGET SENSOR");
             disabledsensor = internals.Where((InternalActiveSensorComponent x) => x.IsFunctional).SelectMax((InternalActiveSensorComponent x) => Common.GetVal<StatValue>(x, "_statRadiatedPower").Value);
-            Debug.LogError("TRANSMITTING VIA RADAR");
+            Common.Trace("TRANSMITTING VIA RADAR");
             
             SetAntennaPower(Common.GetVal<StatValue>(disabledsensor, "_statRadiatedPower").Value);
             Debug.LogError("RECALCULATING");

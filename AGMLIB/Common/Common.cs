@@ -42,7 +42,12 @@ class Common
 
     }
 
-    public static void Hint(object pobject, object error)
+    public static void Trace(object pobject, object error) => Print(pobject, error, CustomColor.YellowTextColor);
+    public static void Trace(object message) => Print(message, CustomColor.YellowTextColor);
+    public static void Hint(object pobject, object error) => Print(pobject, error, CustomColor.LightBlueTextColor);
+    public static void Hint(object message) => Print(message, CustomColor.LightBlueTextColor);
+
+    public static void Print(object pobject, object error, CustomColor color)
     {
         string name = string.Empty;
         if (pobject is HullComponent hullComponent)
@@ -55,10 +60,10 @@ class Common
 
         }
 
-        Hint(name + " " + error.ToString());
+        Print(name + " " + error.ToString(), color);
     }
 
-    public static void Hint(object message)
+    public static void Print(object message, CustomColor color)
     {
         StringFormatter formatter = new StringFormatter();
         formatter.Color = CustomColor.LightBlueTextColor;
