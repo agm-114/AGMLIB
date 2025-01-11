@@ -20,13 +20,47 @@ class DynamicVisibleParticlesUpdatePlaying
     }
 }
 
+public interface IDynamicCollectablePart
+{
+    void Initialize();
+}
 
 //[HarmonyPatch(typeof(ShipController), nameof(ShipController.Initialize))]
 class ShipControllerInitialize
 {
     public static void Prefix(ShipController __instance)
     {
+        var parts = __instance.gameObject.GetComponentsInChildren<IDynamicCollectablePart>(includeInactive:true);
+        //Debug.LogError("Creating " + parts.Length + " children");
+
+        foreach (var part in parts)
+        {
+
+            part.Initialize();
+        }
+
         //__instance.GetComponentInChildren<FixedCellLauncherComponent>().Slurp();
         //__instance.GetComponentInChildren<FixedCellLauncherComponent>().OnAmmoQuantityChanged.Invoke()
     }
 }
+
+[HarmonyPatch(typeof(Hull), "GetAllSubPartsInternal")]
+class HullGetAllSubPartsInternal
+{
+    public static void Prefix(Hull __instance)
+    {
+        var parts = __instance.gameObject.GetComponentsInChildren<IDynamicCollectablePart>(includeInactive: true);
+        //Debug.LogError("Creating " + parts.Length + " children");
+
+        foreach (var part in parts)
+        {
+
+            part.Initialize();
+        }
+
+        //__instance.GetComponentInChildren<FixedCellLauncherComponent>().Slurp();
+        //__instance.GetComponentInChildren<FixedCellLauncherComponent>().OnAmmoQuantityChanged.Invoke()
+    }
+}
+
+
