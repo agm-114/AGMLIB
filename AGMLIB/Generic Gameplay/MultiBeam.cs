@@ -136,7 +136,7 @@ class PointDefenseControllerTaskDirectWeapon
     static void Postfix(PointDefenseController __instance, Object turret, IEnumerable<Object> targetList)
     {
 
-        if (turret == null) { Debug.LogError("Null turret "); }
+        if (turret == null) { Common.Hint("Null turret "); }
         if (Common.GetVal<IWeapon>(turret, "Wep") is ContinuousWeaponComponent  cwp)
         {
             MultiBeam beamdata = cwp?.gameObject?.GetComponent<MultiBeam>();

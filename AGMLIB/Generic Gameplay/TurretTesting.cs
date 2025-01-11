@@ -142,7 +142,7 @@ class TurretControllerTargetWithinLimits
             }
 
             float traverse = Vector3.SignedAngle(Vector3.forward, onHorizontal, Vector3.up);
-            Debug.LogError("Limits test" + traverse + " " + _limits.Value.LeftAngle + " " + _limits.Value.RightAngle);
+            //Debug.LogError("Limits test" + traverse + " " + _limits.Value.LeftAngle + " " + _limits.Value.RightAngle);
             __result =(traverse >= 0f || Mathf.Abs(traverse) <= _limits.Value.LeftAngle) && (traverse < 0f || traverse <= _limits.Value.RightAngle);
         }
         */
