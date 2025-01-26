@@ -7,6 +7,16 @@ public class AdvancedPaintScheme : MonoBehaviour
     //public HullScheme[] HullSchemes;
 
     //public GameObject PaintSchemesChild; 
+
+    public enum ShaderProperties
+    {
+        PaintMask,
+        BaseColorMap,
+        MaskMap,
+        NormalMap
+    }
+
+    public ShaderProperties shaderproperty = ShaderProperties.PaintMask;
     public GameObject Hull;
     public string ClassName = "default";
     public bool Serialize = true;
@@ -58,6 +68,7 @@ public class AdvancedPaintScheme : MonoBehaviour
             newpaintscheme.SegmentName = SerializedSegmentNames[i];
             newpaintscheme.Replacementtexture = SerializedTextures[i];
             newpaintscheme.Index = SerializedIndexes[i];
+            newpaintscheme.shaderproperty = "_" + shaderproperty.ToString();
             //newpaintscheme.ValidBaketraget = SerializedValidTargets[i];
             //stnewpaintscheme.Baketarget = SerializedTargets[i];
             //if (SerializedTextures[i] == null)
