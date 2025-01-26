@@ -28,12 +28,12 @@
 }
 
 
-[HarmonyPatch(typeof(TurretedLauncherComponent), "FixedUpdate")]
-class TurretedLauncherComponentFixedUpdate
+[HarmonyPatch(typeof(BaseTurretedLauncherComponent), "FixedUpdate")]
+class BaseTurretedLauncherComponentFixedUpdate
 {
 
 
-    public static bool Prefix(TurretedLauncherComponent __instance)
+    public static bool Prefix(BaseTurretedLauncherComponent __instance)
     {
         CustomAimPoint customaimpoint = __instance.GetComponentInChildren<CustomAimPoint>();
         if (customaimpoint == null)

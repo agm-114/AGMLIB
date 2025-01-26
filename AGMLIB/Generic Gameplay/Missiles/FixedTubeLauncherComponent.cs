@@ -1,7 +1,5 @@
 ﻿public class FixedTubeLauncherComponent : TubeLauncherComponent, IFixedWeapon
 {
-    public List<int> MissileSizes = new();
-    public string MissileClass => _missileClass;
 
     public bool NeedsTightPID => false;
 

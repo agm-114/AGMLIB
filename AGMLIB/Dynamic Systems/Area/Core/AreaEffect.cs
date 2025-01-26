@@ -6,6 +6,7 @@ using static Utility.GameColors;
 using Munitions.ModularMissiles;
 using System.Runtime.InteropServices;
 using AGMLIB.Dynamic_Systems.Area;
+using static Game.EWar.EWarPrefabCollection;
 
 
 public class AreaEffect : ActiveSettings
@@ -14,8 +15,7 @@ public class AreaEffect : ActiveSettings
     protected HashSet<MonoBehaviour> _detectedmonobhaviors = new();
 
 
-    protected bool? _laststate = null;
-    protected Guid Guid = Guid.NewGuid();
+
 
     //public bool UseTrigger = true;
     public Collider Trigger;
@@ -23,35 +23,37 @@ public class AreaEffect : ActiveSettings
 
     public bool CustomVFX = true;
     public ColorName Color = ColorName.Orange;
-    public EffectFilter Filter = null;
+    public BaseFilter? Filter = null;
+    public List<BasicEffect> Effects = new();
+    protected bool? _laststate = null;
+    protected Guid Guid = Guid.NewGuid();
     private float _updateInterval = 0.5f;
     private bool _updateEveryFrame = true;
-    private NetworkPoolable _followingInstance;
+    private NetworkPoolable? _followingInstance;
     private const string matproperty = "Color_67F96457";
     private Color? _oldcolor;
     private float _updateAccum = 0f;
 
-    public Material Material
+    public Material? Material
     {
         get
         {
             //if (_followingInstance == null)
             //    Common.Hint("Following Instance Null");
-            MeshRenderer renderer = _followingInstance.GetComponentInChildren<MeshRenderer>();
+            MeshRenderer? renderer = _followingInstance?.GetComponentInChildren<MeshRenderer>();
             //if (renderer == null)
             //    Common.Hint("Following mesh Null");
             //if(_followingInstance.GetComponentInChildren<MeshRenderer>(includeInactive:true).material == null)
             //    Common.Hint("Following mat Null");
 
-            return _followingInstance.GetComponentInChildren<MeshRenderer>(includeInactive: true).material;
+            return _followingInstance?.GetComponentInChildren<MeshRenderer>(includeInactive: true)?.material;
         }
     }
 
     //public List<BasicEffect<Ship>> ShipEffects = new();
     //public List<BasicEffect<ModularMissile>> ModularMissileEffects = new();     
 
-
-    public List<BasicEffect> Effects;
+    
 
     public void Fire()
     {
@@ -59,28 +61,15 @@ public class AreaEffect : ActiveSettings
             return;
         //StopFire();//_EmissionColor
         //Debug.LogError("Creating Sphere");
-        string PrefabName = "Stock/E70 'Interruption' Jammer";
-        HullComponent goodewar = BundleManager.Instance.AllComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
-        if (goodewar == null)
-            Debug.LogError("Did not get following bundle");
-        //Debug.LogError("Found Target " + goodewar.SaveKey);
-        RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
-        if (goodmuzzel == null)
-            Debug.LogError("Did not get following muzzel");
-        GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
-        if(prefab == null)
-            Debug.LogError("Did not get following prefab");
-        else
-            _followingInstance = NetworkObjectPooler.Instance.GetNextOrNew(prefab, transform.position, transform.rotation);
-        if (_followingInstance is ISettableEWarParameters settableEWarParameters)
-        {
-            settableEWarParameters.SetParams(SignatureType.Radar, omni: true, 360f, Radius, 1, 0, 0, 0f, true);
-            _followingInstance.GetComponent<IImbued>()?.Imbue(ShipController.NetID);
-            _oldcolor = Material.GetColor(matproperty);
-            Material.SetColor(matproperty, GetColor(Color));
-            _updateAccum = 0f;
-        }
-
+        _followingInstance = NetworkObjectPooler.Instance.GetNextOrNew(SingletonMonobehaviour<EWarPrefabCollection>.Instance.GetPrefab(EwarType.CommsJamming).gameObject, base.transform.position, base.transform.rotation);
+        if (_followingInstance is not ISettableEWarParameters settableEWarParameters)
+            return;
+        settableEWarParameters.SetParams(SignatureType.Radar, omni: true, 360f, Radius, 1, 0, 0, 0f, true);
+        _followingInstance.GetComponent<IImbued>()?.Imbue(ShipController);
+        _followingInstance.GetComponent<ActiveEWarEffect>().enabled = false;
+        _oldcolor = Material?.GetColor(matproperty);
+        Material?.SetColor(matproperty, GetColor(Color));
+        _updateAccum = 0f;
     }
 
     public void StopFire()
@@ -89,6 +78,7 @@ public class AreaEffect : ActiveSettings
         if (_followingInstance == null)
             return;
         //Debug.LogError("Stopping Sphere");
+        _followingInstance.GetComponent<ActiveEWarEffect>().enabled = true;
 
         if (_oldcolor != null)
             Material.SetColor(matproperty, _oldcolor.Value);
@@ -177,7 +167,8 @@ public class AreaEffect : ActiveSettings
     void UpdateDetectedList(Ship target, bool applicationarg = true)
     {
         //if(_detectedships.Contains(target) )
-        if (applicationarg == true  && (Filter?.ValidTarget(target) ?? true))
+
+        if (applicationarg == true  && (Filter?.CheckShip(ShipController, target.GetComponent<ShipController>()) ?? true))
         {
             foreach(var effect in Effects)
                 effect.Enter(target);
@@ -194,7 +185,7 @@ public class AreaEffect : ActiveSettings
     {
         if(target ==  null) return;
         //if(_detectedships.Contains(target) )
-        if (applicationarg == true)
+        if (applicationarg == true && (Filter?.CheckMissile(ShipController, target) ?? true))
         {
             foreach (var effect in Effects)
                 effect.Enter(target);
@@ -210,7 +201,7 @@ public class AreaEffect : ActiveSettings
 
     public void OnTriggerEnter(Collider other) => OnTrigger(other.transform, true);
     public void OnTriggerExit(Collider other) => OnTrigger(other.transform, false);
-    public void OnTrigger(Transform target, bool applicationarg = true)
+    public void OnTrigger(Transform? target, bool applicationarg = true)
     {
         //Debug.LogError(target.name);
         target = target?.root;
@@ -219,15 +210,15 @@ public class AreaEffect : ActiveSettings
         //Debug.LogError(target.name);
         //foreach (MonoBehaviour behaviour in target.GetComponents<MonoBehaviour>())
         //    Debug.LogError(behaviour.GetType().Name);
-        UpdateDetectedList(target?.GetComponent<Ship>(), applicationarg);
-        UpdateDetectedList(target?.GetComponent<ModularMissile>(), applicationarg);
+        UpdateDetectedList(target.GetComponent<Ship>(), applicationarg);
+        UpdateDetectedList(target.GetComponent<ModularMissile>(), applicationarg);
     }
 
     public static void HandleJammer(ActiveEWarEffect eWarEffect, IEWarTarget target, bool applicationarg)
     {
         FratricidalWeapon weapon = eWarEffect.GetComponent<FratricidalWeapon>();
-        WeaponComponent weaponcom = weapon?.Source;
-        AreaEffect areaeffect = weaponcom?.GetComponentInChildren<AreaEffect>();
+        WeaponComponent? weaponcom = weapon?.Source;
+        AreaEffect? areaeffect = weaponcom?.GetComponentInChildren<AreaEffect>();
         if (target is not MonoBehaviour targetmono)
             return;
         areaeffect?.OnTrigger(targetmono?.transform, applicationarg);

@@ -54,6 +54,6 @@ public class MissileSpawner : MonoBehaviour
 
         //Debug.LogError("Launching Missile");
         //callback?.Invoke(basicMissile);
-        basicMissile?.Launch(_myShip.NetID, 0, false);
+        basicMissile?.Launch( _myShip, 0, false, false, true);
     }
 }

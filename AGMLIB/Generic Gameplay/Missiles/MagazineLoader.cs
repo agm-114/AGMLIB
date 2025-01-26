@@ -102,7 +102,7 @@ class BaseCellLauncherComponentGetDesignWarnings
     }
 }
 
-[HarmonyPatch(typeof(BaseHull), nameof(BaseHull.EditorDoesAnyWeaponUseAmmoType))]
+[HarmonyPatch(typeof(BaseHull), nameof(BaseHull.EditorAmmoTypeInUse))]
 class EditorDoesAnyWeaponUseAmmoType
 {
     public static void Postfix(BaseHull __instance, IMunition ammoType, bool externalFeed, ref bool __result)

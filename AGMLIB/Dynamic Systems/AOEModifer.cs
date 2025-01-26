@@ -6,8 +6,9 @@ using Munitions.ModularMissiles.Runtime.Seekers;
 using System.Runtime.InteropServices;
 using Random = UnityEngine.Random;
 using Munitions.ModularMissiles.Descriptors.Seekers;
+using static Game.EWar.EWarPrefabCollection;
 
-public class AOEModifer : ActiveSettings, IJammingSource
+public class OldAOEModifer : ActiveSettings, IJammingSource
 {
     
     protected HashSet<Ship> _detectedships = new();
@@ -25,6 +26,7 @@ public class AOEModifer : ActiveSettings, IJammingSource
     public bool AffectSelf = true;
     public bool CustomVFX = true;
     public ColorName Color = ColorName.Orange;
+
     [SerializeField]
     protected List<StatModifier>  _modifiers = new(1);
     public bool UseFallOff = false;
@@ -58,29 +60,34 @@ public class AOEModifer : ActiveSettings, IJammingSource
     public ISensorTrackable Platform => ShipController.Trackable;
     public Material Material => _followingInstance.GetComponentInChildren<MeshRenderer>().material;
 
+    public IBoardPieceGroup JammingLOBGroup => throw new NotImplementedException();
+
     private float _softkillAccum = 0;
 
     public void Fire()
     {
+        Common.Hint("Component is no longer supported");
+
         StopFire();//_EmissionColor
         //Debug.LogError("Creating Sphere");
-        string PrefabName = "Stock/E70 'Interruption' Jammer";
-        HullComponent goodewar = BundleManager.Instance.AllComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
-        if (goodewar == null)
-            Debug.LogError("Did not get following bundle");
+        //string PrefabName = "Stock/E70 'Interruption' Jammer";
+        //HullComponent goodewar = BundleManager.Instance.AllComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
+        //if (goodewar == null)
+        //    Debug.LogError("Did not get following bundle");
         //Debug.LogError("Found Target " + goodewar.SaveKey);
-        RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
-        if (goodmuzzel == null)
-            Debug.LogError("Did not get following muzzel");
-        GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
-        if(prefab == null)
-            Debug.LogError("Did not get following prefab");
-        else
-            _followingInstance = NetworkObjectPooler.Instance?.GetNextOrNew(prefab, transform.position, transform.rotation );
+        //RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
+        //if (goodmuzzel == null)
+        //    Debug.LogError("Did not get following muzzel");
+        //GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
+        //if(prefab == null)
+        //    Debug.LogError("Did not get following prefab");
+        //else
+       
+        _followingInstance = NetworkObjectPooler.Instance.GetNextOrNew(SingletonMonobehaviour<EWarPrefabCollection>.Instance.GetPrefab(EwarType.CommsJamming).gameObject, base.transform.position, base.transform.rotation);
         if (_followingInstance is ISettableEWarParameters settableEWarParameters)
         {
             settableEWarParameters.SetParams(SignatureType.Radar, omni: true, 360f, Radius, 1, 0, 0, 0f, true);
-            _followingInstance.GetComponent<IImbued>()?.Imbue(ShipController.NetID);
+            //_followingInstance.GetComponent<IImbued>()?.Imbue(ShipController.NetID);
             _oldcolor = Material.GetColor(matproperty);
             Material.SetColor(matproperty, GetColor(Color));
             _updateAccum = 0f;
@@ -90,6 +97,7 @@ public class AOEModifer : ActiveSettings, IJammingSource
 
     public void StopFire()
     {
+        Common.Hint("Component is no longer supported");
         if (_followingInstance != null)
         {
             if(_oldcolor != null)
@@ -103,8 +111,9 @@ public class AOEModifer : ActiveSettings, IJammingSource
     // Start is called before the first frame update
     void Start()
     {
+        Common.Hint("Component is no longer supported");
 
-        if(Trigger == null)
+        if (Trigger == null)
         {
             SphereCollider sphereCollider = gameObject.GetOrAddComponent<SphereCollider>();
             Trigger = sphereCollider;
@@ -291,14 +300,14 @@ public class AOEModifer : ActiveSettings, IJammingSource
         if (applicationarg == true)
         {
             if (!_detectedmissiles.Contains(target))
-                Debug.LogError(target.name + $" is a valid missile target");
+                //Common.Trace(target.name + $" is a valid missile target");
             _detectedmissiles.Add(target);
             _laststate = null;
         }
         else if(target != null)
         {
 
-            Debug.LogError(target.name + $" is not a valid target");
+            //Common.Trace(target.name + $" is not a valid target");
             _detectedmissiles.Remove(target);
         }
 
@@ -324,7 +333,7 @@ public class AOEModifer : ActiveSettings, IJammingSource
     {
         FratricidalWeapon weapon = eWarEffect.GetComponent<FratricidalWeapon>();
         WeaponComponent weaponcom = weapon?.Source;
-        AOEModifer AOEModifer = weaponcom?.GetComponentInChildren<AOEModifer>();
+        AreaEffect AOEModifer = weaponcom?.GetComponentInChildren<AreaEffect>();
         if (target is not MonoBehaviour targetmono)
             return;
         AOEModifer?.OnTrigger(targetmono?.transform, applicationarg);
@@ -352,14 +361,14 @@ public class AOEModifer : ActiveSettings, IJammingSource
     }
 }
 
-[HarmonyPatch(typeof(ActiveJammingEffect), "TargetGained")]
+//[HarmonyPatch(typeof(ActiveJammingEffect), "TargetGained")]
 class ActiveEWarEffectTargetGained
 {
-    static void Postfix(ActiveEWarEffect __instance, IEWarTarget newTarget) => AOEModifer.HandleJammer(__instance, newTarget, true);
+    static void Postfix(ActiveEWarEffect __instance, IEWarTarget newTarget) => AreaEffect.HandleJammer(__instance, newTarget, true);
 }
 
-[HarmonyPatch(typeof(ActiveJammingEffect), "TargetLost")]
+//[HarmonyPatch(typeof(ActiveJammingEffect), "TargetLost")]
 class ActiveEWarEffectTargetLost
 {
-    static void Postfix(ActiveEWarEffect __instance, IEWarTarget lostTarget) => AOEModifer.HandleJammer(__instance, lostTarget, false);
+    static void Postfix(ActiveEWarEffect __instance, IEWarTarget lostTarget) => AreaEffect.HandleJammer(__instance, lostTarget, false);
 }

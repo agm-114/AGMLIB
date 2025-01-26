@@ -43,13 +43,13 @@ public class FratricidalWeapon : MonoBehaviour
     }
 }
 
-[HarmonyPatch(typeof(RezFollowingMuzzle), nameof(RezFollowingMuzzle.Fire))]
-class RezFollowingMuzzleFire : MonoBehaviour
+[HarmonyPatch(typeof(FollowingInstanceMuzzle), nameof(FollowingInstanceMuzzle.Fire))]
+class FollowingInstanceMuzzleFire : MonoBehaviour
 {
 
-    static void Prefix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
+    static void Prefix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
 
-    static void Postfix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance)
+    static void Postfix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance)
     {
         if (____followingInstance == null)
             return;
@@ -67,8 +67,8 @@ class RezFollowingMuzzleFire : MonoBehaviour
     }
 }
 
-[HarmonyPatch(typeof(RezFollowingMuzzle), nameof(RezFollowingMuzzle.StopFire))]
-class RezFollowingMuzzleStopFire
+[HarmonyPatch(typeof(FollowingInstanceMuzzle), nameof(FollowingInstanceMuzzle.StopFire))]
+class FollowingInstanceMuzzleStopFire
 {
-    static void Prefix(RezFollowingMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
+    static void Prefix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
 }

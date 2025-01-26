@@ -103,7 +103,8 @@ public class Craft : DumbfireRocket, ICraft
     }
     new public void Launch(NetworkIdentity launchingPlatform, int salvoId, bool playerOrder)
     {
-        base.Launch(launchingPlatform, salvoId, playerOrder);
+        //launchingPlatform using be network id
+        base.Launch(null, salvoId, playerOrder, false, false);
         this._collider.isTrigger = false;
     }
     public void SetTarget(IEnumerable<MovementTarget> targets = null)

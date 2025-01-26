@@ -1,9 +1,10 @@
 ﻿using Munitions.ModularMissiles.Descriptors.Support;
 
-[HarmonyPatch(typeof(JammerSupportDescriptor), nameof(JammerSupportDescriptor.SpawnJammingEffect))]
+//[HarmonyPatch(typeof(JammerSupportDescriptor), nameof(JammerSupportDescriptor.SpawnJammingEffect))]
+
 class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
 {
-    static void Prefix(JammerSupportDescriptor __instance, ActiveEWarEffect ____effectPrefab)
+    static void FormerPrefix(JammerSupportDescriptor __instance, ActiveEWarEffect ____effectPrefab)
     {
         ActiveEWarEffect _effectPrefab = ____effectPrefab;
         if (_effectPrefab != null)

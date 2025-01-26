@@ -27,6 +27,20 @@ public class SimpleMagazine : MonoBehaviour, IMagazine
     [SerializeField]
     protected List<float> _weights = new(1);
 
+    public int QuantityNotReserved => throw new NotImplementedException();
+
+    public int QuantityAvailableNotReserved => throw new NotImplementedException();
+
+    public string HeldName => throw new NotImplementedException();
+
+    public int Quantity => throw new NotImplementedException();
+
+    public int QuantityAvailable => throw new NotImplementedException();
+
+    public int PeakQuantity => throw new NotImplementedException();
+
+    public float PercentageAvailable => throw new NotImplementedException();
+
     IMunition IMagazine.AmmoType
     {
 
@@ -44,20 +58,6 @@ public class SimpleMagazine : MonoBehaviour, IMagazine
         }
     }
 
-    int IMagazine.QuantityNotReserved => throw new NotImplementedException();
-
-    int IMagazine.QuantityAvailableNotReserved => throw new NotImplementedException();
-
-    string IQuantityHolder.HeldName => throw new NotImplementedException();
-
-    int IQuantityHolder.Quantity => throw new NotImplementedException();
-
-    int IQuantityHolder.QuantityAvailable => throw new NotImplementedException();
-
-    int IQuantityHolder.PeakQuantity => throw new NotImplementedException();
-
-    float IQuantityHolder.PercentageAvailable => throw new NotImplementedException();
-
     event QuantityChanged IQuantityHolder.OnQuantityChanged
     {
         add => throw new NotImplementedException();
@@ -65,11 +65,10 @@ public class SimpleMagazine : MonoBehaviour, IMagazine
         remove => throw new NotImplementedException();
     }
 
-    int IMagazine.Reserve(uint quantity) => throw new NotImplementedException();
-
-    void IMagazine.UnReserve(uint quantity) => throw new NotImplementedException();
-
-    int IMagazine.UpperQuantityBound() => throw new NotImplementedException();
+    public int Deposit(uint quantity) => throw new NotImplementedException();
+    public int Reserve(uint quantity) => throw new NotImplementedException();
+    public int UnReserve(uint quantity) => throw new NotImplementedException();
+    public int UpperQuantityBound() => throw new NotImplementedException();
 
     int IMagazine.Withdraw(uint quantity) => (int)quantity;
 }
