@@ -36,41 +36,19 @@ public class EntryPoint : IModEntryPoint
     }
     public void PreLoad()
     {
-        //Application.logMessageReceived += HandleLog;
 
-        //SteamManager.SetActivityDetails("map_name", "guys help Im trapped in a dll factory its not much longer before I hit the char limit but you have to send help");
-        //SteamManager.SetActivity(RichPresenceActivity.Skirmish);
-        //Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING",   "1", EnvironmentVariableTarget.User);
-        //Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
-        string box = @" A box (plural: boxes) is a container with rigid sides used for the storage or transportation of its contents. Most boxes have flat, parallel, rectangular sides (typically rectangular prisms). Boxes can be very small (like a matchbox) or very large (like";
-        string CAT = @"
-                     ／＞　 フ
-                    | 　_　_| 
-                  ／` ミ＿xノ 
-                 /　　　　 |
-                /　 ヽ　　 ﾉ
-                │　　|　|　|
-            ／￣|　　 |　|　|
-            (￣ヽ＿_ヽ_)__)
-            ＼二)";
-        for (int i = 1; i <= box.Length; i++)
-        {   
-            //SteamManager.SetActivityDetails("map_name", box.Substring(0, i));
-
-        }
-
-
-        //SteamManager.SetActivityDetails("map_name", CAT);
-        string newlines = "Newline\n\rTest";
-        //SteamManager.SetActivityDetails("map_name", newlines);
-        //SteamManager.SetActivityDetails("map_name", "with weird bugs ≽^•⩊•^≼");
-
-
-        //Debug.LogError(nameof(LookaheadMunition.UseableByFaction));
 
         DependencyPatch.window = false;
-        //Application.Quit();
         Debug.Log($"AGMLIB: {Assembly.GetExecutingAssembly().GetName().Version.ToString()} Preload");
+
+        if (Harmony.HasAnyPatches("neb.lib.harmony.product")) {
+            //Debug.LogError("Illegal Load Order");
+            return;
+        }
+        var harmony = new Harmony("neb.lib.harmony.product");
+        harmony.PatchAll();
+        return;
+
         //Debug.LogError("AGMLIB: 0.3.2.2.12 Preload");
         foreach (var hullComponent in BundleManager.Instance.AllComponents)
         {
@@ -82,12 +60,6 @@ public class EntryPoint : IModEntryPoint
                 }
             }
         }
-        if (Harmony.HasAnyPatches("neb.lib.harmony.product")) {
-            //Debug.LogError("Illegal Load Order");
-            return;
-        }
-        var harmony = new Harmony("neb.lib.harmony.product");
-        harmony.PatchAll();
         /*
         Dictionary<string, FactionTraitCard> traits = Common.GetVal<Dictionary<string, FactionTraitCard>>(BundleManager.Instance, "_conquestTraits");
         KeyValuePair<string, FactionTraitCard> newtrait = new();
@@ -108,7 +80,38 @@ public class EntryPoint : IModEntryPoint
         Debug.LogError("Error");
         Common.SetVal(BundleManager.Instance, "_conquestTraits", traits);
         */
-        return;
+
+        //Application.logMessageReceived += HandleLog;
+
+        //SteamManager.SetActivityDetails("map_name", "guys help Im trapped in a dll factory its not much longer before I hit the char limit but you have to send help");
+        //SteamManager.SetActivity(RichPresenceActivity.Skirmish);
+        //Environment.SetEnvironmentVariable("UNITY_EXT_LOGGING",   "1", EnvironmentVariableTarget.User);
+        //Environment.SetEnvironmentVariable("UNITY_LOG_TIMESTAMP", "1", EnvironmentVariableTarget.User);
+        string box = @" A box (plural: boxes) is a container with rigid sides used for the storage or transportation of its contents. Most boxes have flat, parallel, rectangular sides (typically rectangular prisms). Boxes can be very small (like a matchbox) or very large (like";
+        string CAT = @"
+                     ／＞　 フ
+                    | 　_　_| 
+                  ／` ミ＿xノ 
+                 /　　　　 |
+                /　 ヽ　　 ﾉ
+                │　　|　|　|
+            ／￣|　　 |　|　|
+            (￣ヽ＿_ヽ_)__)
+            ＼二)";
+        for (int i = 1; i <= box.Length; i++)
+        {
+            //SteamManager.SetActivityDetails("map_name", box.Substring(0, i));
+
+        }
+
+
+        //SteamManager.SetActivityDetails("map_name", CAT);
+        string newlines = "Newline\n\rTest";
+        //SteamManager.SetActivityDetails("map_name", newlines);
+        //SteamManager.SetActivityDetails("map_name", "with weird bugs ≽^•⩊•^≼");
+
+
+        //Debug.LogError(nameof(LookaheadMunition.UseableByFaction));
         foreach (var path in _stockBundles.Zip(_compressedBundles, (n, w) => new { Source = n, Dest = w }))
         {
             if (File.Exists(path.Dest.FullPath))

@@ -15,7 +15,7 @@
         <string>Debug/net481/AGMLIB.dll</string>
         <string>Debug/net481/0Harmony.dll</string>
       </Assemblies>
-      <GameVer>0.3.2</GameVer>
+      <GameVer>0.5.2</GameVer>
     </ModInfo>
   </xsl:template>
 </xsl:stylesheet>

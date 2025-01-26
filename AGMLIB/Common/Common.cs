@@ -3,6 +3,9 @@ using UnityEngine;
 
 class Common
 {
+    public static bool SkipFunction => false;
+    public static bool RunFunction => true;
+
     public static string Cat = "≽^•⩊•^≼";
 
     public static BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
@@ -51,7 +54,9 @@ class Common
     {
         string name = string.Empty;
         if (pobject is HullComponent hullComponent)
-            name += hullComponent.name;
+        {
+            pobject = hullComponent.gameObject;
+        }
         else if(pobject is GameObject go)
         {
 
@@ -112,4 +117,13 @@ public static class CommonNonStatic
     {
         return source.Where(item => item != null);
     }
+}
+
+public class MonoComponent : MonoBehaviour
+{
+    public void Trace(object message) {
+        //Debug.LogError(message);
+        Common.Trace(this, message); 
+    }
+
 }

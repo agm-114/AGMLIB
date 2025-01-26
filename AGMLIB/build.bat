@@ -46,7 +46,7 @@ echo         ^<string^>Debug/net481/0Harmony.dll^</string^>
 echo.
 echo     ^</Assemblies^>
 echo.
-echo     ^<GameVer^>0.3.2^</GameVer^>
+echo     ^<GameVer^>0.5.2^</GameVer^>
 echo.
 echo ^</ModInfo^>
 ) > ModInfo.xml
