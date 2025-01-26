@@ -40,6 +40,9 @@ namespace Lib.Generic_Gameplay.Engines
         //private Throttle _lastThrottle = Throttle.Idle;
         //public bool ThrottleChange => _currentThrottle != _lastThrottle;
         public float CurrentThottle => ((float)((int)_currentThrottle) / 2) * _localpower;
+
+        public bool MainEngine => _parent._mainEngine;
+
         private bool _providingLateralThrust = false;
 
         public event HullPart.PartChanged OnIsFunctionalChanged;

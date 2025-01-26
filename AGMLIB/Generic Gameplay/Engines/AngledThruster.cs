@@ -19,7 +19,7 @@ namespace Lib.Generic_Gameplay.Engines
         [SerializeField] private DynamicVisibleParticles _particles;
         [SerializeField] private bool _tweenParticlePower = false;
         [SerializeField] private float _particleThrottleRate = 0.5f;
-        [SerializeField] private bool _mainEngine;
+        [SerializeField] public bool _mainEngine = false;
         [SerializeField] private GroupedAudioSource _audioSource;
         private const float CenterlineOffsetMargin = 0.1f;
         private IThrustController _thrustController;
@@ -42,7 +42,7 @@ namespace Lib.Generic_Gameplay.Engines
             }
         }
 
-
+        public bool MainEngine { get => _mainEngine; set => _mainEngine = value; }
 
         private float _currentParticlePower = 0f;
         private bool _providingLateralThrust = false;

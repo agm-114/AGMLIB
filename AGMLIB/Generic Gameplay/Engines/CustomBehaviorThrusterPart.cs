@@ -47,6 +47,8 @@ namespace Ships
 
         AttitudeControl IThruster.AttitudeDirections => this._behavior.attitudeInfluence;
 
+        public bool MainEngine => throw new NotImplementedException();
+
         private void OnValidate()
         {
             if (this._particles != null)
