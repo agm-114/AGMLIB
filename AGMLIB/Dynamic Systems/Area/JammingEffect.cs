@@ -41,6 +41,8 @@ namespace AGMLIB.Dynamic_Systems.Area
         public Vector3 Position => transform.position;
         public Vector3 PlatformPosition => AreaEffect.Ship.transform.position;
         public ISensorTrackable Platform => AreaEffect.ShipController.Trackable;
+
+        IBoardPieceGroup IJammingSource.JammingLOBGroup => (AreaEffect.ShipController as IBoardPiece).MemberOf;
     }
 
     public class ShipJammingEffect : JammingEffect<Ship>

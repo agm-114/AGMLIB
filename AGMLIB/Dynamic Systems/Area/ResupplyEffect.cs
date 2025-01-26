@@ -13,15 +13,16 @@ namespace AGMLIB.Dynamic_Systems.Area
         public bool CellLaunchers = true;
 
         [SerializeField] protected ISimpleFilter _simplefilter;
+        [SerializeField] protected ISimpleFilter _ifffilter;
 
 
         public override void TargetFixedUpdate(Ship target)
         {
             ReloadPoints += PointsPerSecond * Time.fixedDeltaTime;
-            if (target == AreaEffect.Ship)
+            if (target == AreaEffect.Ship || target == null)
                 return;
 
-            if (AreaEffect.ShipController?.GetIFF(target?.Controller?.OwnedBy) == IFF.Enemy)
+            if (AreaEffect.ShipController?.GetIFF(target.Controller?.OwnedBy) == IFF.Enemy)
                 return;
 
             Transform targettransform = target.gameObject.transform.root;
@@ -48,7 +49,7 @@ namespace AGMLIB.Dynamic_Systems.Area
                 IMagazine source = AreaEffect.Hull.MyShip.AmmoFeed.GetAmmoSource(sink.AmmoType);
                 HullComponent hullComponent = kvp.Value;
 
-                if (sink.AmmoType.PointCost > ReloadPoints)
+                if (sink.AmmoType.PointCost > ReloadPoints || sink == null || source == null)
                     return;
 
                 uint reloadamount = (uint)Math.Min((uint)Math.Min(source.QuantityAvailable, sink.PeakQuantity - sink.QuantityAvailable), ReloadPoints / (float)sink.AmmoType.PointCost);
