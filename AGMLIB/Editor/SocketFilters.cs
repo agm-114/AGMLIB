@@ -1,9 +1,11 @@
+using Game;
+using Munitions.ModularMissiles;
 using Shapes;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
-using static UnityEditorInternal.ReorderableList;
+//using static UnityEditorInternal.ReorderableList;#dll
 using static Utility.GameColors;
 using Random = System.Random;
 
@@ -21,13 +23,24 @@ public interface ICoreFilter
 
     public interface ISimpleFilter
     {
-    
+        public bool CheckIFF(IPlayer parent, IPlayer remote);
+        public bool CheckShip(ShipController parent, ShipController remote);
+        public bool CheckMissile(ShipController parent, ModularMissile remote);
         public bool CheckComponent(HullComponent hullComponent);
-
         public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false);
     }
 
-    public interface IFilter : ICoreFilter
+    public abstract class BaseFilter : MonoBehaviour, ISimpleFilter
+    {
+        virtual public bool CheckComponent(HullComponent hullComponent) => throw new NotImplementedException();
+        virtual public bool CheckIFF(IPlayer parent, IPlayer remote) => throw new NotImplementedException();
+        virtual public bool CheckMissile(ShipController parent, ModularMissile remote) => throw new NotImplementedException();
+        virtual public bool CheckShip(ShipController parent, ShipController remote) => throw new NotImplementedException();
+        virtual public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false) => throw new NotImplementedException();
+    }
+
+
+public interface IFilter : ICoreFilter
     {
         public bool Whitelisteverything { get; }
 
@@ -51,7 +64,7 @@ public interface ICoreFilter
         Torus
     }
 
-    public class SimpleAndFilter : MonoBehaviour, ISimpleFilter
+    public class SimpleAndFilter : BaseFilter, ISimpleFilter
     {
         [SerializeField] protected List<ISimpleFilter> _filters = [];
 
@@ -61,18 +74,42 @@ public interface ICoreFilter
             {
                 if (!filter.CheckComponent(hullComponent))
                     return false;
-            }
+            }   
             return true;
         }
 
-        public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false) => throw new NotImplementedException();
+
 }
 
-public abstract class BaseFilter : MonoBehaviour, ISimpleFilter
+public class SimpleOwnerFilter : BaseFilter, ISimpleFilter
 {
-    abstract public bool CheckComponent(HullComponent hullComponent);
-    abstract public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false);
+    [SerializeField] protected bool Self = false;
+    [SerializeField] protected bool Mine = true;
+    [SerializeField] protected bool Friendly = false;
+    [SerializeField] protected bool Enemy = true;
+    [SerializeField] protected bool None = true;
+
+
+    override public bool CheckMissile(ShipController parent, ModularMissile target) => ValidIFFTarget(parent.OwnedBy, target?.OwnedBy);
+    public bool ValidIFFTarget(IPlayer owner, IPlayer toPlayer)
+    {
+
+        Game.IFF IFFstatus = IFFExtensions.GetIFF(owner, toPlayer);
+        if (!Friendly && IFFstatus != Game.IFF.Enemy)
+            return false;
+        else if (!Enemy && IFFstatus == Game.IFF.Enemy)
+            return false;
+        return true;
+    }
+    override public bool CheckShip(ShipController parent, ShipController remote)
+    {
+        if (parent == remote)
+            return Self;
+        return ValidIFFTarget(parent.OwnedBy, remote?.OwnedBy);
+    }
+
 }
+
 
 
 public class SimpleFilter : BaseFilter, ISimpleFilter
@@ -82,7 +119,6 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
         [SerializeField] protected bool _defaultvalue = false;
         public IList<string> Whitelist => _whitelist;
         public IList<string> Blacklist => _blacklist;
-
         public ISimpleFilter CopyFilter(ICoreFilter filter, bool newdefault = true)
         {
             _whitelist = filter.Whitelist.ToList();
@@ -94,9 +130,6 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
 
         override public bool CheckComponent(HullComponent hullComponent)
         {
-
-
-
             if (hullComponent is not WeaponComponent weaponComponent)
                 return _defaultvalue;
 
@@ -533,23 +566,22 @@ class ShipEditorPanePatch
         //
 
 
+        List<SelectableListItem> validComponents = ____palette.GetItemsForSocket(socket);
+        foreach (SelectableListItem item in validComponents)
         {
-            List<SelectableListItem> validComponents = ____palette.GetItemsForSocket(socket);
-            foreach (SelectableListItem item in validComponents)
-            {
-                //if (item.Data is not HullComponent component)
-                //    continue;
-                //Debug.Log("plt " +  component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category);
+            //if (item.Data is not HullComponent component)
+            //    continue;
+            //Debug.Log("plt " +  component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category);
 
-            }
-
-            //
-            SimpleDiscount.UISocket = socket;
-            SocketFilters socketFilters = socket.GetComponent<SocketFilters>();
-            return socketFilters == null || socketFilters.ShowPalette;
         }
 
-        static void Postfix(ShipEditorPane __instance, HullSocket socket)
+        //
+        SimpleDiscount.UISocket = socket;
+        SocketFilters socketFilters = socket.GetComponent<SocketFilters>();
+        return socketFilters == null || socketFilters.ShowPalette;
+    }
+
+            static void Postfix(ShipEditorPane __instance, HullSocket socket)
         {
             SimpleDiscount.UISocket = socket;
             //Debug.LogError("Ship Editor Pane Postfix");
@@ -571,155 +603,154 @@ class ShipEditorPanePatch
             }, initialState: true);
             //Debug.LogError("Finished Delegates");
         }
-    }
+}
 
-    [HarmonyPatch(typeof(Ship), nameof(Ship.LoadFromSave))]
-    class LoadPatch
+[HarmonyPatch(typeof(Ship), nameof(Ship.LoadFromSave))]
+class LoadPatch
+{
+    static void Postfix(Ship __instance)
     {
-        static void Postfix(Ship __instance)
+        HullSocket[] sockets = __instance.GetComponentsInChildren<HullSocket>();
+        foreach (HullSocket socket in sockets)
         {
-            HullSocket[] sockets = __instance.GetComponentsInChildren<HullSocket>();
-            foreach (HullSocket socket in sockets)
-            {
-                SocketFilters socketFilters = socket.GetComponent<SocketFilters>();
-                if (socketFilters != null && socket.Component == null && !socketFilters.AllowNullComponent)
-                    socket.SetComponent(null);
-            }
+            SocketFilters socketFilters = socket.GetComponent<SocketFilters>();
+            if (socketFilters != null && socket.Component == null && !socketFilters.AllowNullComponent)
+                socket.SetComponent(null);
         }
     }
+}
 
-    [HarmonyPatch(typeof(HullSocket), nameof(HullSocket.SetComponent))]
-    class HullSocketPatch
+[HarmonyPatch(typeof(HullSocket), nameof(HullSocket.SetComponent))]
+class HullSocketPatch
+{
+    static bool Prefix(HullSocket __instance, ref HullComponent componentPrefab)
     {
-        static bool Prefix(HullSocket __instance, ref HullComponent componentPrefab)
+
+        //Debug.LogError("Socket Filter Prefix Start");
+        HullSocket socket = __instance;
+        if (socket.Component is HullComponent _component && false)
         {
+            _component.SetSocket(null);
+            CheckDepedends(socket, true, true);
+            _component.enabled = false;
+            UnityEngine.Object.Destroy(_component.gameObject);
+            Common.SetVal(socket, "_component", null);
+            //SetPrivateField(_component, "_size", _component);
+            socket.UpdateColliderActive();
+        }
+        //return true;
+        //Debug.LogError(componentPrefab.Category);
 
-            //Debug.LogError("Socket Filter Prefix Start");
-            HullSocket socket = __instance;
-            if (socket.Component is HullComponent _component && false)
-            {
-                _component.SetSocket(null);
-                CheckDepedends(socket, true, true);
-                _component.enabled = false;
-                UnityEngine.Object.Destroy(_component.gameObject);
-                Common.SetVal(socket, "_component", null);
-                //SetPrivateField(_component, "_size", _component);
-                socket.UpdateColliderActive();
-            }
-            //return true;
-            //Debug.LogError(componentPrefab.Category);
+        //Debug.LogError("Set Component Prefix");
+        SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
+        //if(componentPrefab != null)
+        //    Debug.LogError("General Install " + componentPrefab.SaveKey);
 
-            //Debug.LogError("Set Component Prefix");
-            SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
-            //if(componentPrefab != null)
-            //    Debug.LogError("General Install " + componentPrefab.SaveKey);
-
-            if (componentPrefab == null)
-            {
-                if (socketFilters.AllowNullComponent)
-                    return true;
-                componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
-            }
-
-            if (socket.GetComponent<SocketFilters>() == null && componentPrefab.GetComponent<SocketFilters>() == null)
+        if (componentPrefab == null)
+        {
+            if (socketFilters.AllowNullComponent)
                 return true;
+            componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
+        }
 
-            /*
-            if (!CheckDepedends(socket))
-            {
-                //Debug.LogError("Missing Component");
-                //return false;
-            }
-            */
+        if (socket.GetComponent<SocketFilters>() == null && componentPrefab.GetComponent<SocketFilters>() == null)
+            return true;
 
-            if (!SocketFilters.CheckLegal(socket, componentPrefab))
-                componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
-            else if (!componentPrefab.TestSocketFit(socket.Size))
-            {
-                //Debug.LogError("Resizing Socket");
-                socketFilters.Size = socket.Size.Dimensions;
-                socketFilters.Resized = true;
-                Common.SetVal(socket, "_size", componentPrefab.Size);
-                return true;
-            }
+        /*
+        if (!CheckDepedends(socket))
+        {
+            //Debug.LogError("Missing Component");
+            //return false;
+        }
+        */
 
+        if (!SocketFilters.CheckLegal(socket, componentPrefab))
+            componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
+        else if (!componentPrefab.TestSocketFit(socket.Size))
+        {
+            //Debug.LogError("Resizing Socket");
+            socketFilters.Size = socket.Size.Dimensions;
+            socketFilters.Resized = true;
+            Common.SetVal(socket, "_size", componentPrefab.Size);
             return true;
         }
 
-        static void Postfix(HullSocket __instance)
+        return true;
+    }
+
+    static void Postfix(HullSocket __instance)
+    {
+        //Debug.LogError("Socket Filter Postfix Start");
+        HullSocket socket = __instance;
+        //Debug.LogError("Set Component Postfix");
+
+        CheckDepedends(socket, true);
+        SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
+
+        if (socketFilters.Resized && socketFilters.Size != null)
         {
-            //Debug.LogError("Socket Filter Postfix Start");
-            HullSocket socket = __instance;
-            //Debug.LogError("Set Component Postfix");
-
-            CheckDepedends(socket, true);
-            SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
-
-            if (socketFilters.Resized && socketFilters.Size != null)
-            {
-                Common.SetVal(__instance, "_size", socketFilters.Size);
-                socketFilters.Resized = false;
-            }
-            /*if(socket.Component == null)
-                Debug.LogError("Component Null");
-            else
-                Debug.LogError(socket.Component.ComponentName);*/
-            if (socket.Component == null && !socketFilters.AllowNullComponent)
-            {
-                //Debug.LogError("Comp Removed");
-                HullComponent componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
-                socket.SetComponent(componentPrefab);
-            }
-            Finalize(__instance);
-
+            Common.SetVal(__instance, "_size", socketFilters.Size);
+            socketFilters.Resized = false;
         }
-        public static void Finalize(HullSocket __instance)
+        /*if(socket.Component == null)
+            Debug.LogError("Component Null");
+        else
+            Debug.LogError(socket.Component.ComponentName);*/
+        if (socket.Component == null && !socketFilters.AllowNullComponent)
         {
-            //Needed for dynamic reduction
-            //__instance.GetComponentInParent<Ship>().EditorRecalcCrewAndResources();
+            //Debug.LogError("Comp Removed");
+            HullComponent componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
+            socket.SetComponent(componentPrefab);
+        }
+        Finalize(__instance);
+
+    }
+    public static void Finalize(HullSocket __instance)
+    {
+        //Needed for dynamic reduction
+        //__instance.GetComponentInParent<Ship>().EditorRecalcCrewAndResources();
+    }
+
+    static bool CheckDepedends(HullSocket socket, bool write = false, bool remove = false)
+    {
+        if (socket == null)
+            return true;
+        ComponentDependencies? componentDependencies = socket.Component?.GetComponent<ComponentDependencies>();
+        if (componentDependencies == null) return true;
+        //Debug.LogError("Checking depdends");
+        HullSocket[] sockets = socket.gameObject.transform.parent.GetComponentsInChildren<HullSocket>();
+
+        bool returnval = true;
+        foreach (KeyValuePair<string, string> componentDependency in componentDependencies.Dependendents)
+        {
+            HullSocket testSocket = sockets.Where(testSocket => componentDependency.Key == testSocket.Key).First();
+            //Debug.LogError("D " + componentDependency.Key + " " + componentDependency.Value);
+            if (remove)
+                testSocket.SetComponent(null);
+            else if (write && (componentDependencies.HardInstallDepedenents || (componentDependency.Value != testSocket?.Component?.SaveKey && componentDependencies.InstallDepedenents)))
+            {
+                testSocket?.SetComponent(BundleManager.Instance.GetHullComponent(componentDependency.Value));
+            }
         }
 
-        static bool CheckDepedends(HullSocket socket, bool write = false, bool remove = false)
+        foreach (KeyValuePair<string, string> componentDependency in componentDependencies.Requirements)
         {
-            if (socket == null)
-                return true;
-            ComponentDependencies? componentDependencies = socket.Component?.GetComponent<ComponentDependencies>();
-            if (componentDependencies == null) return true;
-            //Debug.LogError("Checking depdends");
-            HullSocket[] sockets = socket.gameObject.transform.parent.GetComponentsInChildren<HullSocket>();
-
-            bool returnval = true;
-            foreach (KeyValuePair<string, string> componentDependency in componentDependencies.Dependendents)
+            HullSocket testSocket = sockets.Where(testSocket => componentDependency.Key == testSocket.Key).First();
+            //Debug.LogError("R " + componentDependency.Key + " " + componentDependency.Value);
+            if (remove)
+                testSocket.SetComponent(null);
+            else if (componentDependency.Value != testSocket?.Component?.SaveKey || componentDependencies.HardInstallDepedenents)
             {
-                HullSocket testSocket = sockets.Where(testSocket => componentDependency.Key == testSocket.Key).First();
-                //Debug.LogError("D " + componentDependency.Key + " " + componentDependency.Value);
-                if (remove)
-                    testSocket.SetComponent(null);
-                else if (write && (componentDependencies.HardInstallDepedenents || (componentDependency.Value != testSocket?.Component?.SaveKey && componentDependencies.InstallDepedenents)))
-                {
+                if (componentDependencies.InstallRequirements && write)
+                    //Debug.LogError("Add");
                     testSocket?.SetComponent(BundleManager.Instance.GetHullComponent(componentDependency.Value));
-                }
+                else
+                    returnval = false;
             }
-
-            foreach (KeyValuePair<string, string> componentDependency in componentDependencies.Requirements)
-            {
-                HullSocket testSocket = sockets.Where(testSocket => componentDependency.Key == testSocket.Key).First();
-                //Debug.LogError("R " + componentDependency.Key + " " + componentDependency.Value);
-                if (remove)
-                    testSocket.SetComponent(null);
-                else if (componentDependency.Value != testSocket?.Component?.SaveKey || componentDependencies.HardInstallDepedenents)
-                {
-                    if (componentDependencies.InstallRequirements && write)
-                        //Debug.LogError("Add");
-                        testSocket?.SetComponent(BundleManager.Instance.GetHullComponent(componentDependency.Value));
-                    else
-                        returnval = false;
-                }
-            }
-
-            //return true;
-            return componentDependencies.InstallRequirements || returnval;
-
         }
+
+        //return true;
+        return componentDependencies.InstallRequirements || returnval;
+
     }
 }
