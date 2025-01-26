@@ -1,4 +1,5 @@
-﻿using QFSW.QC.Demo;
+﻿using FleetEditor.CraftEditor;
+using QFSW.QC.Demo;
 using System.Drawing;
 using UnityEngine;
 using Image = UnityEngine.UI.Image;
@@ -68,16 +69,24 @@ using Image = UnityEngine.UI.Image;
     {
         static void Postfix(ModalListSelectDetailed __instance, SelectableListItem selected, TextMeshProUGUI ____detailText)
         {
+            TextMeshProUGUI extralore = Lore.GetExtraLoreTMP(____detailText);
+            extralore.text = "";
+
             MonoBehaviour loreobject = null;
             if (selected is PaletteItem listItem)
                 loreobject = listItem.Component;
             else if (selected is HullListItem hullitem)
                 loreobject = hullitem.Hull;
+            else if (selected is CraftListItem craftitem)
+                loreobject = craftitem.Craft;
+            else if (selected is CraftStaticComponentItem staticcompitem)
+                loreobject = staticcompitem.Component;
+            else if (selected is CraftStaticSocketItem staticsocket)
+                loreobject = staticsocket.Socket;
             else
                 return;
             //Transform root = ____detailText.transform.parent.transform;
-            TextMeshProUGUI extralore = Lore.GetExtraLoreTMP(____detailText);
-            extralore.text = Common.Cat;
+
 
 
             if (loreobject?.GetComponentInChildren<Lore>() is not Lore lore)
@@ -94,7 +103,7 @@ using Image = UnityEngine.UI.Image;
 
             //____detailText.font = font;
         }
-    }
+    }    
 
     [HarmonyPatch(typeof(PaletteItem), "GetDetailText")]
     static class ComponentPaletteGetDetailTextPatch
