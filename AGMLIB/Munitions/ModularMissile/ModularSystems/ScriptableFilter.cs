@@ -82,7 +82,7 @@ public class ModularFactionDescription : FactionDescription, IModular
             oneoff = false;
         }
 
-        Debug.Log("Checking " + checkKey + " " + primaryFactionKey);
+        //Debug.Log("Checking " + checkKey + " " + primaryFactionKey);
         if (_sharedFactionSet == null)
         {
             _sharedFactionSet = new HashSet<string>(SharedFactionAll);
@@ -123,41 +123,41 @@ public class ModularFactionDescription : FactionDescription, IModular
 
         if (_sharedEquipmentSetblacklist.Contains(checkKey))
         {
-            Debug.Log("equipmentset blacklist");
+            //Debug.Log("equipmentset blacklist");
             return false;
         }
         else if (_sharedEquipmentSet.Contains(checkKey))
         {
-            Debug.Log("shared witelist");
+            //Debug.Log("shared witelist");
 
             return true;
 
         }
         else if (_shareEquipmentRegexblacklist.Any((Regex x) => x.IsMatch(checkKey)))
         {
-            Debug.Log("equipmentregex blacklist");
+            //Debug.Log("equipmentregex blacklist");
 
             return false;
         }
 
         else if (_shareEquipmentRegex.Any((Regex x) => x.IsMatch(checkKey)))
         {
-            Debug.Log("equipmentregex whitelist");
+            //Debug.Log("equipmentregex whitelist");
 
             return true;
 
         }
         if(primaryFactionKey == this.SaveKey)
         {
-            Debug.Log("primarysavekey whitelist");
+            //Debug.Log("primarysavekey whitelist");
 
             return true;
         }
 
-        foreach (string faction in _sharedFactionSet)
-            Debug.Log("faction: " + faction);
+        //foreach (string faction in _sharedFactionSet)
+        //    Debug.Log("faction: " + faction);
 
-        Debug.Log("null: " + !string.IsNullOrEmpty(primaryFactionKey) +  " faction null: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
+        //Debug.Log("null: " + !string.IsNullOrEmpty(primaryFactionKey) +  " faction null: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
         return (!string.IsNullOrEmpty(primaryFactionKey) && includeFactionAll && _sharedFactionSet.Contains(primaryFactionKey));
     }
 }
@@ -173,7 +173,7 @@ class FactionDescriptionCheckSharedEquipment
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(checkKey, primaryFactionKey, includeFactionAll);
         bool delta = oldresult != __result;
-        Debug.Log("delta: " + delta + " checkKey:" + checkKey + " old: " + oldresult + " new: " + __result + " factionkey: " + primaryFactionKey);
+        //Debug.Log("delta: " + delta + " checkKey:" + checkKey + " old: " + oldresult + " new: " + __result + " factionkey: " + primaryFactionKey);
     }
 }
 
@@ -190,7 +190,7 @@ class LookaheadMunitionUseableByFaction
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(__instance.SaveKey, __instance.FactionKey, true);
         bool delta = oldresult != __result;
-        Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
+        //Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
     }
 }
 
@@ -212,15 +212,15 @@ public class AvailableMunitionsSetConstructor
         foreach (IMunition munition in BundleManager.Instance.AllMunitions)
         {
             
-            Debug.Log(munition.MunitionName + " " + munition.GetType());
+            //Debug.Log(munition.MunitionName + " " + munition.GetType());
 
             if (FactionDescription.FullCheckSharedEquipment(munition.SaveKey, munition.FactionKey, true))
             {
-                Debug.Log("Constructor True");
+                //Debug.Log("Constructor True");
             }
             else
             {
-                Debug.Log("Constructor False");
+                //Debug.Log("Constructor False");
 
                 _allMunitions.Remove(munition);
                 _allMunitionsByNetKey.Remove(munition.NetworkSpawnKey);
@@ -242,7 +242,7 @@ class LightweightMunitionBaseUseableByFaction
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(__instance.SaveKey, ((IMunition)__instance).FactionKey, true);
         bool delta = oldresult != __result;
-        Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + ((IMunition)__instance).FactionKey);
+        //Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + ((IMunition)__instance).FactionKey);
     }
 }
 
@@ -257,6 +257,6 @@ class IFactionLockedUseableByFaction
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(ammo.SaveKey, ammo.FactionKey, true);
         bool delta = oldresult != __result;
-        Debug.Log("delta: " + delta + " checkKey:" + ammo.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + ammo.FactionKey);
+        //Debug.Log("delta: " + delta + " checkKey:" + ammo.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + ammo.FactionKey);
     }
 }
