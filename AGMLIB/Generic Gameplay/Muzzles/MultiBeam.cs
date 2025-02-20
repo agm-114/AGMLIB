@@ -4,7 +4,7 @@ using static Ships.ContinuousWeaponComponent;
 
 public class MultiBeam : MonoBehaviour
 {
-    
+
     public int TruePostionWeight = 10;
     public int KnownPositionWeight = 1;
     public bool SingleTargetMode = false;
@@ -57,7 +57,7 @@ public class MultiBeam : MonoBehaviour
     {
 
         List<ITrack> workingtracks = new(Sortedtracklist);
-;
+        ;
         if (workingtracks.Count > Muzzles.Count)
         {
 
@@ -89,7 +89,7 @@ public class MultiBeam : MonoBehaviour
         //Debug.LogError("Tracklist reduced from " + Sortedtracklist.Count + " to " + Targetedtracks.Count);
         for (int i = 0; i < Muzzles.Count; i++)
         {
-            if(i < tracks.Count)
+            if (i < tracks.Count)
                 StartFire(i, tracks.ElementAt(i));
             else
                 StopFire(i);
@@ -137,13 +137,13 @@ class PointDefenseControllerTaskDirectWeapon
     {
 
         if (turret == null) { Common.Hint("Null turret "); }
-        if (Common.GetVal<IWeapon>(turret, "Wep") is ContinuousWeaponComponent  cwp)
+        if (Common.GetVal<IWeapon>(turret, "Wep") is ContinuousWeaponComponent cwp)
         {
             MultiBeam beamdata = cwp?.gameObject?.GetComponent<MultiBeam>();
-            if (beamdata == null) { return;  }
+            if (beamdata == null) { return; }
             Common.SetVal(cwp, "_cooldownStyle", CooldownType.Proportional);
             beamdata.AssignedTracks = targetList.ConvertAll(target => Common.GetVal<ITrack>(target, "Track")) ?? new();
-            beamdata.CachedAvoidTracks = null ;
+            beamdata.CachedAvoidTracks = null;
         }
     }
 }
