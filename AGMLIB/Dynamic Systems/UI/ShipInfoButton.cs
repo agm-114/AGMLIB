@@ -14,7 +14,12 @@ public class ShipInfoButton : ShipState
     public bool Override = false;
     public ButtonData? Data;
     public SequentialButton Button => Data?.Button;
-    public static ShipInfoButton FindButton(ShipController shipController, string buttonname) => shipController.GetComponentsInChildren<ShipInfoButton>().Where(a => a.ButtonName == buttonname).First();
+    public static ShipInfoButton FindButton(ShipController shipController, string buttonname) {
+        IEnumerable<ShipInfoButton> buttons = shipController.GetComponentsInChildren<ShipInfoButton>().Where(a => a.ButtonName == buttonname).ToList();
+        if (buttons.Any())
+            return buttons.First();
+        return null;
+    }
     public static SequenceOption CreateOption(string name, GameColors.ColorName color)
     {
         SequenceOption option = new()

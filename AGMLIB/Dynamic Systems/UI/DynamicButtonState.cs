@@ -59,7 +59,7 @@
             return;
         foreach(ForcedButtonState forcedButtonState in forcedButtonStates)
         {
-            ShipInfoButton button = ShipInfoButton.FindButton(ShipController, forcedButtonState.ButtonName);
+            ShipInfoButton button = GetButton(forcedButtonState.ButtonName);
 
             if (button == null)
                 continue;
