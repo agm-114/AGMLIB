@@ -12,8 +12,8 @@ namespace AGMLIB.Dynamic_Systems.Area
         public bool BulkMagazines = true;
         public bool CellLaunchers = true;
 
-        [SerializeField] protected ISimpleFilter _simplefilter;
-        [SerializeField] protected ISimpleFilter _ifffilter;
+        [SerializeField] protected BaseFilter AmmoFilter;
+
 
 
         public override void TargetFixedUpdate(Ship target)
@@ -36,8 +36,8 @@ namespace AGMLIB.Dynamic_Systems.Area
             if(CellLaunchers)
                 test1.AddRange(targettransform.GetComponentsInChildren<CellLauncherComponent>().ConvertAll(comp => comp.Missiles .Select(mag => new KeyValuePair<IMagazine, HullComponent>(mag, comp))));
             IEnumerable<KeyValuePair<IMagazine, HullComponent>>  test2 = test1.SelectMany(list => list).Where(pair => pair.Key.QuantityAvailable < pair.Key.PeakQuantity);
-            if (_simplefilter != null)
-                test2 = test2.Where(pair => _simplefilter.IsAmmoCompatible(pair.Key.AmmoType));
+            if (AmmoFilter != null)
+                test2 = test2.Where(pair => AmmoFilter.IsAmmoCompatible(pair.Key.AmmoType));
             IOrderedEnumerable<KeyValuePair<IMagazine, HullComponent>>  test3 = test2.OrderBy(kvp => kvp.Key.PercentageAvailable);
 
 

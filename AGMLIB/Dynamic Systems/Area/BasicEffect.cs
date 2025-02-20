@@ -2,6 +2,7 @@
 {
     public class BasicEffect : MonoBehaviour
     {
+        //[SerializeField] protected BaseFilter ShipFilter;
         [HideInInspector]
         public AreaEffect AreaEffect;
         public virtual bool RequireUpdate => false;

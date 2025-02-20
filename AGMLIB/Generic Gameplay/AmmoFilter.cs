@@ -41,7 +41,7 @@ public class AmmoCompatiblity : MonoBehaviour, ICoreFilter
         return true;
     }
 }
-public class AmmoFilter : AmmoCompatiblity { }
+public class AmmoFilter : AmmoCompatiblity { public void Awake( ) { Common.Hint(this.gameObject, "Replace Ammo filter with AmmoCompatiblity"); } }
 
 
 

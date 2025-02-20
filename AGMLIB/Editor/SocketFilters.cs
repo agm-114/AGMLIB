@@ -1,6 +1,9 @@
 using Game;
+using Lib;
+using Lib;
 using Munitions.ModularMissiles;
 using Shapes;
+using Ships;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine.Rendering;
@@ -66,7 +69,7 @@ public interface IFilter : ICoreFilter
 
     public class SimpleAndFilter : BaseFilter, ISimpleFilter
     {
-        [SerializeField] protected List<ISimpleFilter> _filters = [];
+        [SerializeField] protected List<BaseFilter> _filters = [];
 
         public bool CheckComponent(HullComponent hullComponent)
         {
@@ -130,38 +133,14 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
 
         override public bool CheckComponent(HullComponent hullComponent)
         {
-            if (hullComponent is not WeaponComponent weaponComponent)
-                return _defaultvalue;
+            bool valid = Filters.CheckComponent(hullComponent, _whitelist, _blacklist, _defaultvalue);
+            foreach (string whitelist in Whitelist)
+            {
+                //Common.Trace("w" + whitelist);
+            }
+            //Common.Trace("checking weapon" + hullComponent.SaveKey + hullComponent.Category + valid);
 
-            MunitionTags[] _compatibleAmmoTags = Common.GetVal<MunitionTags[]>(weaponComponent, "_compatibleAmmoTags");
-            IEnumerable<string> taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Subclass);
-            string _statGroupSubtype = Common.GetVal<string>(weaponComponent, "_statGroupSubtype");
-            if (Blacklist.Intersect(taglist).Any())
-                return false;
-            if (Whitelist.Intersect(taglist).Any())
-                return true;
-            taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Class);
-            if (Blacklist.Intersect(taglist).Any())
-                return false;
-            if (Whitelist.Intersect(taglist).Any())
-                return true;
-            if (Blacklist.Contains(weaponComponent.Category))
-                return false;
-            if (Whitelist.Contains(weaponComponent.Category))
-                return true;
-            if (Blacklist.Contains(_statGroupSubtype))
-                return false;
-            if (Whitelist.Contains(_statGroupSubtype))
-                return true;
-            if (Blacklist.Contains(weaponComponent.CostBreakdownClass.ToString()))
-                return false;
-            if (Whitelist.Contains(weaponComponent.CostBreakdownClass.ToString()))
-                return true;
-            if (Blacklist.Contains(weaponComponent.CompoundingCostClass))
-                return false;
-            if (Whitelist.Contains(weaponComponent.CompoundingCostClass))
-                return true;
-            return _defaultvalue;
+            return valid;
         }
 
     override public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false)
@@ -259,9 +238,12 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
 
         public static bool CheckLegal(HullSocket socket, HullComponent hullComponent)
         {
+            SocketFilters socketFilters = socket?.GetComponent<SocketFilters>() ?? new SocketFilters();
+
+            if (hullComponent == null)
+                return socketFilters.AllowNullComponent;
             //Debug.Log(hullComponent.SaveKey);
             SocketFilters componentFilters = hullComponent.GetComponent<SocketFilters>() ?? new SocketFilters();
-            SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
             if (!socketFilters.AllowNullComponent && hullComponent == null)
                 return false;
             else if ((!socketFilters.AllowIllegal || !componentFilters.AllowIllegal) && !hullComponent.TestSocketFit(socket.Size))
@@ -494,16 +476,22 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
                 HullSocket? socket = child?.Socket;
 
                 SocketFilters? filter = socket?.GetComponent<SocketFilters>();
-                if (!(filter?.ShowInShipPane ?? true))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
+                if (filter == null)
+                    continue;
+                //Debug.LogError($"checking socket {socket?.ShortName}");
+
+
+                if (filter.ShowInShipPane &&  string.IsNullOrEmpty(filter.CustomType))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
                 {
-                   // Debug.LogError("removing socket " + socket?.ShortName) ;
-                    List<SocketItem> _sockets = Common.GetVal<List<SocketItem>>(__instance, "_sockets");
-                    _sockets.Remove(child);
-                    UnityEngine.Object.Destroy(child?.gameObject);
+                    continue;
 
                 }
+                //Debug.LogError("removing socket " + socket?.ShortName);
+                List<SocketItem> _sockets = Common.GetVal<List<SocketItem>>(__instance, "_sockets");
+                _sockets.Remove(child);
+                UnityEngine.Object.Destroy(child?.gameObject);
 
-            }
+        }
             HashSet<string> types = [];
 
             IReadOnlyCollection<HullSocket> allSockets = ____currentShip.Ship.Hull.AllSockets;
