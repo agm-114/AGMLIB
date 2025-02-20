@@ -26,7 +26,7 @@ public class InternalShipState : MonoBehaviour
         if (!_buttons.TryGetValue(key, out ShipInfoButton button))
         {
             ShipInfoButton shipInfoButton = ShipInfoButton.FindButton(ShipController, key);
-            _buttons.Add(key, ShipInfoButton.FindButton(ShipController, key));
+            _buttons.Add(key, shipInfoButton);
             return shipInfoButton;
         }
         return button;
