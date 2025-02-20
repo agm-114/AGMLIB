@@ -3,6 +3,7 @@ using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles;
 using static Utility.GameColors;
 using Munitions.ModularMissiles.Descriptors;
+using FleetEditor.CraftEditor;
 
 public class AdvancedModularMissile : ModularMissile
 {
@@ -21,8 +22,8 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
     public override string GetSummarySegment()
     {
         if(MemoryMode)
-            return "<color=" + GetTextColor(Color) + ">GOT</color>";
-        return "<color=" + GetTextColor(Color) + ">GOLIS</color>";
+            return "<color=" + GameColors.GetTextColor(Color) + ">GOT</color>";
+        return "<color=" + GameColors.GetTextColor(Color) + ">GOLIS</color>";
     }
     public override string GetDetailSummarySegment()
     {
@@ -40,14 +41,12 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
 
     public override void FinalSetup(ModularMissile missile)
     {
-        
+
         Communicator component = missile.GetComponent<Communicator>();
         if (component == null)
         {
             component = missile.GameObj.AddComponent<Communicator>();
-            component.SpawnJammableTarget();
         }
-
         missile.AddRuntimeBehaviour<RuntimePostionSeeker>(this);
     }
 }
@@ -103,9 +102,9 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
         SetupTrack();
     }
 
-    public override void OnLaunched()
+    public override void OnLaunched(ILaunchingPlatform platform, bool forceHotLaunch, bool immediateSearching)
     {
-        base.OnLaunched();
+        base.OnLaunched(platform, forceHotLaunch, immediateSearching);
         _age = 0;
     }
 
@@ -169,7 +168,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
     {
         return base._trackTargetInitialPos;
     }
-    protected override SeekerSearchResult SearchForTargetInternal(IReadOnlyCollection<RuntimeMissileSeeker> validators, out Vector3 position, out Vector3 velocity, out Vector3 acceleration)
+    protected override SeekerSearchResult SearchForTargetInternal(IReadOnlyList<RuntimeMissileSeeker> validators, out Vector3 position, out Vector3 velocity, out Vector3 acceleration)
     {
         //Debug.LogError(PredictedPosition);
         position = PredictedPosition;
@@ -196,7 +195,6 @@ public class RangedCommandSeekerDescriptor : CommandSeekerDescriptor
         if (component == null)
         {
             component = missile.GameObj.AddComponent<Communicator>();
-            component.SpawnJammableTarget();
         }
 
         missile.AddRuntimeBehaviour<RuntimeRangedCommandSeeker>(this);
@@ -249,7 +247,7 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
     }
 
 
-    protected override SeekerSearchResult SearchForTargetInternal(IReadOnlyCollection<RuntimeMissileSeeker> validators, out Vector3 position, out Vector3 velocity, out Vector3 acceleration)
+    protected override SeekerSearchResult SearchForTargetInternal(IReadOnlyList<RuntimeMissileSeeker> validators, out Vector3 position, out Vector3 velocity, out Vector3 acceleration)
     {
 
         UpdateTrack();

@@ -111,7 +111,7 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
         //ShortDurationEffect sde = poolable?.GetComponent<ShortDurationEffect>();
         foreach (ILocalImbued imbued in poolable.gameObject.GetComponentsInChildren<ILocalImbued>())
         {
-            imbued.Imbue(Common.GetVal<ShipController>(runtime.Missile, "_localLaunchedFrom"));
+            imbued.ImbueLocal(Common.GetVal<ShipController>(runtime.Missile, "_localLaunchedFrom"));
             imbued.SetWeaponReportPath(Common.GetVal<IWeaponStatReportReceiver>(runtime.Missile, "_reportTo"));
         }
         if (poolable.GetComponent<ModularEffect>() == null)
@@ -186,7 +186,7 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
     }
 
 
-    public override HitResult TriggerDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
+    public override HitResult TriggerDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, out bool noVfx)
     {
         //Debug.LogError("POP");
 
@@ -194,9 +194,9 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
         //cubes.transform.position = runtime.transform.position;
         //GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         //cube.transform.position = hitInfo.Point;
-
+        noVfx = false;
         return Explode(runtime, hitObject, hitInfo);
-
+        
         /*
         if (FuseDelay > 0.01f)
         {
@@ -219,7 +219,7 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
     }
 
 
-    public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo) => TriggerDetonate(runtime, hitObject, hitInfo);
+    public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo) => TriggerDetonate(runtime, hitObject, hitInfo, out bool _);
 
 
     public override void FinalSetup(ModularMissile missile)

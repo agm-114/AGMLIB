@@ -51,9 +51,9 @@ public class BeamRuntimeJammerSupport : RuntimeMissileBehaviour
         _supportDesc = descriptor as ModularJammerSupportDescriptor;
     }
 
-    public override void OnLaunched()
+    public override void OnLaunched(ILaunchingPlatform platform, bool forceHotLaunch, bool immediateSearching)
     {
-        base.OnLaunched();
+        base.OnLaunched(platform, forceHotLaunch, immediateSearching);
         if (base.isServer && _effect == null)
         {
             StartJamming();

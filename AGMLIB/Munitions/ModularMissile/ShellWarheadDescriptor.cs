@@ -76,8 +76,9 @@ public class ShellWarheadDescriptor : BaseWarheadDescriptor, IModular
         return output;
     }
 
-    public override HitResult TriggerDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
+    public override HitResult TriggerDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, out bool noVfx)
     {
+        noVfx = false;
         _selectRandomPointInTarget = true;
 
         foreach (KeyValuePair<LightweightMunitionBase, int> entry in Weightedammotypes)
@@ -100,11 +101,11 @@ public class ShellWarheadDescriptor : BaseWarheadDescriptor, IModular
 
         if (networkPoolable is ILocalImbued localImbued)
         {
-            localImbued.Imbue(runtime.Missile.LaunchedFrom);
+            localImbued.ImbueLocal(runtime.Missile.LaunchedFrom);
             localImbued.SetWeaponReportPath(_reportTo);
         }
     }
-    public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo) => TriggerDetonate(runtime, hitObject, hitInfo);
+    public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo) => TriggerDetonate(runtime, hitObject, hitInfo, out bool _);
 
     public void Awake() => Debug.Log("Awake");
 
