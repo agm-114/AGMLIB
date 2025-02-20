@@ -110,16 +110,16 @@ public class StringFormatter : MonoBehaviour
     {
         return _textcolor switch
         {
-            CustomColor.Red => GetTextColor(ColorName.Red),
-            CustomColor.Orange => GetTextColor(ColorName.Orange),
-            CustomColor.Yellow => GetTextColor(ColorName.Yellow),
-            CustomColor.Green => GetTextColor(ColorName.Green),
-            CustomColor.LightBlue => GetTextColor(ColorName.LightBlue),
-            CustomColor.DarkBlue => GetTextColor(ColorName.DarkBlue),
-            CustomColor.Purple => GetTextColor(ColorName.Purple),
-            CustomColor.Gray => GetTextColor(ColorName.Gray),
-            CustomColor.LightGray => GetTextColor(ColorName.LightGray),
-            CustomColor.White => GetTextColor(ColorName.White),
+            CustomColor.Red => GameColors.GetTextColor(ColorName.Red),
+            CustomColor.Orange => GameColors.GetTextColor(ColorName.Orange),
+            CustomColor.Yellow => GameColors.GetTextColor(ColorName.Yellow),
+            CustomColor.Green => GameColors.GetTextColor(ColorName.Green),
+            CustomColor.LightBlue => GameColors.GetTextColor(ColorName.LightBlue),
+            CustomColor.DarkBlue => GameColors.GetTextColor(ColorName.DarkBlue),
+            CustomColor.Purple => GameColors.GetTextColor(ColorName.Purple),
+            CustomColor.Gray => GameColors.GetTextColor(ColorName.Gray),
+            CustomColor.LightGray => GameColors.GetTextColor(ColorName.LightGray),
+            CustomColor.White => GameColors.GetTextColor(ColorName.White),
             CustomColor.RedTextColor => GameColors.RedTextColor,
             CustomColor.OrangeTextColor => GameColors.OrangeTextColor,
             CustomColor.YellowTextColor => GameColors.YellowTextColor,
@@ -127,7 +127,7 @@ public class StringFormatter : MonoBehaviour
             CustomColor.LightBlueTextColor => GameColors.LightBlueTextColor,
             CustomColor.DarkBlueTextColor => GameColors.DarkBlueTextColor,
             CustomColor.FlavorTextColor => GameColors.FlavorTextColor,
-            _ => GetTextColor(ColorName.White),
+            _ => GameColors.GetTextColor(ColorName.White),
         };
     }
     public override string ToString()

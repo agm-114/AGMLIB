@@ -68,7 +68,7 @@ public class AreaEffect : ActiveSettings
         _followingInstance.GetComponent<IImbued>()?.Imbue(ShipController);
         _followingInstance.GetComponent<ActiveEWarEffect>().enabled = false;
         _oldcolor = Material?.GetColor(matproperty);
-        Material?.SetColor(matproperty, GetColor(Color));
+        Material?.SetColor(matproperty, GameColors.GetColor(Color));
         _updateAccum = 0f;
     }
 
@@ -166,6 +166,7 @@ public class AreaEffect : ActiveSettings
 
     void UpdateDetectedList(Ship target, bool applicationarg = true)
     {
+        if (target == null) return;
         //if(_detectedships.Contains(target) )
 
         if (applicationarg == true  && (Filter?.CheckShip(ShipController, target.GetComponent<ShipController>()) ?? true))

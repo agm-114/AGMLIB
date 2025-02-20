@@ -108,9 +108,9 @@ class HullComponentGetFormattedSubtitle
         float discount = Discount.ListCalc(__instance, currentlyInstalled);
         if (discount == 1) { return; }
         if(discount < 1)
-        __result += $" [<color={GetTextColor(ColorName.Green)}>{1 - discount:P0}</color> OFF]";
+        __result += $" [<color={GameColors.GetTextColor(ColorName.Green)}>{1 - discount:P0}</color> OFF]";
         if (discount > 1)
-            __result += $" [<color={GetTextColor(ColorName.Red)}>{1 - discount:P0}</color> Extra]";
+            __result += $" [<color={GameColors.GetTextColor(ColorName.Red)}>{1 - discount:P0}</color> Extra]";
         //Debug.LogError("End Cost " + __result);
 
     }
