@@ -89,7 +89,7 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
             settableEWarParameters.SetParams(SignatureType.Radar, omni: true, 360f, Radius, 1, 0, 0, 0f, true);
             //_followingInstance.GetComponent<IImbued>()?.Imbue(ShipController.NetID);
             _oldcolor = Material.GetColor(matproperty);
-            Material.SetColor(matproperty, GetColor(Color));
+            Material.SetColor(matproperty, GameColors.GetColor(Color));
             _updateAccum = 0f;
         }
 

@@ -30,11 +30,11 @@
 
     protected override ComponentActivity GetFunctionalActivityStatus() => BlockingFire ? ComponentActivity.Active : base.GetFunctionalActivityStatus();
 
-    public override void GetDesignWarnings(List<string> warnings)
+    public override void GetDesignWarnings(List<DesignWarning> warnings)
     {
         if (_myHull.MyShip.AmmoFeed.GetAllCompatibleAmmoTypes(this).Count == 0)
         {
-            warnings.Add("No ammunition for weapon: " + base.ComponentName + " on " + base.Socket.name);
+            warnings.Add(ShipDesignWarning.Risk("No Ammunition", "No ammunition for weapon: " + base.ComponentName + " on " + base.Socket.name, MyHull.MyShip));
         }
     }
     //public bool CyclingShot => Time.fixedTime >= Common.GetVal<float>(this, "_nextShotTime");

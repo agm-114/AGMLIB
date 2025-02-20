@@ -41,6 +41,8 @@ public class SimpleMagazine : MonoBehaviour, IMagazine
 
     public float PercentageAvailable => throw new NotImplementedException();
 
+    public bool IsReinforced => throw new NotImplementedException();
+
     IMunition IMagazine.AmmoType
     {
 
