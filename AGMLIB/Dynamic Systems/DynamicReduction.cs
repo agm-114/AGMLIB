@@ -1,6 +1,26 @@
 ﻿
+using Mono.Cecil;
+using Ships;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine.UI.Extensions;
+using ResourceType = Ships.ResourceType;
+public class DynamicReductionCache : MonoBehaviour
+{
+    public List<DynamicReduction> dynamicReductions = new List<DynamicReduction>();
+    public Dictionary<ResourcePool, int> AmountExtra = new();
+
+    public static void CacheValues(Ship ship)
+    {
+
+       
+        DynamicReductionCache cache = ship.GetComponent<DynamicReductionCache>() ?? ship.gameObject.AddComponent<DynamicReductionCache>();
+        cache.AmountExtra = Common.GetVal<Dictionary<string, ResourcePool>>(ship, "_resources").Values.ToDictionary(pool => pool, pool => pool.AmountRemaining);
+        cache.dynamicReductions = ship.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList() ?? new();
+        //Common.Trace($"CacheValues {cache.dynamicReductions.Count()}");
+    }
+}
+
 public class DynamicReduction : ActiveSettings
 {
     public String ResourceName = "";
@@ -8,7 +28,15 @@ public class DynamicReduction : ActiveSettings
     private ResourceType Res => ResourceDefinitions.Instance.GetResource(ResourceName);
     private ResourceValue[] _requiredResources;
 
-    public ISimpleFilter Filter;
+    public BaseFilter Filter;
+
+    public override void Awake()
+    {
+        base.Awake();
+        //if(Filter == null)
+        //    Common.Hint($"reduction {gameObject} has null filter ");
+
+    }
 
     protected override void FixedUpdate()
     {
@@ -21,8 +49,9 @@ public class DynamicReduction : ActiveSettings
 
     public bool TargetedComponent(HullComponent hullComponent) 
     {
-        if (!Module.isActiveAndEnabled)
-            return false;
+        //Common.Trace($"filter {Filter?.gameObject.name ?? "null filter"} hullcomp {hullComponent.SaveKey}");
+        //if (!Module.isActiveAndEnabled)
+        //    return false;
         return Filter?.CheckComponent(hullComponent) ?? true;
     }
 
@@ -35,18 +64,29 @@ public class DynamicReduction : ActiveSettings
     }
     public static IEnumerable<DynamicReduction> GetReductions(HullComponent hullComponent)
     {
-        return hullComponent?.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList().Where(reduction => reduction.TargetedComponent(hullComponent));
+        return hullComponent?.transform?.root?.GetComponent<DynamicReductionCache>().dynamicReductions.Where(reduction => reduction.TargetedComponent(hullComponent)) ?? new List<DynamicReduction>();
 
     }
 
     public static float TotalMultiplier(ResourceType type, HullComponent hullComponent)
     {
-        IEnumerable<DynamicReduction> reductions = GetReductions(hullComponent); 
-        reductions = reductions.Where(reduction => type.Name == reduction.ResourceName);
-        reductions = reductions.Where(reduction => reduction.TargetedComponent(hullComponent));
+ 
+        IEnumerable<DynamicReduction> reductions = GetReductions(hullComponent);
         if (!reductions?.Any() ?? false)
             return 1;
-        return reductions.ConvertAll(reduction => reduction.Multiplier).Aggregate(1f, (a, x) => a * x);
+        //Common.Trace($"start {type.Name} {hullComponent.UIName} has {reductions.Count()} valid reduction");
+        //foreach (DynamicReduction reduction in reductions)
+        //    Common.Trace($"{reduction.gameObject}  has {reduction.ResourceName} reduction of {reduction.Multiplier}");
+        reductions = reductions.Where(reduction => type.Name == reduction.ResourceName);
+        //Common.Trace($"trim {type.Name} {hullComponent.UIName} has {reductions.Count()} valid reduction");
+        
+        if (!reductions?.Any() ?? false)
+            return 1;
+
+        float reductionf = reductions.ConvertAll(reduction => reduction.Multiplier).Aggregate(1f, (a, x) => a * x);
+        //Common.Trace($"reduction {reductionf} {type.Name} {hullComponent.UIName} has {reductions.Count()} valid reduction");
+
+        return reductionf;
     }
 
     public static void UpdateResources(HullComponent hullComponent)
@@ -95,27 +135,36 @@ public class RequiredResources : MonoBehaviour
     }
 }
 
-public class PastConsumption : MonoBehaviour
-{
-    public Dictionary<ResourcePool, int> AmountExtra = new();
-}
 
+
+[HarmonyPatch(typeof(Ship), nameof(Ship.SpawnAndAllocateResources))]
+class ShipSpawnAndAllocateResources
+{
+    public static void Prefix(Ship __instance) {
+        Common.LogPatch();
+        DynamicReductionCache.CacheValues(__instance);
+    } 
+}
 
 [HarmonyPatch(typeof(Ship), nameof(Ship.RunResourceTick))]
 class ShipRunResourceTick
 {
-
-    public static void Prefix(Ship __instance)
-    {
-        //
-        PastConsumption pastConsumption = __instance.GetComponent<PastConsumption>() ?? __instance.gameObject.AddComponent<PastConsumption>();
-        pastConsumption.AmountExtra = Common.GetVal<Dictionary<string, ResourcePool>>(__instance, "_resources").Values.ToDictionary(pool => pool, pool => pool.AmountRemaining);
-
-        
+    public static void Prefix(Ship __instance) 
+    { 
+        Common.LogPatch();
+        DynamicReductionCache.CacheValues(__instance);
     }
-
+    
 }
 
+[HarmonyPatch(typeof(Ship), nameof(Ship.EditorRecalcCrewAndResources))]
+class ShipEditorRecalcCrewAndResources
+{
+    public static void Prefix(Ship __instance) {
+        Common.LogPatch();
+        DynamicReductionCache.CacheValues(__instance);
+    } 
+}
 
 [HarmonyPatch(typeof(HullComponent), nameof(HullComponent.ConsumeResources))]
 class HullComponentConsumeResources
@@ -123,6 +172,7 @@ class HullComponentConsumeResources
 
     public static void Prefix(HullComponent __instance, ResourcePool pool)
     {
+        Common.LogPatch();
         //Debug.LogError("ticking consumer");
         DynamicReduction.UpdateResources(__instance);
     }
@@ -135,6 +185,7 @@ class HullComponentGetResourceDemand
 {
     static void Prefix(HullComponent __instance, ResourcePool pool)
     {
+        Common.LogPatch();
         DynamicReduction.UpdateResources(__instance);
     }
 
@@ -145,51 +196,88 @@ class ResourcePoolCalculateDemandForEditor
 {
     static void Postfix(ResourcePool __instance)
     {
-        //Debug.LogError("calc demends");
-
+        Common.LogPatch();
+        //Common.Trace("calc demends");
 
         ResourcePool pool = __instance;
+        ResourceType Resource = pool.Resource;
 
         List<HullComponent> _providers = Common.GetVal<List<HullComponent>>(pool, "_providers");
 	    List<HullComponent> _consumers = Common.GetVal<List<HullComponent>>(pool, "_consumers");
+        HashSet<HullComponent> components = new HashSet<HullComponent>(_providers);
+        components.UnionWith(_consumers);
+        List<float> reductions = new();
+        foreach (HullComponent comp in components)
+        {
+
+            float reduction = DynamicReduction.TotalMultiplier(pool.Resource, comp);
+            if (reduction != 1)
+                reductions.Add(reduction);
+
+        }
+        if (reductions.Count <= 0)
+            return;
+
         //IEnumerable<DynamicReduction> reductions = _consumers?.First()?.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList();
         //foreach(DynamicReduction reduction in reductions)
         //{
-            //Debug.LogError(reduction.ToString());
+        //{
+        //Common.Trace(reduction.ToString());
         //}
 
         pool.Reset();
         pool.SortConsumers();
-        string text = "";
+        EditorResourceSummary _summary = default(EditorResourceSummary);
+        _summary.Details = ["Produced:"];
         foreach (HullComponent provider in _providers)
         {
             if (provider.ResourcesProvided.Any((ResourceModifier x) => x.ResourceName == pool.Resource.Name))
             {
-                ResourceModifier resourceModifier = provider.ResourcesProvided.First((ResourceModifier x) => x.ResourceName == pool.Resource.Name);
-                int resourceProvideAmount = provider.GetResourceProvideAmount(pool.Resource);
+                
+                int baseAmount;
+                int resourceProvideAmount = provider.GetResourceProvideAmount(Resource, out baseAmount);
+                _summary.TotalProvided += resourceProvideAmount;
+                _summary.TotalProvidedUnmodified += baseAmount;
                 pool.AddAvailable(resourceProvideAmount);
-                pool.AddUnmodifiedAvailable(resourceModifier.Amount);
-                text += $"   <color={GameColors.GreenTextColor}>+{resourceProvideAmount}</color> - {provider.ShortUIName}\n";
+                pool.AddUnmodifiedAvailable(baseAmount);
+                _summary.Details.Add($"   <color={GameColors.GreenTextColor}>+{resourceProvideAmount}</color> - {provider.ShortUIName}");
             }
         }
-        string text2 = "";
+        _summary.Details.Add("Consumed:");
+
+
         foreach (HullComponent consumer in _consumers)
         {
-            if (consumer.ResourcesRequired.Any((ResourceModifier x) => x.ResourceName == pool.Resource.Name))
+            if (consumer.ResourcesRequired.Any((ResourceModifier x) => x.ResourceName == Resource.Name))
             {
-                ResourceModifier resourceModifier2 = consumer.ResourcesRequired.First((ResourceModifier x) => x.ResourceName == pool.Resource.Name);
-                int num = Mathf.RoundToInt(consumer.GetResourceDemand(pool));
-                pool.ConsumeGreedy(num);
-                pool.AddUnmodifiedConsumed(resourceModifier2.Amount);
-                text2 += $"   <color={GameColors.RedTextColor}>-{num}</color> - {consumer.ShortUIName}";
+                ResourceModifier resourceModifier = consumer.ResourcesRequired.First((ResourceModifier x) => x.ResourceName == Resource.Name);
+                bool onlyWhenOperating;
                 float reduction = DynamicReduction.TotalMultiplier(pool.Resource, consumer);
+
+                int num = Mathf.RoundToInt(consumer.GetResourceDemand(pool, out onlyWhenOperating) * reduction) ;
+
+                _summary.TotalConsumed += num;
+                _summary.TotalConsumedUnmodified += resourceModifier.Amount;
+                if (onlyWhenOperating)
+                {
+                    _summary.OperatingConsumed += num;
+                }
+                else
+                {
+                    _summary.AlwaysConsumed += num;
+                }
+
+                pool.ConsumeGreedy(num);
+                pool.AddUnmodifiedConsumed(resourceModifier.Amount);
+                _summary.Details.Add($"   <color={(onlyWhenOperating ? GameColors.YellowTextColor : GameColors.RedTextColor)}>-{num}</color> - {consumer.ShortUIName}");
                 if (reduction != 1)
-                    text2 += $" [{StatModifier.FormatModifierColored((float)Math.Round(reduction-1, 2), positiveBad: true)}]";
-                text2 += '\n';
+                    _summary.Details[_summary.Details.Count - 1] += $" [{StatModifier.FormatModifierColored((float)Math.Round(reduction - 1, 2), positiveBad: true)}]";
+
             }
         }
-        string _editorDetails = "Produced:\n" + text.TrimEnd() + "\n\nConsumed:\n" + text2.TrimEnd() + "\n";
-        Common.SetVal(pool, "_editorDetails", _editorDetails);
+
+
+        Common.SetVal(pool, "_summary", _summary);
     }
 
 }
@@ -199,6 +287,7 @@ class ResourceItemSetResource
 {
     static void Postfix(ResourceItem __instance, IReadOnlyResourcePool resource)
     {
+        Common.LogPatch();
         ResourceItem item = __instance;
         TextMeshProUGUI _summaryText = Common.GetVal<TextMeshProUGUI>(item, "_summaryText");
 
