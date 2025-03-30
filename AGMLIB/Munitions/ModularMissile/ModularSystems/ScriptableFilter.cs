@@ -1,4 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using SmallCraft;
+using Steamworks.Ugc;
+using System.Drawing.Printing;
+using System.Text.RegularExpressions;
 
 [CreateAssetMenu(fileName = "New Scriptable Filter", menuName = "Nebulous/New Filter")]
 public class ScriptableFilter : ScriptableObject, IFilterIndexed
@@ -49,9 +52,9 @@ public class ModularFactionDescription : FactionDescription, IModular
 
     public string[] SharedFactionAll => Common.GetVal<string[]>(this, "_sharedFactionAll"); 
 
-    public string[] SharedEquipmentList => Common.GetVal<string[]>(this, "_sharedFactionAll");
+    public string[] SharedEquipmentList => Common.GetVal<string[]>(this, "_sharedEquipmentList");
 
-    public string[] SharedEquipmentPatterns => Common.GetVal<string[]>(this, "_sharedFactionAll");
+    public string[] SharedEquipmentPatterns => Common.GetVal<string[]>(this, "_sharedEquipmentPatterns");
 
     [SerializeField]
     [HideInInspector]
@@ -82,7 +85,7 @@ public class ModularFactionDescription : FactionDescription, IModular
             oneoff = false;
         }
 
-        //Debug.Log("Checking " + checkKey + " " + primaryFactionKey);
+        Common.Trace("Checking " + checkKey + " " + primaryFactionKey);
         if (_sharedFactionSet == null)
         {
             _sharedFactionSet = new HashSet<string>(SharedFactionAll);
@@ -109,7 +112,7 @@ public class ModularFactionDescription : FactionDescription, IModular
 
         if (_sharedEquipmentSetblacklist == null)
         {
-            _sharedEquipmentSetblacklist = new HashSet<string>(SharedEquipmentList);
+            _sharedEquipmentSetblacklist = new HashSet<string>(_sharedEquipmentListblacklist);
         }
 
         if (_shareEquipmentRegexblacklist == null)
@@ -120,15 +123,20 @@ public class ModularFactionDescription : FactionDescription, IModular
                 _shareEquipmentRegexblacklist[i] = new Regex(_sharedEquipmentPatternsblacklist[i]);
             }
         }
+        foreach(var i in _sharedEquipmentSet)
+        {
+            Common.Trace(i);
+        }
 
         if (_sharedEquipmentSetblacklist.Contains(checkKey))
         {
-            //Debug.Log("equipmentset blacklist");
+            Debug.Log("equipmentset blacklist");
             return false;
         }
         else if (_sharedEquipmentSet.Contains(checkKey))
         {
-            //Debug.Log("shared witelist");
+            
+            Debug.Log("shared witelist");
 
             return true;
 
@@ -168,6 +176,7 @@ class FactionDescriptionCheckSharedEquipment
     static bool oneoff = true;
     static void Postfix(FactionDescription __instance, string checkKey, string primaryFactionKey, bool includeFactionAll, ref bool __result)
     {
+        Common.LogPatch();
         if (__instance is not ModularFactionDescription FactionDescription)
             return;
         bool oldresult = __result;
@@ -183,6 +192,7 @@ class LookaheadMunitionUseableByFaction
     static bool oneoff = true;
     static void Postfix(LookaheadMunition __instance, FactionDescription faction, ref bool __result)
     {
+        Common.LogPatch();
         if (faction is not ModularFactionDescription FactionDescription)
             return;
 
@@ -191,6 +201,24 @@ class LookaheadMunitionUseableByFaction
         __result = FactionDescription.FullCheckSharedEquipment(__instance.SaveKey, __instance.FactionKey, true);
         bool delta = oldresult != __result;
         //Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
+    }
+}
+
+[HarmonyPatch(typeof(Spacecraft), nameof(Spacecraft.UseableByFaction))]
+class SpacecraftUseableByFaction
+{
+    static bool oneoff = true;
+    static void Postfix(Spacecraft __instance, FactionDescription faction, ref bool __result)
+    {
+        Common.LogPatch();
+        if (faction is not ModularFactionDescription FactionDescription)
+            return;
+
+
+        bool oldresult = __result;
+        __result = FactionDescription.FullCheckSharedEquipment(__instance.FrameKey, __instance.FactionKey, true);
+        bool delta = oldresult != __result;
+        Debug.Log("delta: " + delta + " checkKey:" + __instance.FrameKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
     }
 }
 
@@ -235,7 +263,7 @@ class LightweightMunitionBaseUseableByFaction
     static bool oneoff = true;
     static void Postfix(LightweightMunitionBase __instance, FactionDescription faction, ref bool __result)
     {
-
+        Common.LogPatch();
         if (faction is not ModularFactionDescription FactionDescription)
             return;
         //Debug.Log("primaryFactionKey");
@@ -251,7 +279,7 @@ class IFactionLockedUseableByFaction
 {
     static void Postfix(IFactionLocked __instance, FactionDescription faction, ref bool __result)
     {
-
+        Common.LogPatch();
         if (faction is not ModularFactionDescription FactionDescription || __instance is not LookaheadMunition ammo)
             return;
         bool oldresult = __result;

@@ -39,7 +39,9 @@ class MissileComponentDescriptorInstallSocketModuleInternal
 
                 }
             }
-            if (!((socket.SocketType & Component.FitsSocketType) == 0))
+            bool compatible = !((socket.SocketType & Component.FitsSocketType) == 0);
+
+            if (!compatible)
             {
                 if (socketfilter.AllowIllegal && socketfilter.Whitelist.Contains(Component.SaveKey))
                 {
@@ -80,6 +82,7 @@ class MissileComponentPaletteSetEditingSocket
 {
     static void Postfix(MissileComponentPalette __instance, MissileSocket socket, List<MissilePaletteItem> ____allComponents, ModularMissile ____editingMissile, FactionDescription ____fleetFaction)
     {
+        Common.LogPatch();
         if (socket == null || ____editingMissile == null || ____editingMissile.Sockets.Count <= 0)
             return;
         int index = ____editingMissile.Sockets.ToList().FindIndex(testsocket => testsocket == socket);
@@ -89,9 +92,9 @@ class MissileComponentPaletteSetEditingSocket
             MissileComponentDescriptor Component = item?.Component;
             GameObject buttonGO = item.gameObject;
             List<IFilterIndexed> filters = (Component as IModular)?.Modules?.Cast<IFilterIndexed>()?.ToList();
-            bool compatible = (socket.SocketType & Component.FitsSocketType) == 0;
+            
             IFilterIndexed componentfilters = Modular.FindIndexedFilter(filters, index) ?? Modular.Default;
-            //Debug.LogError("Comp Savekey: " + item.Component.SaveKey + " Whitelist " + socketfilter.Whitelist.FirstOrDefault());
+            //Debug.LogError("Comp Savekey: " + item.Component.SaveKey);
             if (socketfilter.Blacklist.Contains(Component.SaveKey) || componentfilters.Blacklist.Contains(____editingMissile.BaseMissileDesignation))
             {
                 //Debug.LogError("BlackListed");
@@ -101,14 +104,18 @@ class MissileComponentPaletteSetEditingSocket
 
             if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(____editingMissile.BaseMissileDesignation))
             {
+                bool compatible = ! ((socket.SocketType & Component.FitsSocketType) == 0);
+
                 if (Component.UseableByFaction(____fleetFaction) && compatible)
                 {
                     buttonGO.SetActive(value: true);
-                    continue;
+                    //Debug.LogError("Generally Compatible");
                 }
 
                 if (!Component.UseableByFaction(____fleetFaction))
                 {
+                    //Debug.LogError("Faction Issue");
+
                     if (socketfilter.BypassFactionRestrictions && socketfilter.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
                     else if (componentfilters.BypassFactionRestrictions && componentfilters.Whitelist.Contains(Component.SaveKey))
@@ -116,11 +123,15 @@ class MissileComponentPaletteSetEditingSocket
                 }
                 if (!compatible)
                 {
+                    //Debug.LogError("compatible Issue");
+
                     if (socketfilter.AllowIllegal && socketfilter.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
                     else if (componentfilters.AllowIllegal && componentfilters.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
+                    
                 }
+                continue;
             }
             else if (socketfilter.Blacklisteverything || componentfilters.Blacklisteverything)
                 buttonGO.SetActive(value: false);
@@ -135,6 +146,7 @@ class MissileSettingsPaneOpenSettingsPanel
 {
     static void Prefix(MissileSettingsPane __instance, MissileComponentDescriptor component, List<IMissileSettingsPane> ____settingsPanes)
     {
+        Common.LogPatch();
         List<IMissileSettingsPane> _settingsPanes = ____settingsPanes;
         foreach (IMissileSettingsPane settingsPane in _settingsPanes.Where(settingPane => settingPane.Name == (component?.SettingsPanel ?? "")))
         {
@@ -161,6 +173,7 @@ class MissileSettingsPaneOpenSettingsPanel
     }
     static void Postfix(MissileSettingsPane __instance, MissileComponentDescriptor component, ref bool __result, List<IMissileSettingsPane> ____settingsPanes)// 
     {
+        Common.LogPatch();
         if (component == null)
             return;
         //Debug.LogError("Postfix " + component.SaveKey + __result);
