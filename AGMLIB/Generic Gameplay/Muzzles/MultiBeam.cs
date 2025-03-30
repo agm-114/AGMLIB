@@ -1,102 +1,232 @@
 ﻿using Object = System.Object;
 using static Ships.WeaponComponent;
 using static Ships.ContinuousWeaponComponent;
+using Ships.Controls;
+using static Ships.HullPart;
+using System.Linq;
+using System.Collections.Generic;
+using System.Reflection;
+using Lib.Generic_Gameplay.Ewar;
+using UnityEngine;
+public class MultiBeam : MultiTarget { }
 
-public class MultiBeam : MonoBehaviour
+public class MultiTarget : MonoComponent
 {
-
-    public int TruePostionWeight = 10;
-    public int KnownPositionWeight = 1;
+    //public int TruePostionWeight = 10;
+    //public int KnownPositionWeight = 1;
     public bool SingleTargetMode = false;
-    [HideInInspector]
-    public IEnumerable<ITrack> AssignedTracks = new List<ITrack>();
-    public IEnumerable<ITrack> Validtracklist => AssignedTracks.Where(track => track.IsValid && Weapon.CanTrainOnTarget(track.TruePosition) && Vector3.Distance(transform.position, track.TruePosition) <= Weapon.MaxEffectiveRange);
-    public List<ITrack> Sortedtracklist => Validtracklist.Prepend(Weapon.CurrentlyTargetedTrack()).ToList();
-    public ContinuousWeaponComponent Weapon => this.gameObject.GetComponent<ContinuousWeaponComponent>();
-    bool Firing => Common.GetVal<bool>(Weapon, "_muzzlesActive");
-    List<Muzzle> Muzzles => Common.GetVal<Muzzle[]>(Weapon, "_muzzles").ToList();
-    List<ITrack> AvoidTracks => Root
-                .GetComponentsInChildren<MultiBeam>()
-                .Except(new List<MultiBeam>() { this })
-                .SelectMany(a => a?.Sortedtracklist ?? new())
-                .GroupBy(a => a)
-                .OrderByDescending(a => a?.Count() ?? 0)
-                .ConvertAll(a => a.Key);
-    public List<ITrack> CachedAvoidTracks = null;
-    public Transform Root => gameObject.transform.parent.parent;
+    //public List<FireControlSensor> fireControlSensors = new List<FireControlSensor>();
+    public List<BaseTrackLogic> trackLogics = new();
 
-    public static void HandleBeam(ContinuousWeaponComponent weapon, bool recalculate = false)
+    public WeaponComponent Weapon => this.GetComponentInParent<WeaponComponent>();
+    public bool MuzzlesActive => Common.GetVal<bool>(Weapon, "_muzzlesActive");
+    private bool Reloading => Common.GetVal<bool>(Weapon, "_reloading");
+    private bool WaitingForMuzzle => Common.GetVal<bool>(Weapon, "_waitingForMuzzle");
+    private bool NoTarget => Weapon.CurrentTargetingMode == TargetingMode.None;
+    bool SplitBeams(bool fire)
     {
-        MultiBeam beamdata = weapon?.gameObject?.GetComponent<MultiBeam>();
-        beamdata?.SimBeam(recalculate);
+        if (Weapon.TargetAssignedByPlayer)
+        {
+            //Trace($"Error should not be triggered");
+            return false;
+        }
+        else if (Weapon is ContinuousWeaponComponent continuous)
+        {
+            //Trace($"Error should not be triggered");
+            return MuzzlesActive;
+
+        }
+        else if (Weapon is DiscreteWeaponComponent discrete)
+        {
+            return fire;
+            //Trace($"Checking Discrete Weapon reloading {Reloading} muzzle {WaitingForMuzzle}");
+            //return !NoTarget && discrete.CanFire && !Reloading && !WaitingForMuzzle;
+
+
+        }
+        return false;
+    }
+    List<Muzzle> Muzzles => [.. Common.GetVal<Muzzle[]>(Weapon, "_muzzles")];
+
+
+
+    public ITrack AssignedTrack => Weapon.CurrentlyTargetedTrack();
+    [HideInInspector] public List<ITrack> AssignedTracks = [];
+    public void AssignTracks(List<ITrack> tracks)
+    {
+        AssignedTracks = tracks;
+        //Common.Trace($"AssignTracks {AssignedTracks.Count}");
+
+        //CachedOtherPossibleTracks = null;
+        //CachedOtherAssignedTracks = null;
     }
 
-    public void StartFire(int muzzle, ITrack target)
+    public List<ITrack> ValidTrackList => AssignedTracks
+        .Prepend(AssignedTrack)
+        .WhereNotNull()//NOTE: Not needed due to later null check
+        .Where(track =>
+        track?.IsValid ?? false && Weapon.CanTrainOnTarget(track.TruePosition) &&
+        Vector3.Distance(transform.position, track.TruePosition) <= Weapon.MaxEffectiveRange)
+        .ToList();
+
+    IEnumerable<MultiTarget> Friends => gameObject.transform.parent.parent
+        .GetComponentsInChildren<MultiTarget>()
+        .Except([this]);
+    IEnumerable<ITrack> OtherAssignedTracks => Friends
+            .ConvertAll(a => a.AssignedTrack)
+            .Intersect(AssignedTracks)
+            .WhereNotNull();
+    //public IEnumerable<ITrack> CachedOtherAssignedTracks = null;
+
+    IEnumerable<ITrack> OtherPossibleTracks => Friends
+                .SelectMany(a => a?.ValidTrackList ?? [])
+                .GroupBy(a => a)
+                .OrderByDescending(a => a?.Count() ?? 0)
+                .ConvertAll(a => a.Key)
+                .Intersect(AssignedTracks)
+                .WhereNotNull();
+    //public IEnumerable<ITrack> CachedOtherPossibleTracks = null;
+    public void StartFire(int muzzle, ITrack target, bool fire = false)
     {
+        //return;
+        //Common.Trace(this.gameObject, "StartFire");
         if (!(target?.IsValid ?? false))
             return;
-        Vector3 pos = ((target.KnownPosition * KnownPositionWeight) + (target.TruePosition * TruePostionWeight)) / (TruePostionWeight + KnownPositionWeight);
+        BaseTrackLogic.DefaultUpdateTrack(target, out Vector3 pos, out Vector3 _);
+
+        if (trackLogics.Count > 0)
+        {
+            trackLogics[muzzle % trackLogics.Count].UpdateTrack(target, out pos, out Vector3 _);
+
+        }
         //  Time.timeScale = 0.1f;
         Muzzles[muzzle].transform.rotation = Quaternion.LookRotation(pos - Muzzles[muzzle].transform.position);
+        if (fire)
+            Muzzles[muzzle].Fire();
         Muzzles[muzzle].FireEffect();
 
     }
 
     public void StopFire(int muzzle)
     {
-        IWeaponComponentRPC _weaponRpcProvider = Common.GetVal<IWeaponComponentRPC>(Weapon, "_weaponRpcProvider");
+        //return; 
+        //Common.Trace((this.gameObject), "StopFire");
         Muzzles[muzzle].gameObject.transform.localRotation = Quaternion.identity;
         if (muzzle == 0)
             return;
         Muzzles[muzzle]?.StopFire();
         Muzzles[muzzle]?.StopFireEffect();
-        _weaponRpcProvider.RpcStopFiringEffect(Weapon.RpcKey, muzzle);
 
-    }
-    public List<ITrack> CalcTargetList()
-    {
-
-        List<ITrack> workingtracks = new(Sortedtracklist);
-        ;
-        if (workingtracks.Count > Muzzles.Count)
+        if (Weapon is ContinuousWeaponComponent beamwep && !_baseRpcProvider.IsHost)
         {
+            IWeaponComponentRPC _weaponRpcProvider = Common.GetVal<IWeaponComponentRPC>(Weapon, "_weaponRpcProvider");
 
-            CachedAvoidTracks ??= new(AvoidTracks);
-            List<ITrack> tracks = new(CachedAvoidTracks);
-            while (workingtracks.Count > Muzzles.Count && tracks.Count > 0)
-            {
-                workingtracks.Remove(tracks[0]);
-                tracks.Remove(tracks[0]);
-            }
+            if (!_weaponRpcProvider.IsHost)
+                return;
+            _weaponRpcProvider.RpcStopFiringEffect(Weapon.RpcKey, muzzle);
         }
-        return workingtracks;
+
+
+    }
+    public List<ITrack> CalcTargetList(List<ITrack> inputtracklist)
+    {
+        //Trace($"Step 0 Filter {inputtracklist.Count}");
+
+        //CachedOtherAssignedTracks ??= OtherAssignedTracks.ToList();
+        List<ITrack> tracklist = inputtracklist.Except(OtherAssignedTracks.Take(inputtracklist.Count - Muzzles.Count)).ToList();
+        //Trace($"Step 1 Filter {tracklist.Count}");
+
+        if (ValidTrackList.Count <= Muzzles.Count)
+            return tracklist;
+        Trace("Lots of valid targets");
+        //CachedOtherPossibleTracks ??= OtherPossibleTracks.ToList();
+        tracklist = tracklist.Except(OtherPossibleTracks.Take(tracklist.Count - Muzzles.Count)).ToList();
+        //Trace($"Step 2 Filter {tracklist.Count}");
+
+        return tracklist;
     }
 
-    public void SimBeam(bool recalculate = false)
+    public bool UpdateTargets(bool fire = false)
     {
-        if (Weapon.TargetAssignedByPlayer || !this.Firing)
+        bool splitbeam = this.SplitBeams(fire);
+        //Trace($"{splitbeam} runing multibeam {fire}");
+
+        if (!splitbeam)
         {
-            Muzzles[0].gameObject.transform.localRotation = Quaternion.identity;
             for (int i = 1; i < Muzzles.Count; i++)
                 StopFire(i);
-            return;
+            //Trace("No SimBeam");
+            return Common.RunFunction;
         }
-        //List<FireControlSensor> fireControlSensors = _weapon.GetComponentsInChildren<FireControlSensor>().ToList(); //____muzzles.ToList();
-        List<ITrack> tracks = Enumerable.Repeat(Weapon.CurrentlyTargetedTrack(), Muzzles.Count()).ToList();
-        if (!SingleTargetMode)
-            tracks = CalcTargetList();
+        List<ITrack> tracks = ValidTrackList;
 
-        //Debug.LogError("Tracklist reduced from " + Sortedtracklist.Count + " to " + Targetedtracks.Count);
+        if (tracks.Count <= 0)
+            return Common.SkipFunction;
+
+        //List<FireControlSensor> fireControlSensors = _weapon.GetComponentsInChildren<FireControlSensor>().ToList(); //____muzzles.ToList();
+
+        if (SingleTargetMode || tracks.Count <= 1)
+        {
+            Trace("SimBeam singletarget");
+
+            tracks = Enumerable.Repeat(Weapon.CurrentlyTargetedTrack(), Muzzles.Count).ToList();
+
+        }
+        else if (tracks.Count <= Muzzles.Count)
+        {
+            Trace("SimBeam multitarget " + tracks.Count);
+        }
+        else
+        {
+            tracks = CalcTargetList(tracks);
+            Trace("SimBeam multitarget reduced from " + ValidTrackList.Count + " to " + tracks.Count);
+
+        }
+
         for (int i = 0; i < Muzzles.Count; i++)
         {
             if (i < tracks.Count)
-                StartFire(i, tracks.ElementAt(i));
+                StartFire(i, tracks.ElementAt(i), fire);
             else
                 StopFire(i);
+        }
+        return Common.RunFunction;
+    }
+
+    private IHullPartRPC __baseRpcProvider;
+    protected IHullPartRPC _baseRpcProvider
+    {
+        get
+        {
+            if (__baseRpcProvider == null)
+            {
+                __baseRpcProvider = base.gameObject.GetComponentInParent<IHullPartRPC>();
+            }
+            return __baseRpcProvider;
         }
     }
 }
 
+
+
+
+[HarmonyPatch(typeof(PointDefenseController), "TaskDirectWeapon")]
+class PointDefenseControllerTaskDirectWeapon
+{
+
+    static void Postfix(PointDefenseController __instance, Object turret, NoAllocEnumerable<Object> targetList)
+    {
+        Common.LogPatch();
+        if (turret == null) { return; }
+        if (Common.GetVal<IWeapon>(turret, "Wep") is not WeaponComponent cwp) { return; }
+        if (cwp.gameObject?.GetComponent<MultiTarget>() is not MultiTarget beamdata) { return; }
+        //Common.SetVal(cwp, "_cooldownStyle", CooldownType.Proportional);
+        List<Object> targetList2 = new List<Object>();
+        targetList.ToList(targetList2);
+        beamdata.AssignTracks(targetList2.ConvertAll(target => Common.GetVal<ITrack>(target, "Track")) ?? new());
+    }
+}
+/*
 [HarmonyPatch(typeof(TurretedContinuousWeaponComponent), "BearToTarget")]
 class TurretedContinuousWeaponComponentBearToTarget
 {
@@ -128,22 +258,20 @@ class ContinuousWeaponComponentStartFiring
         //Debug.LogError(typeof(ContinuousWeaponComponentStartFiring));
         => MultiBeam.HandleBeam(__instance);
 }
+*/
 
-[HarmonyPatch(typeof(PointDefenseController), "TaskDirectWeapon")]
-class PointDefenseControllerTaskDirectWeapon
+/*
+if (fireControlSensors.Count > muzzle)
 {
-
-    static void Postfix(PointDefenseController __instance, Object turret, IEnumerable<Object> targetList)
+    if (muzzle >= 1)
     {
+        fireControlSensors[muzzle].SetLockedTarget(target.ID);
+        fireControlSensors[muzzle].AcquireContacts(transform);
 
-        if (turret == null) { Common.Hint("Null turret "); }
-        if (Common.GetVal<IWeapon>(turret, "Wep") is ContinuousWeaponComponent cwp)
-        {
-            MultiBeam beamdata = cwp?.gameObject?.GetComponent<MultiBeam>();
-            if (beamdata == null) { return; }
-            Common.SetVal(cwp, "_cooldownStyle", CooldownType.Proportional);
-            beamdata.AssignedTracks = targetList.ConvertAll(target => Common.GetVal<ITrack>(target, "Track")) ?? new();
-            beamdata.CachedAvoidTracks = null;
-        }
     }
+
+    fireControlSensors[muzzle].UpdateTrack(target.Trackable, out pos, out Vector3 velocity);
 }
+else
+    pos = ((target.KnownPosition * KnownPositionWeight) + (target.TruePosition * TruePostionWeight)) / (TruePostionWeight + KnownPositionWeight);
+*/
