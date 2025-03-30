@@ -49,6 +49,11 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
         }
         missile.AddRuntimeBehaviour<RuntimePostionSeeker>(this);
     }
+
+    public override bool DuplicatesFunctionality(BaseSeekerDescriptor other)
+    {
+        return other is PositionSeekerDescriptor;
+    }
 }
 public class RuntimePostionSeeker : RuntimeCommandSeeker
 {
