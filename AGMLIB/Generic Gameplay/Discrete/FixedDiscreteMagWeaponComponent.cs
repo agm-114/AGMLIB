@@ -8,29 +8,43 @@ public class FixedDiscreteMagWeaponComponent : FixedDiscreteWeaponComponent, IMa
     private float _traverseRate = 1;//=> Common.GetVal<float>(this, "_traverseRate");
     [SerializeField]
     private float _elevationRate = 1;//=> Common.GetVal<float>(this, "_elevationRate");
-                                     //BaseCellLauncherComponent BaseCellLauncherComponent { get; set; }
 
-    public int MagSize = 10;
-    public string MagUnitName = "Slots";
+    public DiscreteMagazine Mag;
 
+    /*
+    protected override void CollectAllStatReferencesForRegistering(List<Tuple<ShipStatAttribute, StatValue>> statList)
+    {
+        //Debug.LogError("pre CollectAllStatReferencesForRegistering");
 
-    //_requireExternalAmmoFeed = false;
-    private DiscreteMagazine Mag;
+        base.CollectAllStatReferencesForRegistering(statList);
 
+        //Debug.LogError("post CollectAllStatReferencesForRegistering");
+    }
 
+    protected override void SocketUnset()
+    {
+        //Debug.LogError("pre SocketUnset");
+        base.SocketUnset();
+        //Debug.LogError("post SocketUnset");
+    }
+
+    */
     protected override void SocketSet()
     {
+        //Debug.LogError("SocketSet");
+        //if(Mag == null)
+        //    Mag = gameObject.AddComponent<DiscreteMagazine>();
+        Mag.SetParent(this);
         base.SocketSet();
-        Mag = new(this);
     }
     public string ProviderKey => PartKey;
     public bool CanProvide => base.IsFunctional;
 
-    public int MaxCapacity => MagSize;
+    public int MaxCapacity => Mag.MaxCapacity;
     public int UsedCapacity => Mag.UsedCapacity;
     public bool NoLoad => false;
     public float RemainingCapacity => Mag.RemainingCapacity;
-    public string UnitName => MagUnitName;
+    public string UnitName => Mag.UnitName;
     public bool VolumeBased => false;
     public bool CanFeedExternally => true;
     public IEnumerable<IMagazine> Magazines => Mag.Magazines;
@@ -63,40 +77,21 @@ public class FixedDiscreteMagWeaponComponent : FixedDiscreteWeaponComponent, IMa
     public void ApplyDeltas(List<Magazine.MagChange> deltas) => Mag.ApplyDeltas(deltas);
     TMagProvider IConfigurableMagazineLoadout.GetMagazineProvider<TMagProvider>() => Mag as TMagProvider;
     public override ComponentSaveData GetSaveData() => Mag.GetSaveData();
-    public override void LoadSaveData(ComponentSaveData data) => Mag.LoadSaveData(data);
+    public override void LoadSaveData(ComponentSaveData data)
+    {
+        base.LoadSaveData(data);
+        Mag.LoadSaveData(data);
+    }
     //protected override PersistentComponentState NewSaveStateInstance() => new BulkMagazineState();
     protected override void FillSaveState(PersistentComponentState state)
     {
         base.FillSaveState(state);
-        //Mag.FillSaveState(state);
+        Mag.FillSaveState(state);
     }
     public override void RestoreSavedState(PersistentComponentState state)
     {
         base.RestoreSavedState(state);
-        //Mag.RestoreSavedState(state);
-    }
-    public String x = "The below are legacy fields, please talk to AGM";
-    public List<MissileEjector> Cells = new();
-    [SerializeField]
-    protected float _baseAccuracy = 0.01f;
-
-    [ShipStat("muzzle-accuracy", "Spread", "MoA", InitializeFrom = "_baseAccuracy", TextValueMultiplier = 3437.75f, PositiveBad = true)]
-    protected StatValue _statAccuracy;
-    public float TimeBetweenCells = 0.2f;
-
-    public String y = "The above are legacy fields, please talk to AGM";
-    protected override void Start()
-    {
-        if(Cells.Count > 0)
-        {
-
-            DiscreteWeaponEjectors ejectors = this.gameObject.AddComponent<DiscreteWeaponEjectors>();
-            ejectors.Cells = Cells;
-            ejectors.BaseAccuracy = _baseAccuracy;
-            ejectors.TimeBetweenCells = TimeBetweenCells;
-
-        }
-        base.Start();
+        Mag.RestoreSavedState(state);
     }
 
 }

@@ -1,7 +1,58 @@
-﻿using static Ships.BulkMagazineComponent;
-
-public class DiscreteMagazine : IMagazineProvider
+﻿
+using static Ships.BulkMagazineComponent;
+/*
+public class InternalDiscreteMagazine : MonoBehaviour, IMagazineProvider
 {
+
+
+    public DiscreteWeaponComponent _parent;
+
+    public string ProviderKey => throw new NotImplementedException();
+
+    public bool CanProvide => throw new NotImplementedException();
+
+    public int MaxCapacity => throw new NotImplementedException();
+
+    public int UsedCapacity => throw new NotImplementedException();
+
+    public bool NoLoad => throw new NotImplementedException();
+
+    public float RemainingCapacity => throw new NotImplementedException();
+
+    public string UnitName => throw new NotImplementedException();
+
+    public bool VolumeBased => throw new NotImplementedException();
+
+    public bool CanFeedExternally => throw new NotImplementedException();
+
+    public IEnumerable<IMagazine> Magazines => throw new NotImplementedException();
+
+    public bool IsReinforced => throw new NotImplementedException();
+
+    public event QuantityChanged OnAmmoQuantityChanged;
+    public event MagazineProviderChanged OnAmmoCapacityChanged;
+    public event MagazineChanged OnMagazineAdded;
+    public event MagazineChanged OnMagazineRemoved;
+
+    public IMagazine AddToMagazine(IMunition ammoType, uint quantity) => throw new NotImplementedException();
+    public void ApplyDeltas(List<Magazine.MagChange> deltas) => throw new NotImplementedException();
+    public void CollectDeltas(List<Magazine.MagChange> deltas) => throw new NotImplementedException();
+    public bool RemoveAllFromMagazine(IMunition ammoType) => throw new NotImplementedException();
+    public bool RemoveFromMagazine(IMunition ammoType, uint quantity) => throw new NotImplementedException();
+    public bool RestrictionCheck(IMunition ammo) => throw new NotImplementedException();
+
+    public void SetParent(DiscreteWeaponComponent parent) => throw new NotImplementedException();
+    public SettingsPanelTypes[] GetConfigPanels() => throw new NotImplementedException();
+    public void LoadSaveData(ComponentSaveData data) => throw new NotImplementedException();
+    public ComponentSaveData GetSaveData() => throw new NotImplementedException();
+}
+*/
+public class DiscreteMagazine : MonoBehaviour, IMagazineProvider
+{
+    public int MagCapacity = 10;
+    public string EditorUnitName = "Slots";
+    public bool IsReinforced = false;
+
     public SettingsPanelTypes[] GetConfigPanels()
     {
         //Debug.LogError("Config Panel Check");
@@ -13,7 +64,20 @@ public class DiscreteMagazine : IMagazineProvider
         }
         return null;
     }
-    public DiscreteMagazine(DiscreteWeaponComponent parent) => _parent = parent;
+    /*
+    public DiscreteMagazine()
+    { 
+        
+        Debug.LogError("DM constructor");
+        
+    }
+    */
+    public void SetParent(DiscreteWeaponComponent parent)
+    {
+
+        _parent = parent;
+    }
+
     protected List<Magazine> Mags { get; } = new List<Magazine>();
     public DiscreteWeaponComponent _parent;
     IMunition SelectedAmmo => _parent.SelectedAmmoType;
@@ -28,21 +92,26 @@ public class DiscreteMagazine : IMagazineProvider
                 return Mags.Sum((Magazine x) => x.Quantity);
         }
     }
-    public float RemainingCapacity => MaxCapacity - UsedCapacity;
+
     public string ProviderKey => _parent.SaveKey;
     public bool CanProvide => _parent.IsFunctional;
-    public int MaxCapacity => _parentprovider.MaxCapacity;
+    public int MaxCapacity => MagCapacity;
+    public float RemainingCapacity => MaxCapacity - UsedCapacity;
     public bool NoLoad => _parentprovider.NoLoad;
-    public string UnitName => _parentprovider.UnitName;
+    public string UnitName => EditorUnitName;
     public bool VolumeBased => _parentprovider.VolumeBased;
     public bool CanFeedExternally => _parentprovider.CanFeedExternally;
     public IEnumerable<IMagazine> Magazines => Mags;
+
+    bool IMagazineProvider.IsReinforced => IsReinforced;
+
     public event QuantityChanged OnAmmoQuantityChanged;
     protected void FireAmmoQuantityChangedEvent(IQuantityHolder holder) => OnAmmoQuantityChanged?.Invoke(holder);
     public event MagazineProviderChanged OnAmmoCapacityChanged;
     public event MagazineChanged OnMagazineAdded;
     protected void FireMagAddedEvent(IMagazine mag) => OnMagazineAdded?.Invoke(this, mag);
     public event MagazineChanged OnMagazineRemoved;
+    public bool RestrictionCheck(IMunition ammo) => ammo != null && _parent.IsAmmoCompatible(ammo);
     protected void FireMagRemovedEvent(IMagazine mag) => OnMagazineRemoved?.Invoke(this, mag);
     public int QuantityRemaining(IMunition ammoType) => FindMag(ammoType)?.QuantityAvailable ?? 0;
     protected Magazine FindMag(IMunition ammoType) => Mags.Find((Magazine x) => x.AmmoType == ammoType);
@@ -91,7 +160,7 @@ public class DiscreteMagazine : IMagazineProvider
         }
         return false;
     }
-    public bool RestrictionCheck(IMunition ammo) => ammo != null && _parent.IsAmmoCompatible(ammo);
+
     IMunition GetMunition(Magazine.MagSaveData magdata) => _parent.Socket.MyHull.MyShip.Fleet.AvailableMunitions.GetMunition(magdata.MunitionKey);
     public ComponentSaveData GetSaveData()
     {

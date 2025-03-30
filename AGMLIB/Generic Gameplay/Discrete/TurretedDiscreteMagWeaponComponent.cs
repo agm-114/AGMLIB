@@ -8,26 +8,27 @@
     private float _elevationRate = 1;//=> Common.GetVal<float>(this, "_elevationRate");
                                      //BaseCellLauncherComponent BaseCellLauncherComponent { get; set; }
 
-    public int MagSize = 10;
-    public string MagUnitName = "Slots";
 
     //_requireExternalAmmoFeed = false;
-    private DiscreteMagazine Mag;
+    public DiscreteMagazine Mag;
 
 
     protected override void SocketSet()
     {
+        //Mag = new InternalDiscreteMagazine();
+        //if(Mag == null)
+        //    Mag = gameObject.AddComponent<DiscreteMagazine>();
+        Mag.SetParent(this);
         base.SocketSet();
-        Mag = new(this);
     }
     public string ProviderKey => PartKey;
     public bool CanProvide => base.IsFunctional;
 
-    public int MaxCapacity => MagSize;
+    public int MaxCapacity => Mag.MaxCapacity;
     public int UsedCapacity => Mag.UsedCapacity;
     public bool NoLoad => false;
     public float RemainingCapacity => Mag.RemainingCapacity;
-    public string UnitName => MagUnitName;
+    public string UnitName => Mag.UnitName;
     public bool VolumeBased => false;
     public bool CanFeedExternally => true;
     public IEnumerable<IMagazine> Magazines => Mag.Magazines;

@@ -41,12 +41,14 @@
     }
 
     //Need to patch
-    public void OnTarget(Vector3 aimPoint)
+    public bool OnTarget(Vector3 aimPoint)
     {
+        if (SkipPatch())
+            return Common.RunFunction;
         if (DiscreteWeaponComponent.CurrentTargetingMode == 0 || !DiscreteWeaponComponent.CanFire || _reloading || _waitingForMuzzle)
-            return;
+            return Common.RunFunction;
         if (DiscreteWeaponComponent.SelectedAmmoType is not IMissile missile)
-            return;
+            return Common.RunFunction;
 
         //Debug.LogError(_cellAccum);
         Common.SetVal<int>(DiscreteWeaponComponent, "_magazineFired", _magazineFired + 1);
@@ -63,7 +65,7 @@
         }
 
         FireTrack(missile, DiscreteWeaponComponent.CurrentlyTargetedTrack(), 0, DiscreteWeaponComponent.TargetAssignedByPlayer, aimPoint);
-
+        return Common.SkipFunction;
     }
 
     public void FireTrack(IMissile missile, ITrack track, int salvoId, bool playerOrder, Vector3? aimPoint = null)
@@ -135,20 +137,6 @@ class FixedDiscreteWeaponComponentOnTarget
 
         ejectors.OnTarget(aimPoint);
         return false;//false
-        //Common.SetVal(__instance, "Mode", TrackingMode.Ping);
-    }
-}
-[HarmonyPatch(typeof(DiscreteWeaponComponent), "OnTarget")]
-class DiscreteWeaponComponentOnTarget
-{
-    static bool Prefix(DiscreteWeaponComponent __instance, Vector3 aimPoint)
-    {
-        DiscreteWeaponEjectors ejectors = __instance?.GetComponentInChildren<DiscreteWeaponEjectors>();
-        if (ejectors == null || ejectors.SkipPatch())
-            return true;
-
-        ejectors.OnTarget(aimPoint);
-        return false;
         //Common.SetVal(__instance, "Mode", TrackingMode.Ping);
     }
 }
