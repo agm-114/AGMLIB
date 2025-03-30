@@ -1,4 +1,5 @@
-﻿using static Ships.BaseCellLauncherComponent;
+﻿using Ships;
+using static Ships.BaseCellLauncherComponent;
 using static Ships.BulkMagazineComponent;
 
 public class MagazineLoader : MonoBehaviour
@@ -12,6 +13,7 @@ class CellLauncherComponentNeedsExternalAmmoFeed
 {
     public static void Postfix(ref bool __result, BaseCellLauncherComponent __instance)
     {
+        Common.LogPatch();
         if (__result)
             return;
         if (__instance.GetComponentInChildren<MagazineLoader?>() != null)
@@ -26,6 +28,7 @@ class SettingsMagazineLoadoutSet
 
     public static void Postfix(SettingsMagazineLoadout __instance, EditorShipController ship, HullSocket socket, HullComponent component)
     {
+        Common.LogPatch();
         IMagazineProvider _provider = (component as IConfigurableMagazineLoadout).GetMagazineProvider<IMagazineProvider>();
         if (!Mags.ContainsKey(__instance))
             Mags.Add(__instance, _provider);
@@ -39,6 +42,7 @@ class SettingsMagazineLoadoutUpdateQuantities
 
     public static void Postfix(SettingsMagazineLoadout __instance)
     {
+        Common.LogPatch();
         return;
         //Debug.Log("Postfix");
         if (!SettingsMagazineLoadoutSet.Mags.ContainsKey(__instance))
@@ -82,22 +86,26 @@ class SettingsMagazineLoadoutUpdateQuantities
 [HarmonyPatch(typeof(BaseCellLauncherComponent), nameof(BaseCellLauncherComponent.GetDesignWarnings))]
 class BaseCellLauncherComponentGetDesignWarnings
 {
-    public static bool Prefix(BaseCellLauncherComponent __instance, List<string> warnings)
+    public static bool Prefix(BaseCellLauncherComponent __instance, List<DesignWarning> warnings)
     {
+        Common.LogPatch();
         MagazineLoader loader = __instance.GetComponentInChildren<MagazineLoader>();
         if (loader == null)
             return true;
         BaseCellMissileMagazine Missiles = Common.GetVal<BaseCellMissileMagazine>(__instance, "_missiles");
 
-        if (Missiles.AnyMissileDesignsInvalid())
-        {
-            warnings.Add("Launcher on " + __instance.Socket.name + " contains invalid munition designs.");
-        }
         BaseHull _myHull = Common.GetVal<BaseHull>(__instance, "_myHull");
         if (_myHull.MyShip.AmmoFeed.GetAllCompatibleAmmoTypes(__instance).Count == 0)
         {
-            warnings.Add("No ammunition for weapon: " + __instance.ComponentName + " on " + __instance.Socket.name);
+            warnings.Add(ShipDesignWarning.Warning("No Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.name + " has no missiles loaded.", _myHull.MyShip));
         }
+
+        if (Missiles.AnyMissileDesignsInvalid())
+        {
+            warnings.Add(ShipDesignWarning.Warning("Invalid Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.name + " contains invalid munition designs.", _myHull.MyShip));
+        }
+
+
         return false;
     }
 }
@@ -107,7 +115,7 @@ class EditorDoesAnyWeaponUseAmmoType
 {
     public static void Postfix(BaseHull __instance, IMunition ammoType, bool externalFeed, ref bool __result)
     {
-
+        Common.LogPatch();
         if (__result == true)
             return;
         foreach (IWeapon weapon in __instance.CollectComponents<IWeapon>().Where(weapon => weapon.IsAmmoCompatible(ammoType)))
@@ -126,7 +134,7 @@ class ShipLoadFromSave
 {
     public static void Prefix(Ship __instance, ref SerializedShip saved, BaseHull ____hull)
     {
-
+        Common.LogPatch();
         if (__instance.GetComponent<ShipController>().enabled == false)
         {
             //Debug.LogError("In Editor");
@@ -187,7 +195,7 @@ class ShipLoadFromSave
 
     public static void Postfix(Ship __instance)
     {
-
+        Common.LogPatch();
         //__instance.GetComponentInChildren<FixedCellLauncherComponent>().Slurp();
         //__instance.GetComponentInChildren<FixedCellLauncherComponent>().OnAmmoQuantityChanged.Invoke()
     }

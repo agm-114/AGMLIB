@@ -153,6 +153,7 @@ public class ContinuousWeaponComponentReportFired
 {
     static void Prefix(ContinuousWeaponComponent __instance)
     {
+        Common.LogPatch();
         foreach (ActiveSettings setting in __instance.GetComponentsInChildren<ActiveSettings>())
             setting.lastfired = Time.fixedTime;
     }
@@ -162,8 +163,7 @@ public class DiscreteWeaponComponentReportFired
 {
     static void Prefix(DiscreteWeaponComponent __instance)
     {
-        //Debug.LogError("Fired");
-        
+        Common.LogPatch();
         foreach (ActiveSettings setting in __instance.GetComponentsInChildren<ActiveSettings>())
             setting.lastfired = Time.fixedTime;
     }

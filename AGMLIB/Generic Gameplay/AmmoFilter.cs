@@ -50,7 +50,7 @@ class BaseCellLauncherComponentIsAmmoCompatible
 {
     public static void Postfix(BaseCellLauncherComponent __instance, IMunition ammo, ref bool __result)
     {
-
+        Common.LogPatch();
         if (AmmoCompatiblity.IsAmmoCompatible(ammo, __instance, out bool value, true))
             __result =  value;
     }
@@ -62,6 +62,7 @@ class BaseTubeLauncherComponentIsAmmoCompatible
 
     public static void Postfix(FixedTubeLauncherComponent __instance, IMunition ammo, ref bool __result)
     {
+        Common.LogPatch();
         if (AmmoCompatiblity.IsAmmoCompatible(ammo, __instance, out bool value))
             __result = value;
     }
@@ -72,6 +73,7 @@ class WeaponComponentIsAmmoCompatible
 {
     static void Postfix(WeaponComponent __instance, IMunition ammo, ref bool __result)
     {
+        Common.LogPatch();
         if (AmmoCompatiblity.IsAmmoCompatible(ammo, __instance, out bool value))
             __result = value;
     }
@@ -82,6 +84,7 @@ class BulkMagazineComponentRestrictionCheck
 {
     static void Postfix(BulkMagazineComponent __instance, IMunition ammoType, ref bool __result)
     {
+        Common.LogPatch();
         if (AmmoCompatiblity.IsAmmoCompatible(ammoType, __instance, out bool value))
             __result = value;
     }

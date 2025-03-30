@@ -138,6 +138,7 @@ class ShipInfoBarMatchAllButtons
 
     static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort)
     {
+        Common.LogPatch();
         //Debug.LogError("buttonmatch");
         ShipController _primaryShip = Common.GetVal<ShipController>(__instance, "_primaryShip");
         List<ShipController> _shipGroup = Common.GetVal<List<ShipController>>(__instance, "_shipGroup") ?? new();

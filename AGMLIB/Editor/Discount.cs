@@ -57,6 +57,7 @@ class HullComponentGetPointCost
 {
     static void Prefix(HullComponent __instance, int existingCount, HullComponentCostCalculator saveInfo = null)
     {
+        Common.LogPatch();
         Postfix();
         if (saveInfo == null)
             return;
@@ -66,7 +67,7 @@ class HullComponentGetPointCost
 
     static void Postfix()
     {
-
+        Common.LogPatch();
         SimpleDiscount.CostingSocket = null;
 
     }
@@ -78,7 +79,7 @@ class HullComponentGetBasePointCost
 {
     static void Postfix(HullComponent __instance, int existingCount, ref int __result)
     {
-
+        Common.LogPatch();
         //Debug.LogError("Start cost " + __result);
         //List<float> test = discounts.ConvertAll<float>(x => x.Multiplier(existingCount));
         //foreach(float val in test)
@@ -105,6 +106,7 @@ class HullComponentGetFormattedSubtitle
 {
     static void Postfix(HullComponent __instance, int currentlyInstalled, ref string __result)
     {
+        Common.LogPatch();
         float discount = Discount.ListCalc(__instance, currentlyInstalled);
         if (discount == 1) { return; }
         if(discount < 1)

@@ -49,6 +49,7 @@ class HullGetAllSubPartsInternal
 {
     public static void Prefix(Hull __instance)
     {
+        Common.LogPatch();
         var parts = __instance.gameObject.GetComponentsInChildren<IDynamicCollectablePart>(includeInactive: true);
         //Debug.LogError("Creating " + parts.Length + " children");
 

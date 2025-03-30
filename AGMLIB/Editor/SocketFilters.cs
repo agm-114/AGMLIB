@@ -468,7 +468,7 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
     {
         static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
         {
-
+            Common.LogPatch();
             //Debug.LogError("Setting Ship");
             foreach (SocketItem child in ____scrollPaneContent.GetComponentsInChildren<SocketItem>().Where(socketitem => socketitem.Socket != null))
             {
@@ -540,6 +540,7 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
     {
         static bool Prefix(FleetCompositionSubmodeController __instance, HullSocket socket, bool fromUI)
         {
+            //Common.LogPatch();
             //Debug.LogError("Highlight Postfix");
             SocketFilters socketFilters = socket?.GetComponent<SocketFilters>() ?? new();
             return socket == null || socketFilters.AllowHighlight;
@@ -552,6 +553,7 @@ class ShipEditorPanePatch
     static bool Prefix(ShipEditorPane __instance, HullSocket socket, ComponentPalette ____palette)
     {
         //
+        Common.LogPatch();
 
 
         List<SelectableListItem> validComponents = ____palette.GetItemsForSocket(socket);
@@ -598,6 +600,7 @@ class LoadPatch
 {
     static void Postfix(Ship __instance)
     {
+        Common.LogPatch();
         HullSocket[] sockets = __instance.GetComponentsInChildren<HullSocket>();
         foreach (HullSocket socket in sockets)
         {
@@ -668,7 +671,7 @@ class HullSocketPatch
 
     static void Postfix(HullSocket __instance)
     {
-        //Debug.LogError("Socket Filter Postfix Start");
+        Common.LogPatch();
         HullSocket socket = __instance;
         //Debug.LogError("Set Component Postfix");
 

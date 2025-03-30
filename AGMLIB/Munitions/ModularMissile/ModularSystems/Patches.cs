@@ -9,6 +9,7 @@ class MissileComponentDescriptorInstallSocketModuleInternal
     public static String FactionKey = null;
     static void Prefix(ModularMissile __instance, MissileSocket socket, MissileComponentDescriptor component, FactionDescription ____fleetFaction)
     {
+        Common.LogPatch();
         MissileComponentDescriptor Component = component;
         if (component == null || socket == null)
             return;
@@ -59,6 +60,7 @@ class MissileComponentDescriptorInstallSocketModuleInternal
 
     static void Postfix(ModularMissile __instance, MissileSocket socket, MissileComponentDescriptor component)
     {
+        Common.LogPatch();
         if (SocketType.HasValue)
         {
             socket.SocketType = SocketType.Value;

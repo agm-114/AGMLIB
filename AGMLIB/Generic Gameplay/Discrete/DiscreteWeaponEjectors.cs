@@ -128,6 +128,7 @@ class FixedDiscreteWeaponComponentOnTarget
 {
     static bool Prefix(FixedDiscreteWeaponComponent __instance, Vector3 aimPoint)
     {
+        Common.LogPatch();
         DiscreteWeaponEjectors ejectors = __instance?.GetComponentInChildren< DiscreteWeaponEjectors>();
         if (ejectors == null || ejectors.SkipPatch())
             return true;//true

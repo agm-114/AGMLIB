@@ -246,11 +246,19 @@ public class AreaEffect : ActiveSettings
 [HarmonyPatch(typeof(ActiveJammingEffect), "TargetGained")]
 class ActiveEWarEffectTargetGained2
 {
-    static void Postfix(ActiveEWarEffect __instance, IEWarTarget newTarget) => AreaEffect.HandleJammer(__instance, newTarget, true);
+    static void Postfix(ActiveEWarEffect __instance, IEWarTarget newTarget)
+    {
+        Common.LogPatch(); 
+        AreaEffect.HandleJammer(__instance, newTarget, true);
+    } 
 }
 
 [HarmonyPatch(typeof(ActiveJammingEffect), "TargetLost")]
 class ActiveEWarEffectTargetLost2
 {
-    static void Postfix(ActiveEWarEffect __instance, IEWarTarget lostTarget) => AreaEffect.HandleJammer(__instance, lostTarget, false);
+    static void Postfix(ActiveEWarEffect __instance, IEWarTarget lostTarget)
+    {
+        Common.LogPatch();
+        AreaEffect.HandleJammer(__instance, lostTarget, false);
+    }
 }

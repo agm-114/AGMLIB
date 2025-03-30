@@ -49,7 +49,7 @@ class TurretControllerFaceTarget
 
     static void Postfix(TurretController __instance)
     {
-         
+        Common.LogPatch();
         if (__instance.gameObject.transform.GetComponentInParent<CustomTraversalLimits>() is not CustomTraversalLimits customlimits)
         {
             return;

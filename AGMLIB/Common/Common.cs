@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.Serialization;
 using UnityEngine;
 
 class Common
@@ -45,11 +46,34 @@ class Common
 
     }
 
-    public static void Trace(object pobject, object error) => Print(pobject, error, CustomColor.YellowTextColor);
-    public static void Trace(object message) => Print(message, CustomColor.YellowTextColor);
+    public static void Trace(object pobject, object error) => SilentPrint(pobject, error);
+    public static void Trace(object message) => SilentPrint(message, "");
     public static void Hint(object pobject, object error) => Print(pobject, error, CustomColor.LightBlueTextColor);
     public static void Hint(object message) => Print(message, CustomColor.LightBlueTextColor);
 
+    public static void SilentPrint(object pobject, object error)
+    {
+        string name = string.Empty;
+        if (pobject is HullComponent hullComponent)
+        {
+            pobject = hullComponent.gameObject;
+        }
+        else if (pobject is GameObject go)
+        {
+
+            name += go.GetComponentInChildren<HullComponent>()?.ComponentName ?? "";
+            name += go.name;
+
+        }
+        else
+        {
+            name = pobject.ToString();
+        }
+
+
+        Debug.Log(name + " " + error.ToString());
+
+    }
     public static void Print(object pobject, object error, CustomColor color)
     {
         string name = string.Empty;
@@ -73,6 +97,23 @@ class Common
         StringFormatter formatter = new StringFormatter();
         formatter.Color = CustomColor.LightBlueTextColor;
         formatter.Text =  message.ToString();
+        Debug.LogError("" + formatter);
+    }
+
+
+    public static void LogPatch(object? message = null)
+    {
+        return;
+        if (message == null)
+            message = "patch triggered";
+        System.Diagnostics.StackFrame frame = new System.Diagnostics.StackFrame(1);
+        string className = frame.GetMethod().DeclaringType.Name;
+        string methodName = frame.GetMethod().Name;
+
+        StringFormatter formatter = new StringFormatter();
+        formatter.Color = CustomColor.OrangeTextColor;
+        formatter.Text = $"{className}.{methodName}: {message}";
+
         Debug.LogError("" + formatter);
     }
 

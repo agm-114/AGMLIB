@@ -159,6 +159,7 @@ class MissileEjectorFireEffect
 
     public static void Postfix(MissileEjector __instance)
     {
+        Common.LogPatch();
         //Debug.LogError("1 MissileInstantiated Postfix");
         List<KinematicLauncher> launchers = __instance.gameObject.GetComponentsInParent<KinematicLauncher>()?.ToList() ?? new(); //??
                                                                                                                                  //__instance.gameObject.AddComponent<KinematicLauncher>();
@@ -178,6 +179,7 @@ class MissileEjectorMissileInstantiated
 {
     public static void Prefix(MissileEjector __instance, NetworkPoolable obj, IMissile missile)
     {
+        Common.LogPatch();
         //Debug.LogError("1 MissileInstantiated Prefix");
 
         if (obj == null)
@@ -187,6 +189,7 @@ class MissileEjectorMissileInstantiated
     }
     public static void Postfix(MissileEjector __instance, NetworkPoolable obj, IMissile missile)
     {
+        Common.LogPatch();
         //Debug.LogError("1 MissileInstantiated Postfix");
 
         List<KinematicLauncher> launchers = __instance.gameObject.GetComponentsInParent<KinematicLauncher>()?.ToList() ?? new(); //??
@@ -208,13 +211,21 @@ class MissileEjectorMissileInstantiated
 [HarmonyPatch(typeof(Missile), "FixedUpdate")]
 class MissileFixedUpate
 {
-    public static void Postfix(Missile __instance) => __instance?.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(a => a?.FixedUpdate());
+    public static void Postfix(Missile __instance)
+    {
+        Common.LogPatch();
+        __instance?.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(a => a?.FixedUpdate());
+    }
 }
 
 [HarmonyPatch(typeof(Missile), "Thrust")]
 class MissileThrust
 {
-    public static void Postfix(Missile __instance) => __instance?.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(a => a?.FixedUpdate());
+    public static void Postfix(Missile __instance)
+    {
+        Common.LogPatch();
+        __instance?.GetComponents<IMissileFixedUpdate>()?.ToList()?.ForEach(a => a?.FixedUpdate());
+    }
 }
 
 

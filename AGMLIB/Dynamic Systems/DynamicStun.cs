@@ -63,7 +63,7 @@ class ShipControllerHandleDrivesWorkingChanged
 {
     static void Prefix(ShipController __instance)
     {
-        
+        Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
         if (__instance.GetActive().Where(a => a.DisableDrives).Count() <= 0)
@@ -75,6 +75,7 @@ class ShipControllerHandleDrivesWorkingChanged
 
     static void Postfix(ShipController __instance)
     {
+        Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
         if(cache._allDrives != null )
@@ -89,7 +90,7 @@ class ShipControllerHandlePowerplantsWorkingChanged
 {
     static void Prefix(ShipController __instance)
     {
-        
+        Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
         if (__instance.GetActive().Where(a => a.DisableReactors).Count() <= 0)
@@ -101,6 +102,7 @@ class ShipControllerHandlePowerplantsWorkingChanged
 
     static void Postfix(ShipController __instance)
     {
+        Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
         if (cache._allPowerplants != null)

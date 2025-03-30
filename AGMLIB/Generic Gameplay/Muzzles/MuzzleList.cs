@@ -52,6 +52,7 @@ namespace AGMLIB.Generic_Gameplay.Discrete
     {
         static bool Prefix(WeaponComponent __instance, ref Muzzle __result, out int num)
         {
+            Common.LogPatch();
             List<MuzzleList> muzzleLists = __instance.GetComponentsInChildren<MuzzleList>().ToList() ?? new List<MuzzleList>();
             // Check if the condition to skip the function is met
             if (muzzleLists.Count > 0)
@@ -84,6 +85,7 @@ namespace AGMLIB.Generic_Gameplay.Discrete
 
         static void Prefix(ContinuousWeaponComponent __instance)
         {
+            Common.LogPatch();
             List<MuzzleList> muzzleLists = __instance.GetComponentsInChildren<MuzzleList>().ToList() ?? new List<MuzzleList>();
             // Check if the condition to skip the function is met
             if (muzzleLists.Count <= 0)
@@ -107,6 +109,7 @@ namespace AGMLIB.Generic_Gameplay.Discrete
 
         static void Postfix(ContinuousWeaponComponent __instance)
         {
+            Common.LogPatch();
             if (_muzzles == null)
                 return;
             Common.SetVal(__instance, "_muzzles", _muzzles);

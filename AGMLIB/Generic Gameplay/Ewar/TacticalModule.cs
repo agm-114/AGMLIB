@@ -21,7 +21,7 @@ class ContestTweak
 {
     static bool Prefix(ObjectivePoint __instance, Collider other)
     {
-        
+        Common.LogPatch();
         if (!other.isTrigger)
         {
             TacticalModule component = other.gameObject.transform.root.GetComponent<TacticalModule>() ?? other.gameObject.transform.root.GetComponentInChildren<TacticalModule>();

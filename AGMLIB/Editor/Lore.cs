@@ -44,11 +44,12 @@ using Image = UnityEngine.UI.Image;
     {
         static void Postfix(PaletteItem __instance, HullComponent component, Image ____modBadge)
         {
-        //foreach (HullComponent pcomp in BundleManager.Instance.AllComponents)
-        //    Debug.Log(pcomp.ComponentName + " bndl2 " + pcomp.SaveKey);
+            Common.LogPatch();
+            //foreach (HullComponent pcomp in BundleManager.Instance.AllComponents)
+            //    Debug.Log(pcomp.ComponentName + " bndl2 " + pcomp.SaveKey);
 
             if (component == null)
-                return;
+                    return;
             //Debug.Log("pltset " + component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category + " " + component);
 
             if (!component.SourceModId.HasValue)
@@ -69,6 +70,7 @@ using Image = UnityEngine.UI.Image;
     {
         static void Postfix(ModalListSelectDetailed __instance, SelectableListItem selected, TextMeshProUGUI ____detailText)
         {
+            Common.LogPatch();
             TextMeshProUGUI extralore = Lore.GetExtraLoreTMP(____detailText);
             extralore.text = "";
 
@@ -110,6 +112,7 @@ using Image = UnityEngine.UI.Image;
     {
         static void Postfix(PaletteItem __instance, HullComponent ____component, ref string __result)
         {
+            Common.LogPatch();
             HullComponent _component = ____component;
             Lore lore = _component.GetComponentInChildren<Lore>();
             if (_component == null || lore == null)
@@ -148,6 +151,7 @@ using Image = UnityEngine.UI.Image;
     {
         static void Postfix(PaletteItem __instance, BaseHull ____hull, out string title, out string subtitle, out Sprite image, out string details)
         {
+            Common.LogPatch();
             BaseHull _hull = ____hull;
             Lore lore = _hull.GetComponentInChildren<Lore>() ?? new();
             title = _hull.ClassName;

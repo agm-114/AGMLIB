@@ -20,6 +20,7 @@ namespace Lib.Editor.Yaml
     {
         static void Prefix(SocketItem __instance)
         {
+            Common.LogPatch();
             ShipEditorPane _editor = Common.GetVal<ShipEditorPane>(__instance, "_editor");
             if (_editor == null)
                 Debug.LogError("editornull");
@@ -45,6 +46,7 @@ namespace Lib.Editor.Yaml
     {
         static void Postfix(ModRecord __instance)
         {
+            Common.LogPatch();
             //return;
             ModRecord record = __instance;
 

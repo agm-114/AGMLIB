@@ -98,6 +98,7 @@ namespace AGMLIB.Dynamic_Systems.Area
     {
         static void Postfix(HullComponent __instance, ComponentSaveData data)
         {
+            Common.LogPatch();
             StartState startState = __instance.GetComponent<StartState>();
             if (startState == null)
                 startState = __instance.gameObject.AddComponent<StartState>();

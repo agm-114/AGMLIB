@@ -74,6 +74,7 @@ class DamageControlBoardLinkShip
     static void Postfix(DamageControlBoard __instance, ShipController ship)
     {
         return;
+        Common.LogPatch();
         DamageControlBoardResources _resources = __instance.transform.parent.gameObject.GetComponent<DamageControlBoardResources>();
         //var random = new System.Random();
         //DCLockerComponent dCLockerComponent = ship.GetComponentsInChildren<DCLockerComponent>().ToList()[0];

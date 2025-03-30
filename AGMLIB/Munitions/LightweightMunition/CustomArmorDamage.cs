@@ -42,6 +42,7 @@ namespace AGMLIB.Munitions.LightweightMunition
         }
 
         static void Prefix(ShipController __instance, MunitionHitInfo hitInfo, IDamageDealer character, bool neverRicochet) {
+            Common.LogPatch();
             IModular modular = character as IModular;
             if (modular == null && character is BaseThrowawayDamager damager)
             {
@@ -100,6 +101,7 @@ namespace AGMLIB.Munitions.LightweightMunition
     {
         static void Prefix(ShipController __instance, int armorIndex, Vector2 hitUV, ref float damage, float brushSize, float heat)
         {
+            Common.LogPatch();
             //Debug.LogError("Base Armor Damage" + damage);
 
             if (ShipControllerApplyArmorDamage.doarmordamage)

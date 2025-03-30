@@ -5,6 +5,7 @@ class CheckTargetValidityTweak
 {
     static void Postfix(ActiveEWarEffect __instance, ref bool __result, IEWarTarget target, SignatureType ____sigType)
     {
+        Common.LogPatch();
         FratricidalWeapon weapon = __instance.GetComponent<FratricidalWeapon>();
         if (weapon == null || !weapon.Targetfriendlies)
         {
@@ -47,10 +48,15 @@ public class FratricidalWeapon : MonoBehaviour
 class FollowingInstanceMuzzleFire : MonoBehaviour
 {
 
-    static void Prefix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
+    static void Prefix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance)
+    {
+        Common.LogPatch();
+        FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
+    }
 
     static void Postfix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance)
     {
+        Common.LogPatch();
         if (____followingInstance == null)
             return;
         //TEMP
@@ -70,5 +76,9 @@ class FollowingInstanceMuzzleFire : MonoBehaviour
 [HarmonyPatch(typeof(FollowingInstanceMuzzle), nameof(FollowingInstanceMuzzle.StopFire))]
 class FollowingInstanceMuzzleStopFire
 {
-    static void Prefix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance) => FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
+    static void Prefix(FollowingInstanceMuzzle __instance, NetworkPoolable ____followingInstance)
+    {
+        Common.LogPatch();
+        FratricidalWeapon.RemoveFratricidalWeapon(____followingInstance);
+    }
 }

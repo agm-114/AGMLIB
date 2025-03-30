@@ -24,6 +24,7 @@ class SensorTrackAddSensor
 {
     static void Prefix(SensorTrack __instance, ISensor sensor, ref AcquisitionType acqType)
     {
+        Common.LogPatch();
         if (sensor.GetAdvancedRadar()?.PingTracksOnly ?? false)
             acqType = AcquisitionType.Ping;
     }
@@ -34,6 +35,7 @@ class SensorTrackUpdate
 {
     static void Prefix(SensorTrack __instance)
     {
+        Common.LogPatch();
         List<AdvancedRadar> _pingSensors = Common.
             GetVal<List<ISensor>>(__instance, "_pingSensors").
             ConvertAll(a => a?.GetAdvancedRadar()).
@@ -58,6 +60,7 @@ class BaseActiveSensorComponentAcquireContacts
 {
     static void Prefix(BaseActiveSensorComponent __instance)
     {
+        Common.LogPatch();
         if (__instance.GetAdvancedRadar()?.ForceBurnthrough ?? false)
             __instance.MarkNextBurnthroughCycle();
     }
@@ -68,6 +71,7 @@ class SensorTrackUpdateMode
 {
     static void Postfix(SensorTrack __instance)
     {
+        Common.LogPatch();
         //Common.SetVal(__instance, "Mode", TrackingMode.Ping);
     }
 }
@@ -77,6 +81,7 @@ class BaseActiveSensorComponentCanSeeSignature
 {
     static bool Prefix(BaseActiveSensorComponent __instance, IActiveSignature sig, ref bool __result)
     {
+        Common.LogPatch();
         AdvancedRadar AR = __instance?.GetAdvancedRadar();
         if (AR == null)
             return true;

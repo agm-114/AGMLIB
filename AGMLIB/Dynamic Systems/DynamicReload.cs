@@ -17,6 +17,7 @@ namespace Lib.Dynamic_Systems
     {
         static void Prefix(DiscreteWeaponComponent __instance)
         {
+            Common.LogPatch();
             if (__instance.CurrentlyFiring || !Common.GetVal<bool>(__instance, "_reloading"))
                 return;
             if (__instance.GetComponent<DynamicReload>() is not DynamicReload reload)

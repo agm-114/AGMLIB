@@ -296,6 +296,7 @@ class HullComponentGetMissingResources : MonoBehaviour
 
     static bool Prefix(HullComponent __instance, ResourceValue[] ____requiredResources, ref string __result)
     {
+        Common.LogPatch();
         string text = "";
         ResourceValue[] requiredResources = ____requiredResources;
         if (requiredResources == null)

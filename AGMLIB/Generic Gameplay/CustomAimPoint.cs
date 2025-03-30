@@ -35,6 +35,7 @@ class BaseTurretedLauncherComponentFixedUpdate
 
     public static bool Prefix(BaseTurretedLauncherComponent __instance)
     {
+        Common.LogPatch();
         CustomAimPoint customaimpoint = __instance.GetComponentInChildren<CustomAimPoint>();
         if (customaimpoint == null)
             return true;
@@ -91,6 +92,7 @@ class WeaponComponentGetAimPoint
 {
     public static void Postfix(DiscreteWeaponComponent __instance, Vector3 target, Vector3 velocity, Vector3 acceleration, float age, ref Vector3 __result)
     {
+        Common.LogPatch();
         CustomAimPoint customaimpoint = __instance.GetComponentInChildren<CustomAimPoint>();
         if (customaimpoint == null)
             return;
