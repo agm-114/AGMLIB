@@ -9,6 +9,7 @@ using AGMLIB.Dynamic_Systems.Area;
 using Steamworks;
 using Networking;
 using System.Reflection;
+using System.Xml.Serialization;
 
 public class EntryPoint : IModEntryPoint 
 {
@@ -36,6 +37,31 @@ public class EntryPoint : IModEntryPoint
     }
     public void PreLoad()
     {
+        if (false)
+        {
+            SerializedInventory inventory = new();
+            List<string> items = new();
+
+            foreach (HullComponent comp in BundleManager.Instance.AllComponents)
+            {
+                items.Add(comp.SaveKey);
+                Common.Hint(comp.ComponentName + comp.HealthPercentage);
+            }
+
+            inventory.Stuff = items.ToArray();
+
+            FilePath invpath = Fleet.FullLocalFleetPath(FilePath.Empty.Directory, "test.inv");
+            if (!Directory.Exists(invpath.Directory))
+            {
+                Debug.Log("Creating missing save directory");
+                Directory.CreateDirectory(invpath.Directory);
+            }
+
+            using FileStream stream = new FileStream(invpath.RelativePath, FileMode.Create);
+            XmlSerializer serializer = new XmlSerializer(typeof(SerializedInventory));
+            serializer.Serialize(stream, inventory);
+            stream.Close();
+        }
 
 
         DependencyPatch.window = false;
