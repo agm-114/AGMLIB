@@ -4,6 +4,8 @@ using Munitions.ModularMissiles.Runtime;
 using Game.Reports;
 using Munitions.InstancedDamagers;
 using System.Runtime.InteropServices;
+using Steamworks;
+using UnityEngine;
 
 public class RangeBasedDamageCharacteristic : IDamageCharacteristic
 {
@@ -45,25 +47,21 @@ public class RuntimeTimeFuse : MonoBehaviour
 }
 
 [CreateAssetMenu(fileName = "New Beam Missile Warhead", menuName = "Nebulous/Missiles/Warhead/Beam Warhead")]
-public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
+public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
 {
     
-    public float WeightedSocketSize => base._weightedSocketSize;
     IDamageCharacteristic DamageCharacteristic => new RangeBasedDamageCharacteristic(this);
     public override float ArmorPenetration => DamageCharacteristic.ArmorPenetration;
     public override float ComponentDamage => DamageCharacteristic.ComponentDamage;
     public override float TotalComponentDamagePotential => BeamCount * ComponentDamage;
     [Header("Beam Warhead FX")]
-    public WeaponEffectSet WepEffects = null;
-    public override WeaponEffectSet GetEffectSet(int setIndex) => WepEffects;
+
     public GameObject BeamPrefab;
-    public List<GameObject> ExplosionPrefabs;
+    
 
     //public bool SelectRandomPointInTarget = false;
     //public readonly bool _bulletLook = false;
-    [Header("Flavor Blobs")]
-    public string Summary = "BEAM";
-    public string DetailedSummary = "Multiple Beam Warhead";
+
     [Header("IDamageCharacteristic Damage Values")]
     public AnimationCurve BeamArmorPenetrationRangeScaling = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(10f, 0.5f));
     public AnimationCurve BeamArmorPenetrationSizeScaling = new AnimationCurve(new Keyframe(0f, 1000f), new Keyframe(10f, 100f));
@@ -84,45 +82,94 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
     public bool IgnoreDamageReduction = false;
     [Header("Beam Specfic Values")]
     public float FuseDelay = 0.0f;
-    public Vector3 FuseDimensions = Vector3.one;
-    public bool Omnidirectional = false;
     public float BeamLength = 2000;
-    public float BeamCount = 100;
+    
     public float PKill = 1;
+
     public CastType CastType = CastType.Ray;
     public DamageSpreadingMethod SpreadingMethod => DamageSpreadingMethod.EvenSpread;
-    public float LaunchAngle = 5;    
-    
-    public override string GetFormattedDescription()
-    {
-        
-        string output = "";
-        output += $"Beam Length: {BeamLength * 10f:N0} m\n";
-        output += $"Armor: {ArmorPenetration:N0}cm\n";
-        output += $"Component: {ComponentDamage:N0}hp\n";
-        output += $"Beam Length: {BeamLength   * 10f:N0} m\n";
-        output += $"Angle:       {LaunchAngle:N0} degrees\n";
-        return output;
-    }
 
-    Poolable SpawnEffect(GameObject prefab, Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime)
+    public bool ConeFrag = false;
+    public override void GetWarheadStatsBlock(ref List<(string, string)> rows)
     {
-        Poolable poolable = ObjectPooler.Instance.GetNextOrNew(prefab, position, rotation);
-        //ShortDurationEffect sde = poolable?.GetComponent<ShortDurationEffect>();
-        foreach (ILocalImbued imbued in poolable.gameObject.GetComponentsInChildren<ILocalImbued>())
+        base.GetWarheadStatsBlock(ref rows);
+        rows.Add(("Beam Length", $"{BeamLength * 10f:N0} m"));
+        rows.Add(("Armor", $"{ArmorPenetration:N0}cm"));
+        rows.Add(("Component", $"{ComponentDamage:N0}hp"));    
+    }
+    public override HitResult DoRay(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, Vector3 direction, Ray ray)
+    {
+        //Vector3 toTarget = runtime.transform.position.To(hitInfo.Point).normalized;
+
+        LineBeamMuzzleEffects? effects = SpawnEffect(BeamPrefab, runtime.transform.position, Quaternion.LookRotation(direction), runtime)?.GetComponentInChildren<LineBeamMuzzleEffects>();
+        effects?.StartEffect();
+        effects?.SetBeamLength(BeamLength);
+        if (effects == null) { Debug.LogError("Beam Effect Failed to spawn"); }
+
+        LineRenderer? lineRenderer = null;
+        if (DebugMode)
         {
-            imbued.ImbueLocal(Common.GetVal<ShipController>(runtime.Missile, "_localLaunchedFrom"));
-            imbued.SetWeaponReportPath(Common.GetVal<IWeaponStatReportReceiver>(runtime.Missile, "_reportTo"));
+            //Debug.LogError("Beam Spawn");
+            GameObject lineObj = new GameObject("BeamLine");
+            Destroy(lineObj, 30);
+            lineRenderer = lineObj.AddComponent<LineRenderer>();
+
+            // Configure LineRenderer settings
+            lineRenderer.startWidth = 0.05f;
+            lineRenderer.endWidth = 0.05f;
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default")); // Use a simple shader
+            lineRenderer.startColor = Color.blue;
+            lineRenderer.endColor = Color.blue;
+
+            // Set the positions to visualize the ray
+            lineRenderer.positionCount = 2;
+            lineRenderer.SetPosition(0, runtime.transform.position);
+            lineRenderer?.SetPosition(1, runtime.transform.position + direction * BeamLength);
+            
         }
-        if (poolable.GetComponent<ModularEffect>() == null)
-            foreach (IEffectModule effect in poolable.gameObject.GetComponentsInChildren<IEffectModule>())
-                effect.Play();
-        return poolable;
+
+        if (Physics.Raycast(ray, out var rayHit, BeamLength, 524801, QueryTriggerInteraction.Ignore))
+        {
+
+
+            effects?.SetBeamLength(rayHit.distance);
+            lineRenderer?.SetPosition(1, rayHit.point);
+            if (lineRenderer != null)
+            {
+                lineRenderer.startColor = Color.red;
+                lineRenderer.endColor = Color.red;
+            }
+
+            effects?.PositionHitEffect(on: true, ray.GetPoint(rayHit.distance), null);
+
+            MunitionHitInfo shrapnelHit = MunitionsHelpers.RaycastHitToMunitionHit(rayHit, runtime.transform.position.To(rayHit.point).normalized);
+
+            if (shrapnelHit.HitCollider is MeshCollider)
+            {
+                shrapnelHit.HitUV = hitObject.SampleUV(shrapnelHit.HitCollider as MeshCollider, shrapnelHit.LocalPoint, shrapnelHit.LocalNormal);
+            }
+            HitResult hitRes = hitObject.DoDamage(shrapnelHit, MakeDamageDealer(rayHit.distance), out float damage, out bool destroyedreport);
+            //if(damage > 0)
+            //    Debug.LogError("Size " + this.WeightedSocketSize + "Beam at distance " + rayHit.distance + " does " + damage + " damage out of " + MakeDamageDealer(rayHit.distance).ComponentDamage);
+
+            runtime.ReportDamageDone(hitRes, damage, destroyedreport);
+            //DoImpactEffect(shrapnelHit, hitRes);
+            shrapnelHit.Dispose();
+            return hitRes;
+        }
+        else
+        {
+            //effects?.HitEffectPlaying = false;
+            effects?.PositionHitEffect(on: true, runtime.transform.position + (direction * BeamLength), null);
+            return HitResult.None;
+        }
     }
 
-    public HitResult Explode(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
-    {
 
+
+    public override HitResult Explode(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
+    {
+        //Debug.LogError($"Explode {BeamCount}");
         HitResult finalresult = HitResult.None;
         if (BeamPrefab == null)
             Debug.LogError("No Beam Prefab");
@@ -130,50 +177,22 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
             Debug.LogError("Beam Prefab has no LineBeamMuzzleEffects");
 
         //steDebug.LogError("Explode");
-        foreach (GameObject ExplosionPrefab in ExplosionPrefabs)
-            SpawnEffect(ExplosionPrefab, runtime.transform.position, runtime.transform.rotation, runtime);
-
-        for (int i = 0; i < BeamCount; i++)
+        MunitionsHelpers.HitAllDamageableInArea(hitInfo.Point, runtime.Missile.transform.root.gameObject, BeamLength, 524801, delegate (Collider hit, IDamageable damageable)
         {
 
-            //Vector3 toTarget = runtime.transform.position.To(hitInfo.Point).normalized;
-            Vector3 randomdirection = MathHelpers.RandomRayInCone(runtime.transform.forward, LaunchAngle);
-            Ray r = new Ray(runtime.transform.position, randomdirection);
-            LineBeamMuzzleEffects effects = SpawnEffect(BeamPrefab, runtime.transform.position, Quaternion.LookRotation(randomdirection), runtime)?.GetComponentInChildren<LineBeamMuzzleEffects>();
-            effects?.StartEffect();
-            effects?.SetBeamLength(BeamLength);
-            //if (beameffect == null) { Debug.LogError("Beam Effect Failed to spawn"); }
-
-            if (Physics.Raycast(r, out var rayHit, BeamLength, 524801, QueryTriggerInteraction.Ignore))
+            if (Vector3.Angle(runtime.Missile.Velocity.normalized, hit.attachedRigidbody.velocity.normalized) > EffectiveLaunchAngle && ConeFrag)
             {
+                float damageDone2;
+                bool destroyed;
 
-
-                effects?.SetBeamLength(rayHit.distance);
-                effects?.PositionHitEffect(on: true, r.GetPoint(rayHit.distance), null);
-
-                MunitionHitInfo shrapnelHit = MunitionsHelpers.RaycastHitToMunitionHit(rayHit, runtime.transform.position.To(rayHit.point).normalized);
-
-                if (shrapnelHit.HitCollider is MeshCollider)
+                HitResult hitResult = damageable.DoDamage(hitInfo, this as IDamageDealer, out damageDone2, out destroyed);
+                if (hitResult != 0)
                 {
-                    shrapnelHit.HitUV = hitObject.SampleUV(shrapnelHit.HitCollider as MeshCollider, shrapnelHit.LocalPoint, shrapnelHit.LocalNormal);
+                    runtime.ReportDamageDone(hitResult, damageDone2, destroyed);
                 }
-                HitResult hitRes = hitObject.DoDamage(shrapnelHit, MakeDamageDealer(rayHit.distance), out float damage, out bool destroyedreport);
-                //if(damage > 0)
-                //    Debug.LogError("Size " + this.WeightedSocketSize + "Beam at distance " + rayHit.distance + " does " + damage + " damage out of " + MakeDamageDealer(rayHit.distance).ComponentDamage);
-                if (finalresult < hitRes)
-                    finalresult = hitRes;
-                runtime.ReportDamageDone(hitRes, damage, destroyedreport);
-                //DoImpactEffect(shrapnelHit, hitRes);
-                shrapnelHit.Dispose();
             }
-            else
-            {
-                //effects?.HitEffectPlaying = false;
-                effects?.PositionHitEffect(on: true, runtime.transform.position + (randomdirection * BeamLength), null);
-            }
-        }
-
-        runtime.Missile.DoImpactEffect(finalresult, runtime.transform.position, Quaternion.LookRotation(hitInfo.HitNormal), null);
+        });
+        
 
         return finalresult;
     }
@@ -183,53 +202,6 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
         yield return new WaitForSeconds(FuseDelay);
         Explode(runtime, hitObject, hitInfo);
 
-    }
-
-
-    public override HitResult TriggerDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, out bool noVfx)
-    {
-        //Debug.LogError("POP");
-
-        //GameObject cubes = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        //cubes.transform.position = runtime.transform.position;
-        //GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        //cube.transform.position = hitInfo.Point;
-        noVfx = false;
-        return Explode(runtime, hitObject, hitInfo);
-        
-        /*
-        if (FuseDelay > 0.01f)
-        {
-            runtime.StartCoroutine(CoroutineDelayedDamage(runtime, hitObject, hitInfo));
-            return HitResult.None;
-
-            for (int i = 0; i < 10; i++)
-            {
-                if(Vector3.Angle(runtime.transform.forward, hitObject.GameObj.transform.position - runtime.transform.position) < LaunchAngle)
-                    return HitResult.Penetrated;
-                Ray r = new Ray(runtime.transform.position, MathHelpers.RandomRayInCone(runtime.transform.forward, LaunchAngle));
-                if (Physics.Raycast(r, out var rayHit, BeamLength, 524801, QueryTriggerInteraction.Ignore))
-                    return HitResult.Penetrated;
-            }
-
-            return HitResult.None;
-        }
-        */
-
-    }
-
-
-    public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo) => TriggerDetonate(runtime, hitObject, hitInfo, out bool _);
-
-
-    public override void FinalSetup(ModularMissile missile)
-    {
-        //Debug.LogError("Setup");
-        base.FinalSetup(missile);
-        //Debug.LogError("Dims: " + FuseDims + " Target: " + Vector3.one * 100);
-
-        missile.SpawnProximityFuze(FuseDimensions);//Fusedimensions * 10 * (AoeRadius / 10) 100
-        missile.AddRuntimeBehaviour<RuntimeMissileWarhead>(this);
     }
 
     protected virtual IDamageDealer MakeDamageDealer(float range = 0)
@@ -253,8 +225,7 @@ public class BeamWarheadDescriptor : BaseWarheadDescriptor, IFuse
         return new SingleRayDamager(characteristic, SpreadingMethod, alwaysSpreadDamage: false, null, IgnoreDamageReduction);
     }
 
-    public override string GetSummarySegment() => Summary;
-    public override string GetDetailSummarySegment() => DetailedSummary;
+
 
 
     private static ColliderComparer _colliderComparer;
@@ -300,6 +271,7 @@ class LookaheadMunitionOnTriggerEnter
 {
     static bool Prefix(LookaheadMunitionBase __instance, Collider other)
     {
+        Common.LogPatch();
         RuntimeMissileWarhead AR = __instance?.GetComponent<RuntimeMissileWarhead>();
         if (AR == null)
             return true;

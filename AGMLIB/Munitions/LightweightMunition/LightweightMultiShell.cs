@@ -12,6 +12,7 @@ using UI.Controls;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI.Extensions;
+using static Sound.AnnouncerVoiceSet;
 using Random = UnityEngine.Random;
 
 namespace Lib.Munitions.LightweightMunition
@@ -22,11 +23,7 @@ namespace Lib.Munitions.LightweightMunition
         public static Queue<Fragment> pool = new Queue<Fragment>();
         public static Vector3 offsetRange = Vector3.one * 10;
         // Create the child object at the position of the parent + random offset
-        public Vector3 randomOffset = new Vector3(
-            Random.Range(-offsetRange.x, offsetRange.x),
-            Random.Range(-offsetRange.y, offsetRange.y),
-            Random.Range(-offsetRange.z, offsetRange.z)
-        );
+
 
         public static Fragment SpawnFrag(Transform parent, LightweightKineticShell simmedshell)
         {
@@ -44,14 +41,20 @@ namespace Lib.Munitions.LightweightMunition
                 
             }
 
-            gameObject.transform.SetParent(parent);  // Set the parent of the child object
-            gameObject.transform.localPosition = frag.randomOffset;
-            frag.SetupFrag(simmedshell);
+            frag.SetupFrag(parent, simmedshell);
             return frag;
         }
 
-        public void SetupFrag(LightweightKineticShell simmedshell)
+        public void SetupFrag(Transform parent, LightweightKineticShell simmedshell)
         {
+            Vector3 randomOffset = new Vector3(
+            Random.Range(-offsetRange.x, offsetRange.x),
+            Random.Range(-offsetRange.y, offsetRange.y),
+            Random.Range(-offsetRange.z, offsetRange.z)
+            );
+            //randomOffset = Vector3.zero;
+            transform.SetParent(parent);  // Set the parent of the child object
+            transform.localPosition = randomOffset;
             if (effect == null)
                 effect = gameObject.AddComponent<VisualEffect>();
             gameObject.SetActive(true);
@@ -111,6 +114,7 @@ namespace Lib.Munitions.LightweightMunition
             float raydistance = body.velocity.magnitude * Time.fixedDeltaTime;
             isTrigger = false;
             hit = new RaycastHit();
+            /*
             if(!Physics.BoxCast(
                 center:transform.position, 
                 halfExtents:Fragment.offsetRange, 
@@ -121,7 +125,7 @@ namespace Lib.Munitions.LightweightMunition
                 queryTriggerInteraction: QueryTriggerInteraction.Ignore
                 ))
                 return false;
-
+            */
 
             foreach (Fragment fragment in fragments)
             {
@@ -129,6 +133,7 @@ namespace Lib.Munitions.LightweightMunition
 
                 if (!Physics.Raycast(ray: r, out hit, maxDistance: raydistance, layerMask: _includeMunitions ? 524801 : 513, QueryTriggerInteraction.Ignore))
                     continue;
+
                 parent.ChildShellTemplate.InstantiateSelf(fragment.transform.position, fragment.transform.rotation, body.velocity);
             }
 
@@ -146,7 +151,9 @@ namespace Lib.Munitions.LightweightMunition
         public LightweightKineticShell ChildShellTemplate => _childShellTemplate;
         public override bool CustomLookaheadMethod => true;
 
-        public int Count => 100;
+        public float Angle => 30;
+
+        public int Count => 30;
 
         public override NetworkPoolable InstantiateSelf(Vector3 startPosition, Quaternion startRotation, Vector3 startVelocity)
         {
