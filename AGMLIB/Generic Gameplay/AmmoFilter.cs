@@ -1,13 +1,8 @@
 ﻿
-public class AmmoCompatiblity : MonoBehaviour, ICoreFilter
+public class AmmoCompatiblity : MonoBehaviour
 {
 
     [SerializeField] protected BaseFilter _filter;
-    public List<string> WhiteList = new();
-    public List<string> Blacklist = new();
-    public bool Default = false;
-    IList<string> ICoreFilter.Whitelist => WhiteList;
-    IList<string> ICoreFilter.Blacklist => Blacklist;
 
     public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false)
     {
@@ -19,9 +14,6 @@ public class AmmoCompatiblity : MonoBehaviour, ICoreFilter
         if (_filter == null)
         {
             Common.Hint(this, "has Ammo Filter that must be configured using simple filter");
-            SimpleFilter newfilter =  gameObject.AddComponent<SimpleFilter>();
-            _filter = newfilter;
-            newfilter.CopyFilter(this);
             return this.IsAmmoCompatible(ammo,debugmode);
         }
         return _filter.IsAmmoCompatible(ammo, debugmode);
