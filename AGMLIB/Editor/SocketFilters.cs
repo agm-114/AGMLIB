@@ -6,6 +6,7 @@ using Shapes;
 using Ships;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Telepathy;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 //using static UnityEditorInternal.ReorderableList;#dll
@@ -242,6 +243,8 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
 
             if (hullComponent == null)
                 return socketFilters.AllowNullComponent;
+            if (hullComponent.SaveKey == socket.DefaultComponent)
+                return true;
             //Debug.Log(hullComponent.SaveKey);
             SocketFilters componentFilters = hullComponent.GetComponent<SocketFilters>() ?? new SocketFilters();
             if (!socketFilters.AllowNullComponent && hullComponent == null)
@@ -306,6 +309,9 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
 
         )
         {
+            return Common.RunFunction;
+            //Common.LogPatch();
+
             //Debug.LogError("Help me I am trapped in a scripting factory ");
             Camera _camera = ____camera;
 
@@ -555,7 +561,6 @@ class ShipEditorPanePatch
         //
         Common.LogPatch();
 
-
         List<SelectableListItem> validComponents = ____palette.GetItemsForSocket(socket);
         foreach (SelectableListItem item in validComponents)
         {
@@ -614,11 +619,41 @@ class LoadPatch
 [HarmonyPatch(typeof(HullSocket), nameof(HullSocket.SetComponent))]
 class HullSocketPatch
 {
+    static bool HandleNullSocket(HullSocket socket, ref HullComponent componentPrefab)
+    {
+        if (componentPrefab != null)
+        {
+            return false;
+        }
+        SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
+        if(socketFilters.AllowNullComponent)
+        {
+            //Common.Trace("Null Socket OK");
+            return false;
+        }
+
+        //Common.Trace("Handle Null Socket");
+
+        componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
+        if (componentPrefab == null)
+        {
+            return true;
+            Common.Hint(socket, $"{socket.Key} Does not have a valid default component {socket.DefaultComponent} and doesn't allow null component");
+        }
+        return false;
+    }
+
     static bool Prefix(HullSocket __instance, ref HullComponent componentPrefab)
     {
-
-        //Debug.LogError("Socket Filter Prefix Start");
+        Common.LogPatch();
         HullSocket socket = __instance;
+        SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
+
+        //Common.Trace($"Socket Filter Key: {socket.Key} Allow Null {socketFilters.AllowNullComponent} comp key {componentPrefab?.SaveKey}");
+
+        if (socket.GetComponent<SocketFilters>() == null && componentPrefab?.GetComponent<SocketFilters>() == null)
+            return true;
+
         if (socket.Component is HullComponent _component && false)
         {
             _component.SetSocket(null);
@@ -630,36 +665,35 @@ class HullSocketPatch
             socket.UpdateColliderActive();
         }
         //return true;
-        //Debug.LogError(componentPrefab.Category);
+        //Common.Trace(componentPrefab.Category);
 
-        //Debug.LogError("Set Component Prefix");
-        SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
+        //Common.Trace("Set Component Prefix");
         //if(componentPrefab != null)
-        //    Debug.LogError("General Install " + componentPrefab.SaveKey);
+        //    Common.Trace("General Install " + componentPrefab.SaveKey);
 
-        if (componentPrefab == null)
-        {
-            if (socketFilters.AllowNullComponent)
-                return true;
-            componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
-        }
-
-        if (socket.GetComponent<SocketFilters>() == null && componentPrefab.GetComponent<SocketFilters>() == null)
+        if (HandleNullSocket(socket, ref componentPrefab))
             return true;
 
-        /*
+
         if (!CheckDepedends(socket))
         {
-            //Debug.LogError("Missing Component");
+            //Common.Trace("Bad Depedends Check");
             //return false;
         }
-        */
+        
 
         if (!SocketFilters.CheckLegal(socket, componentPrefab))
-            componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
-        else if (!componentPrefab.TestSocketFit(socket.Size))
         {
-            //Debug.LogError("Resizing Socket");
+            //Common.Trace("Illegal socket");
+            componentPrefab = null;
+            if (HandleNullSocket(socket, ref componentPrefab))
+                return true;
+
+        }
+        else if (!componentPrefab?.TestSocketFit(socket.Size) ?? false)
+        {
+
+            //Common.Trace("poor socket");
             socketFilters.Size = socket.Size.Dimensions;
             socketFilters.Resized = true;
             Common.SetVal(socket, "_size", componentPrefab.Size);
@@ -673,24 +707,28 @@ class HullSocketPatch
     {
         Common.LogPatch();
         HullSocket socket = __instance;
-        //Debug.LogError("Set Component Postfix");
 
         CheckDepedends(socket, true);
         SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
 
         if (socketFilters.Resized && socketFilters.Size != null)
         {
+            //Common.Trace("Reseting size");
             Common.SetVal(__instance, "_size", socketFilters.Size);
             socketFilters.Resized = false;
         }
-        /*if(socket.Component == null)
-            Debug.LogError("Component Null");
+        /*
+        if(socket.Component == null)
+            Common.Trace("Component Null");
         else
-            Debug.LogError(socket.Component.ComponentName);*/
+            Common.Trace(socket.Component.ComponentName);
+        */
         if (socket.Component == null && !socketFilters.AllowNullComponent)
         {
-            //Debug.LogError("Comp Removed");
-            HullComponent componentPrefab = BundleManager.Instance.GetHullComponent(socket.DefaultComponent);
+            //Common.Trace("Comp Removed");
+            HullComponent componentPrefab = null;
+            if (HandleNullSocket(socket, ref componentPrefab))
+                return;
             socket.SetComponent(componentPrefab);
         }
         Finalize(__instance);
@@ -708,16 +746,18 @@ class HullSocketPatch
             return true;
         ComponentDependencies? componentDependencies = socket.Component?.GetComponent<ComponentDependencies>();
         if (componentDependencies == null) return true;
-        //Debug.LogError("Checking depdends");
         HullSocket[] sockets = socket.gameObject.transform.parent.GetComponentsInChildren<HullSocket>();
 
         bool returnval = true;
         foreach (KeyValuePair<string, string> componentDependency in componentDependencies.Dependendents)
         {
             HullSocket testSocket = sockets.Where(testSocket => componentDependency.Key == testSocket.Key).First();
-            //Debug.LogError("D " + componentDependency.Key + " " + componentDependency.Value);
+            //Common.Trace("D " + componentDependency.Key + " " + componentDependency.Value);
             if (remove)
+            {
                 testSocket.SetComponent(null);
+
+            }
             else if (write && (componentDependencies.HardInstallDepedenents || (componentDependency.Value != testSocket?.Component?.SaveKey && componentDependencies.InstallDepedenents)))
             {
                 testSocket?.SetComponent(BundleManager.Instance.GetHullComponent(componentDependency.Value));
@@ -727,7 +767,7 @@ class HullSocketPatch
         foreach (KeyValuePair<string, string> componentDependency in componentDependencies.Requirements)
         {
             HullSocket testSocket = sockets.Where(testSocket => componentDependency.Key == testSocket.Key).First();
-            //Debug.LogError("R " + componentDependency.Key + " " + componentDependency.Value);
+            //Common.Trace("R " + componentDependency.Key + " " + componentDependency.Value);
             if (remove)
                 testSocket.SetComponent(null);
             else if (componentDependency.Value != testSocket?.Component?.SaveKey || componentDependencies.HardInstallDepedenents)
