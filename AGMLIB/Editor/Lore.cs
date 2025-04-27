@@ -2,6 +2,7 @@
 using QFSW.QC.Demo;
 using System.Drawing;
 using UnityEngine;
+using static Steamworks.InventoryItem;
 using Image = UnityEngine.UI.Image;
 
     public class Lore : MonoBehaviour
@@ -63,6 +64,37 @@ using Image = UnityEngine.UI.Image;
                 ____modBadge.sprite = _loreicon;
             //____modBadge.sprite = BundleManager.Instance.AllFactions.ToList()[2].SmallLogo;
         }
+    }
+
+
+    //[HarmonyPatch(typeof(PaletteItem), nameof(PaletteItem.SetCurrentCount))]
+    static class PaletteItemSetCurrentCount
+{
+        static void Postfix(PaletteItem __instance, int typeCount, int compoundingClassCount)
+        {
+            int _currentCount = typeCount;
+            int _compoundingClassCount = compoundingClassCount;
+            TextMeshProUGUI _count  = Common.GetVal<TextMeshProUGUI>(__instance, "_count"); ;
+            if (typeCount == 0)
+            {
+                _count.gameObject.SetActive(value: false);
+                return;
+            }
+            _count.gameObject.SetActive(value: true);
+            if (compoundingClassCount == typeCount)
+            {
+                _count.text = $"({typeCount})";
+            }
+            else
+            {
+                _count.text = $"({typeCount}) [{compoundingClassCount}]";
+            }
+            _count.text += "\n<i><color=" + GameColors.FlavorTextColor + ">" + 12 + "</color></i>";
+            Common.SetVal<int>(__instance, "_currentCount", _currentCount);
+            Common.SetVal<int>(__instance, "_compoundingClassCount", _compoundingClassCount);
+        }
+
+
     }
 
     [HarmonyPatch(typeof(ModalListSelectDetailed), "SelectItemInternal")]
