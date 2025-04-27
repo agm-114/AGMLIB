@@ -1,4 +1,5 @@
 ﻿using Lib.Generic_Gameplay.Discrete;
+using Mirror.RemoteCalls;
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -70,13 +71,30 @@ class RaycastMuzzleDoRaycast
     static void Postfix(RaycastMuzzle __instance, MunitionHitInfo __result)
     {
         Common.LogPatch();
-        if (__result == null)
-            return;
-        //Common.Trace("RaycastMuzzleDoRaycast");
-
         MuzzleEffects.SpawnImpacts(__instance , __result);
 
     }
 }
 
 
+[HarmonyPatch(typeof(BallisticRaycastMuzzle), "DamageableImpact")]
+class BallisticRaycastMuzzleDamageableImpact
+{
+    static void Postfix(RaycastMuzzle __instance, MunitionHitInfo hitInfo)
+    {
+        Common.LogPatch();
+        MuzzleEffects.SpawnImpacts(__instance, hitInfo);
+
+    }
+}
+
+[HarmonyPatch(typeof(BallisticRaycastMuzzle), "GenericImpact")]
+class BallisticRaycastMuzzleGenericImpact
+{
+    static void Postfix(BallisticRaycastMuzzle __instance, MunitionHitInfo hitInfo)
+    {
+        Common.LogPatch();
+        MuzzleEffects.SpawnImpacts(__instance, hitInfo);
+
+    }
+}

@@ -10,7 +10,7 @@ namespace Lib.Generic_Gameplay.Discrete
     public interface IMuzzleEffect
     {
         public void FireEffect();
-        public void SpawnHit(MunitionHitInfo rayHit);
+        public void SpawnHit(MunitionHitInfo? rayHit);
     }
 
 
@@ -32,8 +32,7 @@ namespace Lib.Generic_Gameplay.Discrete
         public static void SpawnImpacts(Muzzle muzzle, MunitionHitInfo hit)
         {
 
-            if (hit == null)
-                return;
+
             //Common.Trace("Spawning Impacts");
 
             foreach (IMuzzleEffect effect in muzzle.gameObject.GetComponentsInChildren<IMuzzleEffect>())
@@ -48,7 +47,7 @@ namespace Lib.Generic_Gameplay.Discrete
     public abstract class BaseMuzzleEffects : MonoBehaviour, IMuzzleEffect
     {
         public abstract void FireEffect();
-        public abstract void SpawnHit(MunitionHitInfo rayHit);
+        public abstract void SpawnHit(MunitionHitInfo? rayHit);
     }
 
 
@@ -60,16 +59,21 @@ namespace Lib.Generic_Gameplay.Discrete
         [SerializeField] protected GameObject _hitEffect;
         public override void FireEffect()
         {
+            if (_muzzleEffect == null)
+                return;
             //Common.Trace("Spawn Muzzle");
             ObjectPooler.Instance.GetNextOrNew(_muzzleEffect, _muzzleEffectEffectlocation ?? transform);
             //GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             //sphere.transform.position = _muzzleEffectEffectlocation?.position ?? transform.position;
         }
-        public override void SpawnHit(MunitionHitInfo rayHit)  
+        public override void SpawnHit(MunitionHitInfo? rayHit)  
         {
-
-            return;
+            if(rayHit == null || _hitEffect == null)
+                return;
             Common.Trace("Custom Hit Effect");
+
+            if (rayHit.HitObject == null)
+                Common.Hint("Hit object was null");
 
             Poolable hitob = ObjectPooler.Instance.GetNextOrNew(_hitEffect, rayHit.HitObject.transform);
             hitob.transform.position = rayHit.Point;
@@ -87,17 +91,90 @@ namespace Lib.Generic_Gameplay.Discrete
         }
         public void SpwawnCustomHit(Vector3 pos)
         {
-            Common.Trace("Very Custom Hit Effect");
+
+            Common.Hint("Experimental Custom Hit Effect");
             Poolable hitob = ObjectPooler.Instance.GetNextOrNew(_muzzleEffect);
             hitob.transform.position = pos;
         }
     }
+
+    public class MuzzleFireHitEffects : BaseMuzzleEffects
+    {
+        [SerializeField] protected LineBeamMuzzleEffects _muzzleeffect;
+        [SerializeField] private float _effectDuration = 1f;
+        [SerializeField] private float _maxDisplayedLength = 100f;
+
+        private float _timer = 0f;
+        private bool _isTimerActive = false;
+        private float _currentlen = 0f;
+
+        public void Awake()
+        {
+            _muzzleeffect.SetMaxLength(_maxDisplayedLength);
+            _muzzleeffect.SetBeamLength(0);
+            _muzzleeffect.StopEffect();
+            if (_muzzleeffect == null)
+                Common.Hint("Line Beam muzzle effect not linked");
+            //gameObject.GetComponent<LineRenderer>().useWorldSpace = false;
+
+        }
+
+        public override void FireEffect()
+        {
+
+
+        }
+        public  void Reset()
+        {
+            _isTimerActive = false;
+            _muzzleeffect.StopEffect();
+            _muzzleeffect.SetBeamLength(0);
+            _currentlen = _maxDisplayedLength;
+        }
+
+        private void FixedUpdate()
+        {
+            if (_timer > 0)
+            {
+                _muzzleeffect.SetBeamLength(_currentlen);
+
+                _timer -= Time.fixedDeltaTime;
+                if (_timer <= 0f)
+                {
+                    Reset();
+                }
+            }
+        }
+        public override void SpawnHit(MunitionHitInfo? rayHit)
+        {
+
+            _currentlen = _maxDisplayedLength;
+            if (rayHit != null)
+            {
+                _currentlen = Vector3.Distance(rayHit.Point, transform.position);
+                Common.Trace($"hit {_currentlen}" );
+            }
+            else
+            {
+                Common.Trace($"miss {_currentlen}");
+            }
+            _muzzleeffect.StartEffect();
+            _muzzleeffect.SetBeamLength(_currentlen);  
+            _timer = _effectDuration;
+        }
+    }
+
     public class MuzzleSoundEffects : BaseMuzzleEffects
     {
         [SerializeField] protected VariedSoundEffect _muzzleSound;
         [SerializeField] protected VariedSoundEffect _impactSound;
         public override void FireEffect() => GlobalSFX.PlayOneShotSpatial(_muzzleSound, transform);
-        public override void SpawnHit(MunitionHitInfo rayHit) => GlobalSFX.PlayOneShotSpatial(_impactSound, rayHit.HitObject.transform);
+        public override void SpawnHit(MunitionHitInfo rayHit)
+        {
+            if (rayHit != null)
+                GlobalSFX.PlayOneShotSpatial(_impactSound, rayHit.HitObject.transform);
+    
+        }
     }
 
     /*

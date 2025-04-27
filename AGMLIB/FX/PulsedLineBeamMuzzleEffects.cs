@@ -1,13 +1,9 @@
-﻿public class PulsedLineBeamMuzzleEffects : LineBeamMuzzleEffects
+﻿public class PulsedLineBeamMuzzleEffects : ResizingLineBeamMuzzleEffects
 {
-    
-    public override void StopEffect()
+
+    protected override void Awake()
     {
-        //RaycastMuzzle
-        AudioSource holder = _fireSoundEffect;
-        if (_fireSoundEffect?.isPlaying ?? false)
-            _fireSoundEffect = null;
-        base.StopEffect();
-        _fireSoundEffect = holder;
+        PulseAudio = true;
+        base.Awake();
     }
 }
