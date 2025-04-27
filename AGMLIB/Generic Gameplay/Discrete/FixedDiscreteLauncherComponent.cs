@@ -1,8 +1,15 @@
-﻿public class BlockingWeapon : MonoBehaviour
+﻿using UnityEngine.PlayerLoop;
+
+public class BlockingWeapon : MonoBehaviour
 {
     public bool InEditor => GetComponentInParent<EditorShipController>() != null;
     ComponentActivity Status => gameObject.GetComponentInChildren<HullComponent>().GetActivityStatus();
-    public bool Blocking => InEditor || Status == ComponentActivity.Active || Status == ComponentActivity.ActiveTimed;
+    public bool Blocking => InEditor || Status == ComponentActivity.Active || Status == ComponentActivity.ActiveTimed || Status == ComponentActivity.OutOfRange;
+
+    public void FixedUpdate()
+    {
+        //Common.Hint($"Status: {Status}");
+    }
 }
 
 public class FixedDiscreteLauncherComponent : FixedDiscreteWeaponComponent
