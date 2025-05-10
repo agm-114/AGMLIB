@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
+using Object = System.Object;
 
 
 //[HarmonyPatch(typeof(Muzzle), nameof(Muzzle.FireEffect))]
@@ -98,3 +98,56 @@ class BallisticRaycastMuzzleGenericImpact
 
     }
 }
+
+
+[HarmonyPatch(typeof(BallisticRaycastMuzzle), "CoroutineUpdateBullets")]
+class BallisticRaycastMuzzleFixedUpdate
+{
+
+    public class RaycastBulletObject
+    {
+        public float Lifetime;
+
+        public Vector3 Position;
+
+        public Vector3 Direction;
+
+        public float Velocity;
+
+        public float ExpectedFlightTime;
+
+        public RaycastBulletObject(Object bullet)
+        {
+            Lifetime = Common.GetVal<float>(bullet, "Lifetime");
+            Position = Common.GetVal<Vector3>(bullet, "Position");
+        }
+    }
+
+    static void Prefix(BallisticRaycastMuzzle __instance)
+    {
+        Common.LogPatch();
+
+        //Common.Hint("updating bullet queue");
+
+
+        object _activeBullets = Common.GetVal<object>(__instance, "_activeBullets");
+        var enumerable = _activeBullets as System.Collections.IEnumerable;
+
+        foreach (var bulletobj in enumerable)
+        {
+            RaycastBulletObject bullet = new RaycastBulletObject(bulletobj);
+            if((bullet.Lifetime - Time.fixedDeltaTime) <= 0)
+            {
+                continue;
+            }
+        
+            MunitionHitInfo hitInfo = new MunitionHitInfo();
+            hitInfo.Point = bullet.Position;
+            MuzzleEffects.SpawnImpacts(__instance, hitInfo);
+
+        }
+        //MuzzleEffects.SpawnImpacts(__instance, hitInfo);
+
+    }
+}
+
