@@ -1,6 +1,6 @@
 public class MovementTarget : MonoBehaviour
 {
-    public static HashSet<MovementTarget> Instances = new ();
+    public static HashSet<MovementTarget> Instances = new();
     [SerializeField]
     protected float _repairrate = 0;
     [SerializeField]
@@ -27,7 +27,7 @@ public class MovementTarget : MonoBehaviour
     public bool PermantTarget => _permanant;
     public bool RepairTarget => _repairrate > 0;
     public float RepairRate => _repairrate;
-    
+
     public bool CanRepair => RepairTarget && Vector3.Distance(transform.position, Craft.Rigidbody.position) < _repairdistance;
     [Range(0.0f, 1f)]
     [SerializeField]
@@ -52,7 +52,7 @@ public class MovementTarget : MonoBehaviour
                     hullComponent.DoHeal(1);
                 else if (hullComponent.CurrentHealth > targethealth)
                     hullComponent.DoDamage(1, null, null);
-               
+
                 Common.SetVal(hullComponent, "_minHealthReached", hullComponent.CurrentHealth);
                 FormationManager.ShipController?.MarkAsDamaged();
             }

@@ -1,5 +1,5 @@
-﻿using Munitions.ModularMissiles.Descriptors.Warheads;
-using Munitions.ModularMissiles;
+﻿using Munitions.ModularMissiles;
+using Munitions.ModularMissiles.Descriptors.Warheads;
 using Munitions.ModularMissiles.Runtime;
 
 [CreateAssetMenu(fileName = "New Missile Warhead", menuName = "Nebulous/Missiles/Warhead/FusedFragmentation")]

@@ -1,7 +1,7 @@
 ﻿namespace AGMLIB.Munitions.LightweightMunition
 {
     public class LightweightSelectiveClusterShell : LightweightClusterShell
-    {   
+    {
 
         [SerializeField]
         private float TriggerRadius => Common.GetVal<float>(this, "_lookaheadSphereRadius");

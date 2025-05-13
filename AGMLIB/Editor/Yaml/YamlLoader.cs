@@ -1,13 +1,6 @@
 ﻿using Lib.Editor.Yaml.Components;
 using Modding;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.SceneManagement;
 //using YamlDotNet.Serialization;
-using static Steamworks.InventoryItem;
 
 
 //using static YamlDotNet.Serialization.DeserializerBuilder;
@@ -65,13 +58,13 @@ namespace Lib.Editor.Yaml
 
                     Dictionary<string, HullComponent> _components = Common.GetVal<Dictionary<string, HullComponent>>(BundleManager.Instance, "_components");
 
-                    YamlHullComponent yamlObject =  new();//deserializer.Deserialize<YamlHullComponent>(reader); // Replace YourYamlClass with your actual class
+                    YamlHullComponent yamlObject = new();//deserializer.Deserialize<YamlHullComponent>(reader); // Replace YourYamlClass with your actual class
                     GameObject prefab = new GameObject(yamlObject.ShortUIName);
                     prefab.AddComponent<YamlComp>().Freeze(prefab);
 
                     prefab.SetActive(false);
                     HullComponent comp = prefab.AddComponent<HullComponent>();
-                    
+
                     //comp.enabled = false;
 
                     Common.SetVal(comp, "_partKey", yamlObject.PartKey);

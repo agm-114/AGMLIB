@@ -1,6 +1,4 @@
-﻿using Telepathy;
-
-public class DynamicTransform : ActiveSettings
+﻿public class DynamicTransform : ActiveSettings
 {
     // Start is called before the first frame update
     [Space]
@@ -15,7 +13,7 @@ public class DynamicTransform : ActiveSettings
     public float SlerpVlaue => Mathf.Clamp(AnimationCurve.Evaluate(accum), 0, 1);
     public float EndValue => 1 - SlerpVlaue;
     private float accum = 0f;
-    
+
     //public GameObject target;
 
     // Update is called once per frame
@@ -43,7 +41,7 @@ public class DynamicTransform : ActiveSettings
 
         if (accum < 0f)
             accum = 0f;
-        else if(accum > MaxTime)
+        else if (accum > MaxTime)
             accum = MaxTime;
         //Common.Trace(this.gameObject, $"{accum}, {Target.transform.position}, {Target.transform.rotation}");
 

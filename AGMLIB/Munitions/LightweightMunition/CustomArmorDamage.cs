@@ -41,7 +41,8 @@ namespace AGMLIB.Munitions.LightweightMunition
             return false;
         }
 
-        static void Prefix(ShipController __instance, MunitionHitInfo hitInfo, IDamageDealer character, bool neverRicochet) {
+        static void Prefix(ShipController __instance, MunitionHitInfo hitInfo, IDamageDealer character, bool neverRicochet)
+        {
             Common.LogPatch();
             IModular modular = character as IModular;
             if (modular == null && character is BaseThrowawayDamager damager)
@@ -57,8 +58,8 @@ namespace AGMLIB.Munitions.LightweightMunition
                 return;
             ArmorDamage model = test.First();
             ShipController controller = __instance;
-           
-            if(model is MultiplierArmorDamage mult)
+
+            if (model is MultiplierArmorDamage mult)
             {
                 if (mult.MaxThickness)
                 {
@@ -68,7 +69,7 @@ namespace AGMLIB.Munitions.LightweightMunition
                     armordamage = _dynamicArmor.FirstOrDefault().Thickness * mult.ArmorStripMultiplier;
                     return;
                 }
-                if(GetArmorThickness(hitInfo, controller, out float armor))
+                if (GetArmorThickness(hitInfo, controller, out float armor))
                     return;
                 doarmordamage = true;
                 armordamage = armor * mult.ArmorStripMultiplier;

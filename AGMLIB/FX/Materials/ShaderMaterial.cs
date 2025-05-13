@@ -1,11 +1,4 @@
-﻿using Game;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-public abstract class ShaderMaterial : MonoComponent
+﻿public abstract class ShaderMaterial : MonoComponent
 {
     public abstract Material GetMaterial();
 
@@ -36,7 +29,7 @@ public abstract class FixedShaderMaterial : ShaderMaterial
     public override Material GetMaterial()
     {
 
-            Material newmat  = new Material(GetLineMaterial(GetSavekey()));
+        Material newmat = new Material(GetLineMaterial(GetSavekey()));
         int propertyCount = newmat.shader.GetPropertyCount();
         for (int i = 0; i < propertyCount; i++)
         {
@@ -46,7 +39,7 @@ public abstract class FixedShaderMaterial : ShaderMaterial
         }
         return newmat;
     }
-        
+
 
 }
 public class AuroraMaterial : FixedShaderMaterial
@@ -79,7 +72,7 @@ public class BeamMaterial : FixedShaderMaterial
     public override string GetSavekey() => "Stock/Mk610 Beam Turret";
 }
 
-public class SaveKeyShaderMaterial: ShaderMaterial
+public class SaveKeyShaderMaterial : ShaderMaterial
 {
     public string SaveKey = "";
 

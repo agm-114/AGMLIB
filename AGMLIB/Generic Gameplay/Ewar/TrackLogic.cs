@@ -1,13 +1,4 @@
-﻿using Game.Sensors;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
-namespace Lib.Generic_Gameplay.Ewar
+﻿namespace Lib.Generic_Gameplay.Ewar
 {
     public abstract class BaseTrackLogic : MonoBehaviour
     {
@@ -58,7 +49,7 @@ namespace Lib.Generic_Gameplay.Ewar
 
         public override void UpdateTrack(ITrack track, out Vector3 position, out Vector3 velocity, CachedCrossSectionData? cachedCS = null)
         {
-            if(contactClassifications.TryGetValue(track.Trackable.ContactType, out BaseTrackLogic? value))
+            if (contactClassifications.TryGetValue(track.Trackable.ContactType, out BaseTrackLogic? value))
             {
                 value.UpdateTrack(track, out position, out velocity);
                 return;

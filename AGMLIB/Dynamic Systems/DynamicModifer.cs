@@ -53,14 +53,14 @@ public class DynamicModifer : ActiveSettings
             //Debug.LogError("Not Active " + gameObject.name + " " + Modifiers[0].ToString());
 
             return;
-        }  
+        }
         else
         {
             //Debug.LogError("Active " + gameObject.name + " " + Modifiers[0].ToString());
         }
         bool changes = false;
 
-        if(TargetModifiers.Length < Modifiers.Length)
+        if (TargetModifiers.Length < Modifiers.Length)
         {
             //Debug.LogError("Possible Dynamic Modifer Misconfiguration");
         }
@@ -86,9 +86,9 @@ public class DynamicModifer : ActiveSettings
 
         if (changes)
         {
-            if( Mode == ModifierMode.Module)
+            if (Mode == ModifierMode.Module)
                 ModFromSource(Module);
-            else if( Mode == ModifierMode.Hull)
+            else if (Mode == ModifierMode.Hull)
                 ModFromSource(Hull);
         }
     }

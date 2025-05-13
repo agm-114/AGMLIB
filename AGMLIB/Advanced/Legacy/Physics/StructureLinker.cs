@@ -1,14 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Ships;
-using System.Reflection;
-using Game.Sensors;
-using Game.Intel;
-using Game.Map;
-using Game;
-using Utility;
-
 public class StructureLinker : MonoBehaviour
 {
     public List<GameObject> linked;
@@ -20,14 +9,14 @@ public class StructureLinker : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(transform.childCount == 0 && broken == false)
+        if (transform.childCount == 0 && broken == false)
         {
             Breakjoints();
         }
-        else if(broken == false)
+        else if (broken == false)
         {
             HullComponent strut = transform.GetChild(0).GetComponent<HullComponent>();
-            if(strut.IsFunctional == false)
+            if (strut.IsFunctional == false)
             {
                 Breakjoints();
             }

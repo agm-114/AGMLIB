@@ -1,17 +1,3 @@
-using System;
-using System.IO;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.VFX;
-using Bundles;
-using Utility;
-using Ships;
-using Modding;
-using Munitions;
 //using Game.Ships;
 
 public class EjectorArray : MonoBehaviour
@@ -35,13 +21,13 @@ public class EjectorArray : MonoBehaviour
     private Vector3 lvec;
     void Start()
     {
-        
+
     }
-    
+
     RotationMonitor Findmonitor(GameObject searchobject)
     {
         RotationMonitor[] monitors = searchobject.GetComponentsInChildren<RotationMonitor>();
-        if(monitors.Length > 0)
+        if (monitors.Length > 0)
             return monitors[0];
 
         //Debug.Log("No Monitor found");
@@ -63,7 +49,7 @@ public class EjectorArray : MonoBehaviour
         {
             if (rotation == null)
                 rotation = Findmonitor(gameObject.transform.parent.parent.gameObject);
-			if (rotation == null)
+            if (rotation == null)
                 return;
             dvec = rotation.angle;
             lvec = gameObject.transform.eulerAngles;
@@ -108,7 +94,7 @@ public class EjectorArray : MonoBehaviour
                 //Debug.LogError("Right Fire Mission Tube: " + index + " Dev:" + dev + " lvec.y: " + lvec.y + " dvec.y " + dvec.y);
                 linkedejectors[index % linkedejectors.Count].gameObject.transform.position = rightejectors[index % rightejectors.Capacity].gameObject.transform.position;
                 linkedejectors[index % linkedejectors.Count].gameObject.transform.rotation = rightejectors[index % rightejectors.Capacity].gameObject.transform.rotation;
-            }  
+            }
             else
             {
                 //Debug.LogError("Left Fire Mission Tube: " + index + " Dev:" + dev + " lvec.y: " + lvec.y + " dvec.y " + dvec.y);

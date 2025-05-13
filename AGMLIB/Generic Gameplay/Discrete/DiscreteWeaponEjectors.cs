@@ -28,8 +28,8 @@
 
     protected void Start()
     {
-            
-        if(DiscreteWeaponComponent == null)
+
+        if (DiscreteWeaponComponent == null)
             DiscreteWeaponComponent = gameObject.GetComponentInChildren<DiscreteWeaponComponent>();
     }
 
@@ -78,7 +78,7 @@
         //this.gameObject.AddComponent<DynamicStun>();
 
         //return;
-        if(missile == null) return; 
+        if (missile == null) return;
 
         if (aimPoint != null)
         {
@@ -131,7 +131,7 @@ class FixedDiscreteWeaponComponentOnTarget
     static bool Prefix(FixedDiscreteWeaponComponent __instance, Vector3 aimPoint)
     {
         Common.LogPatch();
-        DiscreteWeaponEjectors ejectors = __instance?.GetComponentInChildren< DiscreteWeaponEjectors>();
+        DiscreteWeaponEjectors ejectors = __instance?.GetComponentInChildren<DiscreteWeaponEjectors>();
         if (ejectors == null || ejectors.SkipPatch())
             return true;//true
 

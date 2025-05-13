@@ -1,10 +1,4 @@
-﻿using Game.Intel;
-using Game;
-using Munitions;
-using UnityEngine;
-
-using Game.Units;
-using Mirror;
+﻿using Mirror;
 
 #pragma warning disable
 public class ShipPDTarget : DumbfireRocket, IDamageable
@@ -23,7 +17,7 @@ public class ShipPDTarget : DumbfireRocket, IDamageable
     protected override void FixedUpdate()
     {
         //base.FixedUpdate();
-        if(ShipController != null)
+        if (ShipController != null)
         {
             _body.velocity = ShipController.Velocity;
             Vector3 pos = ShipController.Position;
@@ -34,7 +28,7 @@ public class ShipPDTarget : DumbfireRocket, IDamageable
 
     new void OnCollisionEnter(Collision collision) => gameObject.GetComponent<Rigidbody>().isKinematic = false;
 
-    HitResult IDamageable.DoDamage (MunitionHitInfo hitInfo, IDamageDealer character, out float damageDone, out bool destroyed)
+    HitResult IDamageable.DoDamage(MunitionHitInfo hitInfo, IDamageDealer character, out float damageDone, out bool destroyed)
     {
         destroyed = false;
         //Debug.LogError("Doing " + character.ComponentDamage + " Damage");

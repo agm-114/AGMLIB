@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-
-[HarmonyPatch(typeof(BoxSignature), "Awake")]
+﻿[HarmonyPatch(typeof(BoxSignature), "Awake")]
 class BoxSignatureAwake
 {
 
@@ -16,7 +9,7 @@ class BoxSignatureAwake
         {
             return;
         }
-        Bounds  _sigSize = new Bounds(Vector3.zero, _collider.bounds.size);
+        Bounds _sigSize = new Bounds(Vector3.zero, _collider.bounds.size);
         Common.SetVal(__instance, "_sigSize", _sigSize);
         _collider.enabled = false;
     }

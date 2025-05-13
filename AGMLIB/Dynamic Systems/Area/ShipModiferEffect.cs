@@ -7,7 +7,7 @@
         protected List<FreeModifierSource> _modifierssources = new();
         protected Guid Guid = Guid.NewGuid();
 
-         public override void Setup()
+        public override void Setup()
         {
             //Common.Trace("ShipModiferEffect Setup " + Modifiers.Count());
             foreach (StatModifier modifier in Modifiers)

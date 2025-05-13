@@ -1,15 +1,10 @@
-﻿using Modding;
-using Bundles;
-using Steamworks.Ugc;
-using UI;
-using System.Diagnostics;
+﻿using AGMLIB.Dynamic_Systems.Area;
+using Modding;
 using Shapes;
-using System.Text;
-using AGMLIB.Dynamic_Systems.Area;
-using Steamworks;
-using Networking;
+using Steamworks.Ugc;
+using System.Diagnostics;
 using System.Reflection;
-using System.Xml.Serialization;
+using System.Text;
 
 public class EntryPoint : IModEntryPoint 
 {

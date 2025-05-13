@@ -19,7 +19,7 @@ public class IFFComponent : MonoBehaviour
         jammed = _shipController.Comms.AnyJamming;
 
         foreach (LoiteringMissile loiteringMissile in _detectedmines)
-            if(Common.GetVal<Communicator>(loiteringMissile, "_comms").AnyJamming)
+            if (Common.GetVal<Communicator>(loiteringMissile, "_comms").AnyJamming)
                 jammed = true;
         if (jammed)
             Common.Trace("IFF SHIP JAMMED" + jammed);
@@ -44,7 +44,7 @@ public class IFFComponent : MonoBehaviour
             Common.Trace("FINDING TARGET SENSOR");
             disabledsensor = internals.Where((InternalActiveSensorComponent x) => x.IsFunctional).SelectMax((InternalActiveSensorComponent x) => Common.GetVal<StatValue>(x, "_statRadiatedPower").Value);
             Common.Trace("TRANSMITTING VIA RADAR");
-            
+
             SetAntennaPower(Common.GetVal<StatValue>(disabledsensor, "_statRadiatedPower").Value);
             Debug.LogError("RECALCULATING");
 

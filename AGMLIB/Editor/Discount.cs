@@ -9,9 +9,9 @@ public class SimpleDiscount : MonoBehaviour
 
     public static float ListCalc(HullComponent component, int existingCount)
     {
-        HullSocket currentsocket = Common.GetVal<HullSocket>(component, "_socket") ?? CostingSocket ?? UISocket ;
+        HullSocket currentsocket = Common.GetVal<HullSocket>(component, "_socket") ?? CostingSocket ?? UISocket;
         //Debug.LogError("Discount Calc for " + existingCount + "th " + component.ComponentName);
-        List<SimpleDiscount> discounts = component?.GetComponents<SimpleDiscount>()?.ToList() ?? new(); 
+        List<SimpleDiscount> discounts = component?.GetComponents<SimpleDiscount>()?.ToList() ?? new();
         if (currentsocket != null)
             discounts.AddRange(currentsocket?.GetComponents<SimpleDiscount>()?.ToList() ?? new());
 
@@ -21,7 +21,7 @@ public class SimpleDiscount : MonoBehaviour
         if (discounts.Count == 0) { return 1; }
         //Debug.LogError(discounts.Count + " Discounts provided " + discounts.ConvertAll(x => x.Multiplier(existingCount)).Aggregate(1f, (a, x) => a * x));
         return discounts.ConvertAll(x => x.Multiplier(existingCount)).Aggregate(1f, (a, x) => a * x);
-    } 
+    }
 
 }
 
@@ -30,7 +30,7 @@ public class Discount : SimpleDiscount
 
     public int Modulo = 2;
     public int Offset = -1;
-    
+
 
     public override float Multiplier(float amount)
     {
@@ -109,8 +109,8 @@ class HullComponentGetFormattedSubtitle
         Common.LogPatch();
         float discount = Discount.ListCalc(__instance, currentlyInstalled);
         if (discount == 1) { return; }
-        if(discount < 1)
-        __result += $" [<color={GameColors.GetTextColor(ColorName.Green)}>{1 - discount:P0}</color> OFF]";
+        if (discount < 1)
+            __result += $" [<color={GameColors.GetTextColor(ColorName.Green)}>{1 - discount:P0}</color> OFF]";
         if (discount > 1)
             __result += $" [<color={GameColors.GetTextColor(ColorName.Red)}>{1 - discount:P0}</color> Extra]";
         //Debug.LogError("End Cost " + __result);

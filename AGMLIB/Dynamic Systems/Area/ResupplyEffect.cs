@@ -1,7 +1,4 @@
-﻿using static Ships.BulkMagazineComponent;
-using static UnityEngine.UI.CanvasScaler;
-
-namespace AGMLIB.Dynamic_Systems.Area
+﻿namespace AGMLIB.Dynamic_Systems.Area
 {
     public class ResupplyEffect : FalloffEffect<Ship>
     {
@@ -29,16 +26,16 @@ namespace AGMLIB.Dynamic_Systems.Area
             //Debug.LogError("Resupply Ship");
 
             bool dirtymissiles = false;
-            
+
             List<IEnumerable<KeyValuePair<IMagazine, HullComponent>>> test1 = new();
-            if(BulkMagazines)
+            if (BulkMagazines)
                 test1.AddRange(targettransform.GetComponentsInChildren<BulkMagazineComponent>().ConvertAll(comp => comp.Magazines.Select(mag => new KeyValuePair<IMagazine, HullComponent>(mag, comp))));
-            if(CellLaunchers)
-                test1.AddRange(targettransform.GetComponentsInChildren<CellLauncherComponent>().ConvertAll(comp => comp.Missiles .Select(mag => new KeyValuePair<IMagazine, HullComponent>(mag, comp))));
-            IEnumerable<KeyValuePair<IMagazine, HullComponent>>  test2 = test1.SelectMany(list => list).Where(pair => pair.Key.QuantityAvailable < pair.Key.PeakQuantity);
+            if (CellLaunchers)
+                test1.AddRange(targettransform.GetComponentsInChildren<CellLauncherComponent>().ConvertAll(comp => comp.Missiles.Select(mag => new KeyValuePair<IMagazine, HullComponent>(mag, comp))));
+            IEnumerable<KeyValuePair<IMagazine, HullComponent>> test2 = test1.SelectMany(list => list).Where(pair => pair.Key.QuantityAvailable < pair.Key.PeakQuantity);
             if (AmmoFilter != null)
                 test2 = test2.Where(pair => AmmoFilter.IsAmmoCompatible(pair.Key.AmmoType));
-            IOrderedEnumerable<KeyValuePair<IMagazine, HullComponent>>  test3 = test2.OrderBy(kvp => kvp.Key.PercentageAvailable);
+            IOrderedEnumerable<KeyValuePair<IMagazine, HullComponent>> test3 = test2.OrderBy(kvp => kvp.Key.PercentageAvailable);
 
 
 
@@ -59,9 +56,9 @@ namespace AGMLIB.Dynamic_Systems.Area
 
 
                 //Debug.LogError($"{AreaEffect.Ship.gameObject.name} Resupply Ship {target.gameObject.name} {sink.AmmoType.MunitionName} {sink.QuantityAvailable}/{sink.PeakQuantity}");
-                if(hullComponent is BulkMagazineComponent magcomp)
+                if (hullComponent is BulkMagazineComponent magcomp)
                     magcomp.AddToMagazine(sink.AmmoType, reloadamount);
-                else if( hullComponent is CellLauncherComponent cellcomp)
+                else if (hullComponent is CellLauncherComponent cellcomp)
                 {
                     IMagazineProvider magazineProvider = cellcomp as IMagazineProvider;
                     //Debug.LogError("movin missiles");
@@ -74,10 +71,10 @@ namespace AGMLIB.Dynamic_Systems.Area
                 source.Withdraw(reloadamount);
 
             }
-            
+
 
             //target.BuildMissileGroups();
-            if(dirtymissiles)
+            if (dirtymissiles)
                 target?.BuildMissileMagazineTracker();
 
         }

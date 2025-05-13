@@ -1,12 +1,9 @@
-﻿using UnityEngine.UI.Extensions;
-using Game.EWar;
-using Game.Sensors;
-using Bundles;
-using static Utility.GameColors;
+﻿using AGMLIB.Dynamic_Systems.Area;
 using Munitions.ModularMissiles;
 using System.Runtime.InteropServices;
-using AGMLIB.Dynamic_Systems.Area;
+using UnityEngine.UI.Extensions;
 using static Game.EWar.EWarPrefabCollection;
+using static Utility.GameColors;
 
 
 public class AreaEffect : ActiveSettings
@@ -53,7 +50,7 @@ public class AreaEffect : ActiveSettings
     //public List<BasicEffect<Ship>> ShipEffects = new();
     //public List<BasicEffect<ModularMissile>> ModularMissileEffects = new();     
 
-    
+
 
     public void Fire()
     {
@@ -95,14 +92,14 @@ public class AreaEffect : ActiveSettings
         {
             effect.AreaEffect = this;
             effect.Setup();
-        }   
+        }
         if (Trigger == null)
         {
             SphereCollider sphereCollider = gameObject.GetOrAddComponent<SphereCollider>();
             Trigger = sphereCollider;
             sphereCollider.radius = Radius;
         }
-        else if(Trigger is SphereCollider sphere)
+        else if (Trigger is SphereCollider sphere)
         {
             Radius = sphere.radius;
         }
@@ -110,7 +107,7 @@ public class AreaEffect : ActiveSettings
         Trigger.isTrigger = true;
 
 
-  
+
     }
 
     // Update is called once per frame
@@ -122,7 +119,7 @@ public class AreaEffect : ActiveSettings
             return;
         //Debug.LogError("Core Fixed Update");
 
-        foreach(BasicEffect basicEffect in  Effects)
+        foreach (BasicEffect basicEffect in Effects)
         {
             //if(!basicEffect.isActiveAndEnabled)
             //    Debug.LogError("Effect Type: " + basicEffect.GetType().Name + " Active: " + basicEffect.isActiveAndEnabled);
@@ -141,11 +138,11 @@ public class AreaEffect : ActiveSettings
 
         }
 
-                
+
         _laststate = active;
 
         _updateAccum += Time.fixedDeltaTime;
-        if(CustomVFX)
+        if (CustomVFX)
         {
 
             if (active)
@@ -169,13 +166,13 @@ public class AreaEffect : ActiveSettings
         if (target == null) return;
         //if(_detectedships.Contains(target) )
 
-        if (applicationarg == true  && (Filter?.CheckShip(ShipController, target.GetComponent<ShipController>()) ?? true))
+        if (applicationarg == true && (Filter?.CheckShip(ShipController, target.GetComponent<ShipController>()) ?? true))
         {
-            foreach(var effect in Effects)
+            foreach (var effect in Effects)
                 effect.Enter(target);
             _laststate = null;
         }
-        else if(target != null)
+        else if (target != null)
         {
             foreach (var effect in Effects)
                 effect.Exit(target);
@@ -184,7 +181,7 @@ public class AreaEffect : ActiveSettings
     }
     void UpdateDetectedList(ModularMissile target, bool applicationarg = true)
     {
-        if(target ==  null) return;
+        if (target == null) return;
         //if(_detectedships.Contains(target) )
         if (applicationarg == true && (Filter?.CheckMissile(ShipController, target) ?? true))
         {
@@ -192,7 +189,7 @@ public class AreaEffect : ActiveSettings
                 effect.Enter(target);
             _laststate = null;
         }
-        else if(target != null)
+        else if (target != null)
         {
             foreach (var effect in Effects)
                 effect.Exit(target);
@@ -248,9 +245,9 @@ class ActiveEWarEffectTargetGained2
 {
     static void Postfix(ActiveEWarEffect __instance, IEWarTarget newTarget)
     {
-        Common.LogPatch(); 
+        Common.LogPatch();
         AreaEffect.HandleJammer(__instance, newTarget, true);
-    } 
+    }
 }
 
 [HarmonyPatch(typeof(ActiveJammingEffect), "TargetLost")]

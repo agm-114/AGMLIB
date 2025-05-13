@@ -2,11 +2,6 @@
 using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors.Warheads;
 using Munitions.ModularMissiles.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
 {
@@ -47,7 +42,7 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
         //Debug.LogError("Setup");
         base.FinalSetup(missile);
         //Debug.LogError("Dims: " + FuseDims + " Target: " + Vector3.one * 100);
-        if(ProxFuse)
+        if (ProxFuse)
             missile.SpawnProximityFuze(FuseDimensions);//Fusedimensions * 10 * (AoeRadius / 10) 100
         missile.AddRuntimeBehaviour<RuntimeMissileWarhead>(this);
 
@@ -59,7 +54,7 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
             return runtime.transform.position.To(hitInfo.HitObject.transform.root.TransformPoint(hitObject.RandomPointInBounds())).normalized;
         if (Omnidirectional)
             return UnityEngine.Random.onUnitSphere;
-        
+
         return MathHelpers.RandomRayInCone(runtime.transform.forward, EffectiveLaunchAngle);
     }
     public abstract HitResult DoRay(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, Vector3 direction, Ray ray);

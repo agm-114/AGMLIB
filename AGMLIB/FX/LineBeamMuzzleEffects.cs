@@ -1,8 +1,4 @@
-﻿using UnityEngine;
-
-
-
-public class ResizingLineBeamMuzzleEffects : LineBeamMuzzleEffects
+﻿public class ResizingLineBeamMuzzleEffects : LineBeamMuzzleEffects
 {
     public ShaderMaterial LineMaterial = null;
     public bool PulseAudio = false;
@@ -61,7 +57,7 @@ public class CurvedResizingLineBeamMuzzleEffects : ResizingLineBeamMuzzleEffects
     {
         base.HandleBeamLengthChanged();
 
-        if (_beam == null || _beam.positionCount < 2 )
+        if (_beam == null || _beam.positionCount < 2)
         {
             Debug.LogWarning("LineRenderer is not properly set up or target is null.");
             return;

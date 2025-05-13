@@ -1,10 +1,3 @@
-using Munitions;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
-using UnityEngine;
-
 public class StrikeCraft : MonoBehaviour
 {
 
@@ -22,7 +15,7 @@ public class StrikeCraft : MonoBehaviour
     public Vector3 rtarget;
     public Vector3 rcurrent;
     public Vector3 deviation;
-    public Vector3 torque = new(0,0,0);
+    public Vector3 torque = new(0, 0, 0);
     //protected new Guid myGuid => new System.Guid();
 
     void Start()
@@ -31,8 +24,8 @@ public class StrikeCraft : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(rb.velocity.magnitude < 10)
-            rb.AddForce( P * (target.transform.position - transform.position) );
+        if (rb.velocity.magnitude < 10)
+            rb.AddForce(P * (target.transform.position - transform.position));
         //var rotation = Quaternion.FromToRotation(manager.transform.forward, transform.forward).eulerAngles;
         //if (rb.angularVelocity.magnitude < 1)
         //    rb.AddTorque(rotation);
@@ -46,6 +39,6 @@ public class StrikeCraft : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }

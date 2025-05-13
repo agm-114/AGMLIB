@@ -17,4 +17,4 @@ class ModularMissileSupportsVisualTargeting
         }
         //__result = true;
     }
-}   
+}

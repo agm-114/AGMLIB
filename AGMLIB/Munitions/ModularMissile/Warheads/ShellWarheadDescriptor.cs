@@ -1,11 +1,6 @@
-﻿using Munitions.ModularMissiles.Descriptors.Warheads;
-using Munitions.ModularMissiles;
+﻿using Game.Reports;
 using Munitions.ModularMissiles.Runtime;
 using Shapes;
-using Bundles;
-using Game.Reports;
-using System.ComponentModel;
-using UnityEngine;
 
 public abstract class BaseShellWarheadDescriptor : AngleWarheadDescriptor
 {
@@ -82,7 +77,7 @@ public class LightWeightShellWarheadDescriptor : BaseShellWarheadDescriptor
         NetworkPoolable networkPoolable;
         if (DirectImpact)
         {
-            networkPoolable = NetworkObjectPooler.Instance.GetNextOrNewLWKContainer(hitInfo.Point, BulletLook ? Quaternion.LookRotation(direction) : Quaternion.identity, direction * Ammo.FlightSpeed) ;
+            networkPoolable = NetworkObjectPooler.Instance.GetNextOrNewLWKContainer(hitInfo.Point, BulletLook ? Quaternion.LookRotation(direction) : Quaternion.identity, direction * Ammo.FlightSpeed);
             container = networkPoolable as LightweightKineticMunitionContainer;
             container.ApplyTemplate(Ammo.NetworkSpawnKey);
         }
@@ -131,7 +126,7 @@ public class MultiShellWarheadDescriptor : ShellWarheadDescriptor
     public List<ScalingValue> Scalingvalues = new(1);
 
 
-    
+
 
 
     private List<int> Weights => Scalingvalues.ConvertAll(scalingvalue => (int)Math.Round(scalingvalue.GetValue(base.WeightedSocketSize)));

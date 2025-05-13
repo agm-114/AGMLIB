@@ -40,18 +40,18 @@
         public FieldName TargetFieldName = FieldName._particles;
 
         MonoBehaviour VisualEffectDestination;
-        public void Awake ()
+        public void Awake()
         {
             HullComponent componentSource;
             Dictionary<string, HullComponent> componentDictionary = Common.GetVal<Dictionary<string, HullComponent>>(BundleManager.Instance, "_components");
             componentDictionary.TryGetValue(SourceSaveKey, out componentSource);
-            
+
             GameObject target = componentSource.gameObject;
 
 
-            
+
         }
     }
 
-   
+
 }

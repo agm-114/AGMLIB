@@ -1,12 +1,4 @@
-﻿using Mirror;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Utility;
-
-namespace Lib.Generic_Gameplay.Ewar
+﻿namespace Lib.Generic_Gameplay.Ewar
 {
     public class MultiSensor : ActiveFireControlSensor
     {

@@ -1,15 +1,10 @@
 ﻿using Lib.Generic_Gameplay.Discrete;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lib.Generic_Gameplay.Muzzles
 {
     public class CustomPulseRaycastMuzzle : SinglePulseRaycastMuzzle, IDirectDamageMuzzle
     {
-        
+
 
         [SerializeField] protected GameObject _rayhitEffect;
         [SerializeField] protected bool _cylinderRaycast = false;
@@ -26,7 +21,7 @@ namespace Lib.Generic_Gameplay.Muzzles
                 position = base.transform.position + MathHelpers.RandomRayInConeToCylinder(base.transform.forward, base._accuracy / 2f, _raycastRange);
                 direction = base.transform.forward;
             }
-                
+
             else
             {
                 position = base.transform.position;
@@ -57,7 +52,7 @@ namespace Lib.Generic_Gameplay.Muzzles
                     }
                 }
                 rayHit.Dispose();
-       
+
 
             }
         }

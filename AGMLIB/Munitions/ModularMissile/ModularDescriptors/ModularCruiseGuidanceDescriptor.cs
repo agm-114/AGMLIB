@@ -5,13 +5,13 @@ public class ModularCruiseGuidanceDescriptor : CruiseGuidanceDescriptor, IModula
 {
     public override void LoadSettings(MissileComponentSettings data)
     {
-        
+
         if (data is BaseAvionicsSettings avionics)
         {
 
             if (_weaponrole != WeaponRole.Unlocked)
             {
-                if(_weaponrole == WeaponRole.Offensive )
+                if (_weaponrole == WeaponRole.Offensive)
                     avionics.Role = Utility.WeaponRole.Offensive;
                 else if (_weaponrole == WeaponRole.Defensive)
                     avionics.Role = Utility.WeaponRole.Defensive;
@@ -41,12 +41,12 @@ public class ModularCruiseGuidanceDescriptor : CruiseGuidanceDescriptor, IModula
             }
         }
 
-        
+
         base.LoadSettings(data);
     }
-        
 
-    
+
+
 
 
     static protected int _defaultlock = -1;
@@ -63,8 +63,8 @@ public class ModularCruiseGuidanceDescriptor : CruiseGuidanceDescriptor, IModula
     [SerializeField]
     protected Terminal _terminal = (Terminal)_defaultlock;
     List<ScriptableObject> IModular.Modules => _modules;
-    
-    public Dictionary<string, int> RestrictedOptions =>  new()            
+
+    public Dictionary<string, int> RestrictedOptions => new()
     {
         { "_roleButton", Convert.ToInt32(_weaponrole)},
         { "_launchButton",Convert.ToInt32( _launchType) },

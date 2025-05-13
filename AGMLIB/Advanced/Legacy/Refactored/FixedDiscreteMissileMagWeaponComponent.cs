@@ -1,16 +1,4 @@
-﻿using Game.Orders;
-using Game.Sensors;
-using Munitions;
-using Ships;
-using Ships.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
-public class FixedDiscreteMissileMagWeaponComponent : FixedDiscreteMagWeaponComponent //, IMissileLauncher
+﻿public class FixedDiscreteMissileMagWeaponComponent : FixedDiscreteMagWeaponComponent //, IMissileLauncher
 {
     /*
     public int Capacity =>             throw new NotImplementedException();

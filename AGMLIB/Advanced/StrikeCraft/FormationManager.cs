@@ -2,10 +2,10 @@ using Game.Orders.Tasks;
 public class FormationManager : ShipState
 {
     [SerializeField]
-    protected bool  _dedicatedformation = true;
+    protected bool _dedicatedformation = true;
     public GameObject movementtargetroot;
     protected Rigidbody rigidbody;
-    
+
     protected List<MovementTarget> _targets;
     protected Vector3 targetpos;
     public override void Awake()
@@ -13,7 +13,7 @@ public class FormationManager : ShipState
         base.Awake();
         targetpos = transform.position;
 
-        if(movementtargetroot == null)
+        if (movementtargetroot == null)
             movementtargetroot = gameObject;
         _targets = movementtargetroot.GetComponentsInChildren<MovementTarget>().ToList();
         //dedicatedformation = true;
@@ -25,12 +25,12 @@ public class FormationManager : ShipState
         if (!_dedicatedformation || ShipController == null || EditorShipController != null)
             return;
         List<IRepairJob> repairJobs = new();
-        foreach (HullComponent hullComponent  in ShipController.gameObject.GetComponentsInChildren<HullComponent>().Where(a => a.DebuffCount > 0))
+        foreach (HullComponent hullComponent in ShipController.gameObject.GetComponentsInChildren<HullComponent>().Where(a => a.DebuffCount > 0))
             hullComponent.GetAvailableDCJobs(ref repairJobs, ref repairJobs, true, false);
         foreach (IRepairJob job in repairJobs.Where(a => !a.IsRestoration && a.Name.Contains("Repairing") && a.Name.Contains("in")))
-                    job.DoRepairWork(1);
+            job.DoRepairWork(1);
         NavigationTask task = Common.GetVal<NavigationTask>(ShipController, "_navOrder");
-        #pragma warning disable IDE0045 // Convert to conditional expression
+#pragma warning disable IDE0045 // Convert to conditional expression
         if (task is KeepFormationTask keepFormationTask)
         {
             ShipController _guide = Common.GetVal<ShipController>(keepFormationTask, "_guide");
@@ -42,7 +42,7 @@ public class FormationManager : ShipState
             targetpos = moveToTask.Path.First();
         else
             targetpos = ShipController?.CurrentNavTarget ?? targetpos;
-        #pragma warning restore IDE0045 // Convert to conditional expression
+#pragma warning restore IDE0045 // Convert to conditional expression
         movementtargetroot.transform.position = targetpos;
         movementtargetroot.transform.rotation = rigidbody?.gameObject.transform.rotation ?? new();
         List<ICraft> crafts = _targets.Where(target => target.Craft != null).ConvertAll(target => target.Craft);
@@ -62,8 +62,8 @@ public class FormationManager : ShipState
             rigidbody.velocity = averagevelocity;
             rigidbody.MovePosition(centroid);
             float distance = Vector3.Distance(centroid, targetpos);
-            foreach(ICraft icraft in crafts)
-                icraft.SetLeadFactor(rigidbody.position + (icraft.Target.transform.position - movementtargetroot.transform.position), ShipController.MoveStyle == MovementStyle.Evasive);;
+            foreach (ICraft icraft in crafts)
+                icraft.SetLeadFactor(rigidbody.position + (icraft.Target.transform.position - movementtargetroot.transform.position), ShipController.MoveStyle == MovementStyle.Evasive); ;
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿
-using Game.Units;
-using Mirror;
+﻿using Mirror;
 using UnityEngine.UI.Extensions;
 
 //[CreateAssetMenu(fileName = "New LW Guided Shell", menuName = "Nebulous/LW Shells/Guided Shell")]
@@ -49,7 +47,7 @@ public class ModularShell : ShellMunition
     protected override bool DamageableImpact(IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger)
     {
 
-        if(trigger)
+        if (trigger)
             Debug.LogError("FUSED IMPACT!");
         else
             Debug.LogError("IMPACT!");
@@ -63,7 +61,7 @@ public class ModularShell : ShellMunition
         if (trigger)
         {
             Debug.LogError("FUSED IMPACT!");
-            if(_FusedWarhead != null)
+            if (_FusedWarhead != null)
                 hitResult = _FusedWarhead.Detonate(hitObject, hitInfo, out missiledamage2, out missledestroyed);
         }
         else
@@ -136,7 +134,7 @@ public class ModularShell : ShellMunition
 
         if (_avoider != null && _avoider.BroadphaseCheck(_body.velocity.normalized, __flightSpeed * 10, out var _))
         {
-            
+
             //vector =  _avoider.FindAvoidanceDirection(_body.velocity.normalized, __flightSpeed * 10);// transform.position +
             //Debug.LogError(vector);
         }
@@ -195,7 +193,7 @@ public class ModularShell : ShellMunition
         _FusedWarhead?.ResetWarhead();
     }
 
-    protected  bool GetComponentHits(Vector3 hitPosition, Vector3 penDirection, float penDistance, HitResult hitRes, ref ISubDamageable[] hits, out int hitCount)
+    protected bool GetComponentHits(Vector3 hitPosition, Vector3 penDirection, float penDistance, HitResult hitRes, ref ISubDamageable[] hits, out int hitCount)
     {
         Debug.LogError("ISSUE");
         hitCount = 0;

@@ -61,7 +61,7 @@ class BaseTurretedLauncherComponentFixedUpdate
                 _trainOnTrack = _trainOnTrack.NewTrack;
             //Debug.LogError("Running Enhanced Lead");
             //GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            
+
             aimPoint = MathHelpers.EstimateLeadPosition(__instance.transform.position, _missileFlightSpeed, _trainOnTrack.KnownPosition + _trackOffset, _trainOnTrack.AbsoluteVelocity - customaimpoint.Rigidbody.velocity, Vector3.zero, out var _, _trainOnTrack.Age);
             //cube.transform.position = aimPoint;
         }

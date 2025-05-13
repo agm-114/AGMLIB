@@ -1,7 +1,7 @@
 ﻿using UnityEngine.UI.Extensions;
 using Object = UnityEngine.Object;
 using TooltipTrigger = UI.TooltipTrigger;
-public class BoardingModule : MonoBehaviour 
+public class BoardingModule : MonoBehaviour
 {
 
 }
@@ -36,7 +36,7 @@ public class AssultTeamPiece : MonoBehaviour
     [SerializeField]
     private GameColors.ColorName _deadColor;
 
-    public void Setup(DCTeamPiece source, ShipController ship, DamageControlBoard board) 
+    public void Setup(DCTeamPiece source, ShipController ship, DamageControlBoard board)
     {
         Debug.LogError("Settingup team");
         _shipController = ship;
@@ -49,7 +49,7 @@ public class AssultTeamPiece : MonoBehaviour
         _workingColor = Common.GetVal<GameColors.ColorName>(source, "_workingColor");
         _deadColor = Common.GetVal<GameColors.ColorName>(source, "_deadColor");
         Component.Destroy(source);
-        
+
         base.transform.localScale = new Vector3(1f, 1f, 1f);
 
         _progressBar.fillAmount = 1f;

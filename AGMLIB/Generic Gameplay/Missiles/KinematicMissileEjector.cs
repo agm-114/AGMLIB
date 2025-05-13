@@ -18,7 +18,7 @@ public class KinematicLauncher : ActiveSettings
     {
         yield return new WaitForSeconds(Delay);
 
-        if(active && (DynamicVisible?.IsVisible ?? true))
+        if (active && (DynamicVisible?.IsVisible ?? true))
         {
             if (Sound != null)
             {
@@ -33,7 +33,7 @@ public class KinematicLauncher : ActiveSettings
         else
         {
             //Debug.LogError("Null Particle Effect");
-        } 
+        }
     }
     public void Launch(NetworkPoolable obj = null)
     {
@@ -55,16 +55,17 @@ public class MissileLaunchKinematics : LaunchKinematics
     private Missile _missile; // field
     public Missile Missile   // property
     {
-        get {
+        get
+        {
             if (_missile == null)
                 _missile = gameObject.GetComponent<Missile>();
-            return _missile; 
+            return _missile;
         }   // get method
     }
     public bool HotLaunch = true;
     public override void FixedUpdate()
     {
-        if(Missile?.HotLaunch == HotLaunch) 
+        if (Missile?.HotLaunch == HotLaunch)
             base.FixedUpdate();
     }
 
@@ -113,17 +114,17 @@ public class KinematicMissile : MonoBehaviour, IMissileFixedUpdate
     public KinematicLauncher Launcher = new();
     public float StartVelocity => Launcher?.ReleaseVelocity ?? 0;
     public float EndVelocity => Launcher?.EndVelocity ?? 0;
-    public float Velocity => Mathf.Lerp(StartVelocity, EndVelocity, Age/TimeToLive);
+    public float Velocity => Mathf.Lerp(StartVelocity, EndVelocity, Age / TimeToLive);
     public float TimeToLive => Launcher?.PostReleaseBoostTime ?? 0;
     private bool _fixedupdate = false;
     private Rigidbody Body => gameObject.GetComponent<Rigidbody>();
     private float _startTime = 0;
-    private float Age =>  Time.fixedTime - _startTime;
+    private float Age => Time.fixedTime - _startTime;
     public void Start() => _startTime = Time.fixedTime;
     public KinematicMissile Setup(KinematicLauncher launcher)
     {
         Start();
-        if(launcher != null)
+        if (launcher != null)
             Launcher = launcher;
         return this;
     }
@@ -137,7 +138,7 @@ public class KinematicMissile : MonoBehaviour, IMissileFixedUpdate
             return;
         }
 
-        if ( Body.velocity.magnitude < Velocity)
+        if (Body.velocity.magnitude < Velocity)
         {
             //Debug.LogError("Update      " + Age / TimeToLive + " tV " + Velocity + " rV " + Body.velocity.magnitude);
             Body.velocity = Body.velocity.normalized * Velocity;
@@ -150,7 +151,7 @@ public class KinematicMissile : MonoBehaviour, IMissileFixedUpdate
 
         _fixedupdate = false;
     }
- 
+
 }
 
 [HarmonyPatch(typeof(MissileEjector), nameof(MissileEjector.FireEffect))]
@@ -193,9 +194,9 @@ class MissileEjectorMissileInstantiated
         //Debug.LogError("1 MissileInstantiated Postfix");
 
         List<KinematicLauncher> launchers = __instance.gameObject.GetComponentsInParent<KinematicLauncher>()?.ToList() ?? new(); //??
-          //__instance.gameObject.AddComponent<KinematicLauncher>();
+                                                                                                                                 //__instance.gameObject.AddComponent<KinematicLauncher>();
 
-        foreach(KinematicLauncher launcher in launchers)
+        foreach (KinematicLauncher launcher in launchers)
         {
             launcher?.Launch(obj);
 

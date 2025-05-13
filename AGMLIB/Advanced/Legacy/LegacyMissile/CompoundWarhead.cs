@@ -4,7 +4,7 @@ public class CompoundWarhead : MissileWarhead
     [SerializeField]
     protected MissileWarhead[] _Warheads;
 
-    public override float TotalComponentDamagePotential     
+    public override float TotalComponentDamagePotential
     {
         get
         {

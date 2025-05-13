@@ -1,11 +1,7 @@
-﻿using Munitions.ModularMissiles.Descriptors.Warheads;
-using Munitions.ModularMissiles;
+﻿using Munitions.InstancedDamagers;
+using Munitions.ModularMissiles.Descriptors.Warheads;
 using Munitions.ModularMissiles.Runtime;
-using Game.Reports;
-using Munitions.InstancedDamagers;
 using System.Runtime.InteropServices;
-using Steamworks;
-using UnityEngine;
 
 public class RangeBasedDamageCharacteristic : IDamageCharacteristic
 {
@@ -49,7 +45,7 @@ public class RuntimeTimeFuse : MonoBehaviour
 [CreateAssetMenu(fileName = "New Beam Missile Warhead", menuName = "Nebulous/Missiles/Warhead/Beam Warhead")]
 public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
 {
-    
+
     IDamageCharacteristic DamageCharacteristic => new RangeBasedDamageCharacteristic(this);
     public override float ArmorPenetration => DamageCharacteristic.ArmorPenetration;
     public override float ComponentDamage => DamageCharacteristic.ComponentDamage;
@@ -57,7 +53,7 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
     [Header("Beam Warhead FX")]
 
     public GameObject BeamPrefab;
-    
+
 
     //public bool SelectRandomPointInTarget = false;
     //public readonly bool _bulletLook = false;
@@ -68,14 +64,14 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
     public float InternalPenetrationDepth = 1000;
     public AnimationCurve BeamComponentDamageRangeScaling = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(10f, 0.5f));
     public AnimationCurve BeamComponentDamageSizeScaling = new AnimationCurve(new Keyframe(0f, 1000f), new Keyframe(10f, 100f));
-    public float HeatDamage = new ();
+    public float HeatDamage = new();
     public float DamageBrushSize = new();
     public float OverpenetrationDamageMultiplier = new();
     public float RandomEffectMultiplier = new();
     public float CrewVulnerabilityMultiplier = new();
     [Header("IDamageCharacteristic Damage Flags")]
     public bool NeverCrit = new();
-    public bool NeverOverpen = new();   
+    public bool NeverOverpen = new();
     public bool IgnoreEffectiveThickness = new();
     public bool NeverRicochet = new();
     public bool AlwaysSpreadThroughStructure = new();
@@ -83,7 +79,7 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
     [Header("Beam Specfic Values")]
     public float FuseDelay = 0.0f;
     public float BeamLength = 2000;
-    
+
     public float PKill = 1;
 
     public CastType CastType = CastType.Ray;
@@ -95,7 +91,7 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
         base.GetWarheadStatsBlock(ref rows);
         rows.Add(("Beam Length", $"{BeamLength * 10f:N0} m"));
         rows.Add(("Armor", $"{ArmorPenetration:N0}cm"));
-        rows.Add(("Component", $"{ComponentDamage:N0}hp"));    
+        rows.Add(("Component", $"{ComponentDamage:N0}hp"));
     }
     public override HitResult DoRay(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, Vector3 direction, Ray ray)
     {
@@ -125,7 +121,7 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
             lineRenderer.positionCount = 2;
             lineRenderer.SetPosition(0, runtime.transform.position);
             lineRenderer?.SetPosition(1, runtime.transform.position + direction * BeamLength);
-            
+
         }
 
         if (Physics.Raycast(ray, out var rayHit, BeamLength, 524801, QueryTriggerInteraction.Ignore))
@@ -192,7 +188,7 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
                 }
             }
         });
-        
+
 
         return finalresult;
     }
@@ -289,7 +285,7 @@ class LookaheadMunitionOnTriggerEnter
             __instance.StartCoroutine(beamWarheadDescriptor.CoroutineOnTriggerEnter(__instance, other, beamWarheadDescriptor.FuseDelay));
             return false;
         }
-        return true;    
+        return true;
     }
 }
 

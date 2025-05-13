@@ -17,7 +17,7 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
     protected ConditionalState HullComponentState => Module != null && Module.IsFunctional ? ConditionalState.Enabled : ConditionalState.Disabled;
 
     protected ConditionalState FiringState => Weapon != null && Weapon.CurrentlyFiring ? ConditionalState.Enabled : ConditionalState.Disabled;
-    protected ConditionalState OnFireState => lastfired + fireactivetime >  Time.fixedTime ? ConditionalState.Enabled : ConditionalState.Disabled;
+    protected ConditionalState OnFireState => lastfired + fireactivetime > Time.fixedTime ? ConditionalState.Enabled : ConditionalState.Disabled;
 
     protected ConditionalState Buttonstate
     {
@@ -25,8 +25,8 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
         {
             if (activateButtonState == ConditionalState.Ignore)
                 return activateButtonState;
-            
-            foreach(KeyValuePair<string, string> StateToTest in ActiveStates)
+
+            foreach (KeyValuePair<string, string> StateToTest in ActiveStates)
             {
                 ShipInfoButton button = GetButton(StateToTest.Key);
 
@@ -41,7 +41,7 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
                 else if (button.CurrentOption.Text != StateToTest.Value)
                     return ConditionalState.Disabled;
             }
-            
+
             return ConditionalState.Enabled;
         }
     }
@@ -80,7 +80,7 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
 
     public List<string> ActiveButtonNames = new(1);
     public List<string> ActiveButtonStateName = new(1);
-    protected IEnumerable<KeyValuePair<string, string>> ActiveStates => ActiveButtonNames.Zip(ActiveButtonStateName, (ButtonName, StateName) =>  new KeyValuePair<string, string>(ButtonName, StateName));
+    protected IEnumerable<KeyValuePair<string, string>> ActiveStates => ActiveButtonNames.Zip(ActiveButtonStateName, (ButtonName, StateName) => new KeyValuePair<string, string>(ButtonName, StateName));
 
 
     [HideInInspector]

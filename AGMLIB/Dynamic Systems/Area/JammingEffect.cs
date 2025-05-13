@@ -53,7 +53,7 @@ namespace AGMLIB.Dynamic_Systems.Area
     public class GenericSeekerEffect : JammingEffect<ModularMissile>
     {
         public List<SignatureType> ImpactedWavelengths = new(3) { SignatureType.PassiveRadar | SignatureType.Radar | SignatureType.NoSignature };
-        
+
 
         public bool JamAntiJam = true;
 

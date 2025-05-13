@@ -1,16 +1,16 @@
 ﻿using Mirror;
-using UnityEngine.UI.Extensions;
-using static Utility.GameColors;
 using Munitions.ModularMissiles;
+using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles.Runtime.Seekers;
 using System.Runtime.InteropServices;
-using Random = UnityEngine.Random;
-using Munitions.ModularMissiles.Descriptors.Seekers;
+using UnityEngine.UI.Extensions;
 using static Game.EWar.EWarPrefabCollection;
+using static Utility.GameColors;
+using Random = UnityEngine.Random;
 
 public class OldAOEModifer : ActiveSettings, IJammingSource
 {
-    
+
     protected HashSet<Ship> _detectedships = new();
     protected HashSet<ModularMissile> _detectedmissiles = new();
 
@@ -28,10 +28,10 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
     public ColorName Color = ColorName.Orange;
 
     [SerializeField]
-    protected List<StatModifier>  _modifiers = new(1);
+    protected List<StatModifier> _modifiers = new(1);
     public bool UseFallOff = false;
     public bool ShowLOB = true;
-    public List<SignatureType> SoftKillWavelengths = new(3) { SignatureType.PassiveRadar | SignatureType.Radar | SignatureType.NoSignature } ;
+    public List<SignatureType> SoftKillWavelengths = new(3) { SignatureType.PassiveRadar | SignatureType.Radar | SignatureType.NoSignature };
     public float SoftKillRecycle = 1;
     public float FailChance = 1;
     public bool FailValidators = true;
@@ -69,20 +69,20 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
         Common.Hint("Component is no longer supported");
 
         StopFire();//_EmissionColor
-        //Debug.LogError("Creating Sphere");
-        //string PrefabName = "Stock/E70 'Interruption' Jammer";
-        //HullComponent goodewar = BundleManager.Instance.AllComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
-        //if (goodewar == null)
-        //    Debug.LogError("Did not get following bundle");
-        //Debug.LogError("Found Target " + goodewar.SaveKey);
-        //RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
-        //if (goodmuzzel == null)
-        //    Debug.LogError("Did not get following muzzel");
-        //GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
-        //if(prefab == null)
-        //    Debug.LogError("Did not get following prefab");
-        //else
-       
+                   //Debug.LogError("Creating Sphere");
+                   //string PrefabName = "Stock/E70 'Interruption' Jammer";
+                   //HullComponent goodewar = BundleManager.Instance.AllComponents.FirstOrDefault(x => x.SaveKey == PrefabName);
+                   //if (goodewar == null)
+                   //    Debug.LogError("Did not get following bundle");
+                   //Debug.LogError("Found Target " + goodewar.SaveKey);
+                   //RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
+                   //if (goodmuzzel == null)
+                   //    Debug.LogError("Did not get following muzzel");
+                   //GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
+                   //if(prefab == null)
+                   //    Debug.LogError("Did not get following prefab");
+                   //else
+
         _followingInstance = NetworkObjectPooler.Instance.GetNextOrNew(SingletonMonobehaviour<EWarPrefabCollection>.Instance.GetPrefab(EwarType.CommsJamming).gameObject, base.transform.position, base.transform.rotation);
         if (_followingInstance is ISettableEWarParameters settableEWarParameters)
         {
@@ -100,7 +100,7 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
         Common.Hint("Component is no longer supported");
         if (_followingInstance != null)
         {
-            if(_oldcolor != null)
+            if (_oldcolor != null)
                 Material.SetColor(matproperty, _oldcolor.Value);
             _followingInstance.RepoolSelf();
             _followingInstance = null;
@@ -119,13 +119,13 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
             Trigger = sphereCollider;
             sphereCollider.radius = Radius;
         }
-        else if(Trigger is SphereCollider sphere)
+        else if (Trigger is SphereCollider sphere)
         {
             Radius = sphere.radius;
         }
         //Debug.LogError("Current layer:" + gameObject.layer);
         //gameObject.layer = 19;
-        if(UseFallOff)
+        if (UseFallOff)
         {
             ModiferFalloff.preWrapMode = WrapMode.Clamp;
             ModiferFalloff.postWrapMode = WrapMode.Clamp;
@@ -134,7 +134,7 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
         Trigger.isTrigger = true;
         //Debug.LogError("INIT AOE");
 
-        foreach(StatModifier modifier in _modifiers)
+        foreach (StatModifier modifier in _modifiers)
             _modifierssources.Add(new FreeModifierSource(Guid.ToString() + modifier.StatName, modifier));
 
     }
@@ -189,15 +189,15 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
                         target.RemoveStatModifier(freeModifierSource, statModifier.StatName);
                 }
             }
-            foreach(ModularMissile missile in _detectedmissiles)
+            foreach (ModularMissile missile in _detectedmissiles)
             {
-                foreach(RuntimeMissileSeeker seeker in missile.GetComponentsInChildren<RuntimeMissileSeeker>())
+                foreach (RuntimeMissileSeeker seeker in missile.GetComponentsInChildren<RuntimeMissileSeeker>())
                 {
                     bool antijam = seeker.Descriptor is PassiveSeekerDescriptor passive && passive.CanPursueJamming;
                     if (!SoftKillWavelengths.Contains(seeker.DecoySigType))
                         return;
                     //Debug.LogError("Softkilling " + missile.gameObject.name);
-                    if(SoftKillAntiJamVals && FailChance >= Random.Range(0.0f, 1f))
+                    if (SoftKillAntiJamVals && FailChance >= Random.Range(0.0f, 1f))
                     {
                         if (antijam && !SoftKillAntiJamVals)
                             continue;
@@ -210,7 +210,7 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
                         if (antijam && !JamAntiJam)
                             continue;
                         ReceivedJamming jammming = Common.GetVal<ReceivedJamming>(seeker, "_jammingSources");
-                        if(active)
+                        if (active)
                             jammming.AddSource(this);
                         else
                             jammming.RemoveSource(this);
@@ -220,11 +220,11 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
                 }
             }
         }
-                
+
         _laststate = active;
 
         _updateAccum += Time.fixedDeltaTime;
-        if(CustomVFX && InGame)
+        if (CustomVFX && InGame)
         {
 
             if (active && _followingInstance == null)
@@ -270,11 +270,11 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
     {
         if (target == null)
             return false;
-        return  ValidListTarget(target) && ValidIFFTarget(target);
+        return ValidListTarget(target) && ValidIFFTarget(target);
     }
 
     void UpdateDetectedList(Ship target, bool applicationarg = true)
-    {  
+    {
         //if(_detectedships.Contains(target) )
         if (ValidTarget(target) && applicationarg == true)
         {
@@ -283,28 +283,28 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
             _detectedships.Add(target);
             _laststate = null;
         }
-        else if(target != null)
+        else if (target != null)
         {
             //Debug.LogError(target?.ShipName + $" is not a valid target");
             if (_detectedships.Contains(target))
                 foreach (FreeModifierSource freeModifierSource in _modifierssources)
-                        target.RemoveStatModifier(freeModifierSource, freeModifierSource.Modifier.StatName);
+                    target.RemoveStatModifier(freeModifierSource, freeModifierSource.Modifier.StatName);
             _detectedships.Remove(target);
         }
 
     }
     void UpdateDetectedList(ModularMissile target, bool applicationarg = true)
     {
-        if(target ==  null) return;
+        if (target == null) return;
         //if(_detectedships.Contains(target) )
         if (applicationarg == true)
         {
             if (!_detectedmissiles.Contains(target))
                 //Common.Trace(target.name + $" is a valid missile target");
-            _detectedmissiles.Add(target);
+                _detectedmissiles.Add(target);
             _laststate = null;
         }
-        else if(target != null)
+        else if (target != null)
         {
 
             //Common.Trace(target.name + $" is not a valid target");

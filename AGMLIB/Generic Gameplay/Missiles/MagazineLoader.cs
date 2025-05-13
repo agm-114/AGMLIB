@@ -1,5 +1,4 @@
-﻿using Ships;
-using static Ships.BaseCellLauncherComponent;
+﻿using static Ships.BaseCellLauncherComponent;
 using static Ships.BulkMagazineComponent;
 
 public class MagazineLoader : MonoBehaviour

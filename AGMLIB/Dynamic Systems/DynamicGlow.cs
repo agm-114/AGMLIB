@@ -93,4 +93,3 @@ public class DynamicGlow : MonoBehaviour
         }
     }
 }
-      

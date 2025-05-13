@@ -1,9 +1,8 @@
-﻿using Munitions.ModularMissiles.Runtime.Seekers;
-using Munitions.ModularMissiles.Descriptors.Seekers;
-using Munitions.ModularMissiles;
-using static Utility.GameColors;
+﻿using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors;
-using FleetEditor.CraftEditor;
+using Munitions.ModularMissiles.Descriptors.Seekers;
+using Munitions.ModularMissiles.Runtime.Seekers;
+using static Utility.GameColors;
 
 public class AdvancedModularMissile : ModularMissile
 {
@@ -21,7 +20,7 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
     public bool MultiSensorMemoryMode = false;
     public override string GetSummarySegment()
     {
-        if(MemoryMode)
+        if (MemoryMode)
             return "<color=" + GameColors.GetTextColor(Color) + ">GOT</color>";
         return "<color=" + GameColors.GetTextColor(Color) + ">GOLIS</color>";
     }
@@ -121,8 +120,8 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
         if (_comdesc == null || !_comdesc.MemoryMode)
             return;
 
-        List<RuntimeMissileSeeker> _validationSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_validationSeekers") ??  new();
-        List<RuntimeMissileSeeker> _targetingSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_targetingSeekers")   ?? new();
+        List<RuntimeMissileSeeker> _validationSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_validationSeekers") ?? new();
+        List<RuntimeMissileSeeker> _targetingSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_targetingSeekers") ?? new();
 
         foreach (RuntimeMissileSeeker targetingSeeker in _targetingSeekers)
         {
@@ -140,7 +139,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
                     return distanceToA < distanceToB ? a : b;
                 }
 
-                if(!_comdesc.MultiSensorMemoryMode)
+                if (!_comdesc.MultiSensorMemoryMode)
                 {
                     _startvelocity = velocity;
                     _startaccel = acceleration;
@@ -156,7 +155,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
                 _startaccel = ClosestVector(_startaccel, acceleration, (_targetedTrack?.Acceleration ?? Vector3.zero));
                 _startposition = ClosestVector(_startaccel, position, (_targetedTrack?.Trackable?.Position ?? Vector3.zero));
                 _age = 0;
-                
+
             }
         }
         /*
@@ -165,7 +164,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
 
         }
         */
-        
+
         //GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         //sphere.transform.position = CurrentPostion;
     }
@@ -182,7 +181,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
         if (PredictedPosition == Vector3.zero)
             return SeekerSearchResult.NotFound;
 
-        return SeekerSearchResult.Found;    
+        return SeekerSearchResult.Found;
     }
 }
 
@@ -203,7 +202,7 @@ public class RangedCommandSeekerDescriptor : CommandSeekerDescriptor
         }
 
         missile.AddRuntimeBehaviour<RuntimeRangedCommandSeeker>(this);
-        
+
     }
 
     public override string GetSummarySegment()
@@ -306,7 +305,7 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
             return;
         }
 
- 
+
         if (_targetedTrack == null)
         {
             if (base._trackTargetID.HasValue)

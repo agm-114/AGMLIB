@@ -11,17 +11,17 @@ class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
             return;
 
         JammerSupportDescriptor source = BundleManager.Instance.AllMissileComponents.Where(desc => desc is JammerSupportDescriptor jammer).Select(desc => (JammerSupportDescriptor)desc).First();
-        
+
         _effectPrefab = Common.GetVal<ActiveEWarEffect>(source, "_effectPrefab");
         SignatureType _sigType = Common.GetVal<SignatureType>(_effectPrefab, "_sigType");
 
         if (__instance is ModularJammerSupportDescriptor jammer)
         {
             //Debug.LogError("Setting Up Illums " + _sigType);
-            
+
             IReadOnlyCollection<HullComponent> hullComponents = BundleManager.Instance.AllComponents;
 
-   
+
 
             HullComponent goodewar = hullComponents.FirstOrDefault(x => x.SaveKey == jammer.PrefabName);
             //Debug.LogError("Found Target " + goodewar.SaveKey);
@@ -49,4 +49,3 @@ class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
     }
 
 }
- 

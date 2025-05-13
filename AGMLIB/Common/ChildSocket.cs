@@ -8,7 +8,7 @@ public class ChildSocket : MonoBehaviour
     void Start()
     {
         _hullsocket = gameObject.GetComponentInParent<HullSocket>();
-        if(_hullsocket == null)
+        if (_hullsocket == null)
             _hullsocket = gameObject.GetComponent<HullSocket>();
 
         foreach (HullComponent componentPrefab in BundleManager.Instance.AllComponents)
@@ -45,7 +45,7 @@ public class ChildSocket : MonoBehaviour
 
     void OnDestroy()
     {
-        foreach(GameObject gameObject in _children)
+        foreach (GameObject gameObject in _children)
         {
             Destroy(gameObject);
         }

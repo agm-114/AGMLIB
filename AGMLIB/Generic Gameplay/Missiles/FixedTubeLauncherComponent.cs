@@ -12,7 +12,7 @@
         base.Update();
         if (_lastShot != CurrentShot || _lastShot != CurrentShot || _lastBlock != BlockingFire)
         {
-            
+
             _lastShot = CurrentShot;
             _lastShotTime = CurrentShotTime;
             _lastBlock = BlockingFire;

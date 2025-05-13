@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Utility;
-using static Ships.SensorTurretComponent;
-
-
-public class TurretedInternalActiveSensorComponent : BaseActiveSensorComponent
+﻿public class TurretedInternalActiveSensorComponent : BaseActiveSensorComponent
 {
     [SerializeField]
     private TurretController _turretControl;

@@ -1,6 +1,4 @@
 ﻿using SmallCraft;
-using Steamworks.Ugc;
-using System.Drawing.Printing;
 using System.Text.RegularExpressions;
 
 [CreateAssetMenu(fileName = "New Scriptable Filter", menuName = "Nebulous/New Filter")]
@@ -29,7 +27,7 @@ public class ScriptableFilter : ScriptableObject, IFilterIndexed
     public bool AllowIllegal => _allowIllegal;
     [SerializeField]
     protected bool _bypassFactionRestrictions = false;
-    public bool BypassFactionRestrictions => _bypassFactionRestrictions; 
+    public bool BypassFactionRestrictions => _bypassFactionRestrictions;
 }
 
 [CreateAssetMenu(fileName = "New Faction", menuName = "Nebulous/Modular Faction Description")]
@@ -50,7 +48,7 @@ public class ModularFactionDescription : FactionDescription, IModular
     [SerializeField]
     private string[] _sharedEquipmentPatternsblacklist = new string[0];
 
-    public string[] SharedFactionAll => Common.GetVal<string[]>(this, "_sharedFactionAll"); 
+    public string[] SharedFactionAll => Common.GetVal<string[]>(this, "_sharedFactionAll");
 
     public string[] SharedEquipmentList => Common.GetVal<string[]>(this, "_sharedEquipmentList");
 
@@ -123,20 +121,20 @@ public class ModularFactionDescription : FactionDescription, IModular
                 _shareEquipmentRegexblacklist[i] = new Regex(_sharedEquipmentPatternsblacklist[i]);
             }
         }
-        foreach(var i in _sharedEquipmentSet)
+        foreach (var i in _sharedEquipmentSet)
         {
             Common.Trace(i);
         }
 
         if (_sharedEquipmentSetblacklist.Contains(checkKey))
         {
-            Debug.Log("equipmentset blacklist");
+            //Debug.Log("equipmentset blacklist");
             return false;
         }
         else if (_sharedEquipmentSet.Contains(checkKey))
         {
-            
-            Debug.Log("shared witelist");
+
+            //Debug.Log("shared witelist");
 
             return true;
 
@@ -155,7 +153,7 @@ public class ModularFactionDescription : FactionDescription, IModular
             return true;
 
         }
-        if(primaryFactionKey == this.SaveKey)
+        if (primaryFactionKey == this.SaveKey)
         {
             //Debug.Log("primarysavekey whitelist");
 
@@ -196,7 +194,7 @@ class LookaheadMunitionUseableByFaction
         if (faction is not ModularFactionDescription FactionDescription)
             return;
 
-        
+
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(__instance.SaveKey, __instance.FactionKey, true);
         bool delta = oldresult != __result;
@@ -239,7 +237,7 @@ public class AvailableMunitionsSetConstructor
         Dictionary<Guid, IMunition> _allMunitionsByNetKey = Common.GetVal<Dictionary<Guid, IMunition>>(__instance, "_allMunitionsByNetKey");
         foreach (IMunition munition in BundleManager.Instance.AllMunitions)
         {
-            
+
             //Debug.Log(munition.MunitionName + " " + munition.GetType());
 
             if (FactionDescription.FullCheckSharedEquipment(munition.SaveKey, munition.FactionKey, true))

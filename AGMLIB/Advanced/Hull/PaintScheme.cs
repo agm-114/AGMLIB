@@ -1,17 +1,3 @@
-using Bundles;
-using FleetEditor;
-using Game.Units;
-using Munitions;
-using RSG;
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using UnityEngine;
-using UnityEngine.PlayerLoop;
-using Utility;
 //using HarmonyLib;
 public class PaintScheme : MonoBehaviour
 {
@@ -46,9 +32,9 @@ public class PaintScheme : MonoBehaviour
     {
     }
 
-    void FixedUpdate ()
+    void FixedUpdate()
     {
-        if(ClassName == null || SegmentName == null || Replacementtexture == null)
+        if (ClassName == null || SegmentName == null || Replacementtexture == null)
         {
             Common.Hint("Null Value");
             Destroy(this);
@@ -56,7 +42,7 @@ public class PaintScheme : MonoBehaviour
         }
         if (Hull.ClassName != ClassName || Index < 0 || validsegs.Count() <= 0)
         {
-            if(Hull.ClassName == ClassName && Index >= 0)
+            if (Hull.ClassName == ClassName && Index >= 0)
             {
                 Common.Hint(SegmentName + " not found in " + hullsegs.Length + " hull segs named " + string.Join(",", hullsegs.ToList().ConvertAll<string>(a => a.gameObject.name)));
 

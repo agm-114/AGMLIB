@@ -1,10 +1,3 @@
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using UnityEngine;
-using System;
-
 public class PaintableHullSegment : HullSegment
 {
     public string key;
@@ -24,9 +17,9 @@ public class PaintableHullSegment : HullSegment
             //Debug.LogError("Painter " + painter.gameObject.name + " Key: " + key);
             //if (painter.key == key)
             //{
-                //paintScheme = painter.replacementtexture;
-                UpdatePaintScheme();
-                Destroy(paintScheme);
+            //paintScheme = painter.replacementtexture;
+            UpdatePaintScheme();
+            Destroy(paintScheme);
             //}
 
         }

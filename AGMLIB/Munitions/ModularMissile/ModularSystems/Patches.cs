@@ -1,6 +1,6 @@
 ﻿using FleetEditor.MissileEditor;
-using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles;
+using Munitions.ModularMissiles.Descriptors;
 
 [HarmonyPatch(typeof(ModularMissile), "InstallSocketModuleInternal")]
 class MissileComponentDescriptorInstallSocketModuleInternal
@@ -92,7 +92,7 @@ class MissileComponentPaletteSetEditingSocket
             MissileComponentDescriptor Component = item?.Component;
             GameObject buttonGO = item.gameObject;
             List<IFilterIndexed> filters = (Component as IModular)?.Modules?.Cast<IFilterIndexed>()?.ToList();
-            
+
             IFilterIndexed componentfilters = Modular.FindIndexedFilter(filters, index) ?? Modular.Default;
             //Debug.LogError("Comp Savekey: " + item.Component.SaveKey);
             if (socketfilter.Blacklist.Contains(Component.SaveKey) || componentfilters.Blacklist.Contains(____editingMissile.BaseMissileDesignation))
@@ -104,7 +104,7 @@ class MissileComponentPaletteSetEditingSocket
 
             if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(____editingMissile.BaseMissileDesignation))
             {
-                bool compatible = ! ((socket.SocketType & Component.FitsSocketType) == 0);
+                bool compatible = !((socket.SocketType & Component.FitsSocketType) == 0);
 
                 if (Component.UseableByFaction(____fleetFaction) && compatible)
                 {
@@ -129,7 +129,7 @@ class MissileComponentPaletteSetEditingSocket
                         buttonGO.SetActive(value: true);
                     else if (componentfilters.AllowIllegal && componentfilters.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
-                    
+
                 }
                 continue;
             }

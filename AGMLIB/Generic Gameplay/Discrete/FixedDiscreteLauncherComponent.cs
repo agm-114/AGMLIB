@@ -1,6 +1,4 @@
-﻿using UnityEngine.PlayerLoop;
-
-public class BlockingWeapon : MonoBehaviour
+﻿public class BlockingWeapon : MonoBehaviour
 {
     public bool InEditor => GetComponentInParent<EditorShipController>() != null;
     ComponentActivity Status => gameObject.GetComponentInChildren<HullComponent>().GetActivityStatus();

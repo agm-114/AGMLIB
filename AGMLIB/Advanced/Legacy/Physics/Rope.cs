@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class Rope : MonoBehaviour
 {
     public GameObject root;
@@ -109,13 +105,13 @@ public class Rope : MonoBehaviour
         }
 
         firstSegment.posNow = target.transform.position;
-        
+
         //lastsegment.posNow = tail.transform.position;
         //tail.transform.position = lastsegment.posNow;
         this.ropeSegments[0] = firstSegment;
-       
+
         tail.transform.position = this.ropeSegments[this.segments - 1].posNow;
-        Quaternion rotation = Quaternion.LookRotation((this.ropeSegments[this.segments - 2].posNow - this.ropeSegments[this.segments - 1].posNow)* -1, tail.transform.TransformDirection(Vector3.up));
+        Quaternion rotation = Quaternion.LookRotation((this.ropeSegments[this.segments - 2].posNow - this.ropeSegments[this.segments - 1].posNow) * -1, tail.transform.TransformDirection(Vector3.up));
         tail.transform.rotation = rotation;//Vector3.ProjectOnPlane(this.ropeSegments[0].posNow - this.ropeSegments[1].posNow, tail.transform.parent.TransformDirection(Vector3.right))
         rotation = Quaternion.LookRotation(-1 * Vector3.ProjectOnPlane(this.ropeSegments[0].posNow - this.ropeSegments[1].posNow, root.transform.TransformDirection(Vector3.right)), tail.transform.TransformDirection(Vector3.up));
         hinge.transform.rotation = rotation;
@@ -147,7 +143,7 @@ public class Rope : MonoBehaviour
     {
         public Vector3 posNow;
         public Vector3 posOld;
-        
+
         public RopeSegment(Vector3 pos)
         {
             this.posNow = pos;

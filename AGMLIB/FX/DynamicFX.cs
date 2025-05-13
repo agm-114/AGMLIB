@@ -23,7 +23,7 @@
 
         base.FixedUpdate();
 
-        if(active && continuoustrigger)
+        if (active && continuoustrigger)
             SendTriggers();
         else if (laststate != active)
         {
@@ -45,9 +45,9 @@
 
     void SendTriggers()
     {
-        foreach(VisualEffect effect in effects)
-            foreach(string eventi in events)
+        foreach (VisualEffect effect in effects)
+            foreach (string eventi in events)
                 effect.SendEvent(eventi);
-        
+
     }
 }

@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Utility;
-using static Ships.SensorTurretComponent;
-
-
-public class InternalSectorActiveSensorComponent : BaseActiveSensorComponent
+﻿public class InternalSectorActiveSensorComponent : BaseActiveSensorComponent
 {
     [SerializeField]
     private Sector _coverage;

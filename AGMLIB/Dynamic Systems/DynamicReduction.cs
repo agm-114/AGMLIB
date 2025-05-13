@@ -1,9 +1,4 @@
-﻿
-using Mono.Cecil;
-using Ships;
-using System.Diagnostics;
-using System.Linq;
-using UnityEngine.UI.Extensions;
+﻿using UnityEngine.UI.Extensions;
 using ResourceType = Ships.ResourceType;
 public class DynamicReductionCache : MonoBehaviour
 {
@@ -13,7 +8,7 @@ public class DynamicReductionCache : MonoBehaviour
     public static void CacheValues(Ship ship)
     {
 
-       
+
         DynamicReductionCache cache = ship.GetComponent<DynamicReductionCache>() ?? ship.gameObject.AddComponent<DynamicReductionCache>();
         cache.AmountExtra = Common.GetVal<Dictionary<string, ResourcePool>>(ship, "_resources").Values.ToDictionary(pool => pool, pool => pool.AmountRemaining);
         cache.dynamicReductions = ship.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList() ?? new();
@@ -47,7 +42,7 @@ public class DynamicReduction : ActiveSettings
 
     }
 
-    public bool TargetedComponent(HullComponent hullComponent) 
+    public bool TargetedComponent(HullComponent hullComponent)
     {
         //Common.Trace($"filter {Filter?.gameObject.name ?? "null filter"} hullcomp {hullComponent.SaveKey}");
         //if (!Module.isActiveAndEnabled)
@@ -70,7 +65,7 @@ public class DynamicReduction : ActiveSettings
 
     public static float TotalMultiplier(ResourceType type, HullComponent hullComponent)
     {
- 
+
         IEnumerable<DynamicReduction> reductions = GetReductions(hullComponent);
         if (!reductions?.Any() ?? false)
             return 1;
@@ -79,7 +74,7 @@ public class DynamicReduction : ActiveSettings
         //    Common.Trace($"{reduction.gameObject}  has {reduction.ResourceName} reduction of {reduction.Multiplier}");
         reductions = reductions.Where(reduction => type.Name == reduction.ResourceName);
         //Common.Trace($"trim {type.Name} {hullComponent.UIName} has {reductions.Count()} valid reduction");
-        
+
         if (!reductions?.Any() ?? false)
             return 1;
 
@@ -140,30 +135,32 @@ public class RequiredResources : MonoBehaviour
 [HarmonyPatch(typeof(Ship), nameof(Ship.SpawnAndAllocateResources))]
 class ShipSpawnAndAllocateResources
 {
-    public static void Prefix(Ship __instance) {
+    public static void Prefix(Ship __instance)
+    {
         Common.LogPatch();
         DynamicReductionCache.CacheValues(__instance);
-    } 
+    }
 }
 
 [HarmonyPatch(typeof(Ship), nameof(Ship.RunResourceTick))]
 class ShipRunResourceTick
 {
-    public static void Prefix(Ship __instance) 
-    { 
+    public static void Prefix(Ship __instance)
+    {
         Common.LogPatch();
         DynamicReductionCache.CacheValues(__instance);
     }
-    
+
 }
 
 [HarmonyPatch(typeof(Ship), nameof(Ship.EditorRecalcCrewAndResources))]
 class ShipEditorRecalcCrewAndResources
 {
-    public static void Prefix(Ship __instance) {
+    public static void Prefix(Ship __instance)
+    {
         Common.LogPatch();
         DynamicReductionCache.CacheValues(__instance);
-    } 
+    }
 }
 
 [HarmonyPatch(typeof(HullComponent), nameof(HullComponent.ConsumeResources))]
@@ -203,7 +200,7 @@ class ResourcePoolCalculateDemandForEditor
         ResourceType Resource = pool.Resource;
 
         List<HullComponent> _providers = Common.GetVal<List<HullComponent>>(pool, "_providers");
-	    List<HullComponent> _consumers = Common.GetVal<List<HullComponent>>(pool, "_consumers");
+        List<HullComponent> _consumers = Common.GetVal<List<HullComponent>>(pool, "_consumers");
         HashSet<HullComponent> components = new HashSet<HullComponent>(_providers);
         components.UnionWith(_consumers);
         List<float> reductions = new();
@@ -233,7 +230,7 @@ class ResourcePoolCalculateDemandForEditor
         {
             if (provider.ResourcesProvided.Any((ResourceModifier x) => x.ResourceName == pool.Resource.Name))
             {
-                
+
                 int baseAmount;
                 int resourceProvideAmount = provider.GetResourceProvideAmount(Resource, out baseAmount);
                 _summary.TotalProvided += resourceProvideAmount;
@@ -254,7 +251,7 @@ class ResourcePoolCalculateDemandForEditor
                 bool onlyWhenOperating;
                 float reduction = DynamicReduction.TotalMultiplier(pool.Resource, consumer);
 
-                int num = Mathf.RoundToInt(consumer.GetResourceDemand(pool, out onlyWhenOperating) * reduction) ;
+                int num = Mathf.RoundToInt(consumer.GetResourceDemand(pool, out onlyWhenOperating) * reduction);
 
                 _summary.TotalConsumed += num;
                 _summary.TotalConsumedUnmodified += resourceModifier.Amount;
@@ -292,7 +289,7 @@ class ResourceItemSetResource
         TextMeshProUGUI _summaryText = Common.GetVal<TextMeshProUGUI>(item, "_summaryText");
 
         float num = (float)resource.AmountConsumed / (float)resource.TotalAvailable;
-        string text = ((resource.ConsumedModifier == 0f) ? "" : (" (" + StatModifier.FormatModifierColored((float)Math.Round(resource.ConsumedModifier, 2) , positiveBad: true) + ")"));
+        string text = ((resource.ConsumedModifier == 0f) ? "" : (" (" + StatModifier.FormatModifierColored((float)Math.Round(resource.ConsumedModifier, 2), positiveBad: true) + ")"));
         string text2 = ((resource.ProducedModifier == 0f) ? "" : (" (" + StatModifier.FormatModifierColored((float)Math.Round(resource.ProducedModifier, 2), positiveBad: false) + ")"));
         _summaryText.text = $"{resource.ResourceName} - {Mathf.Round(num * 100f)}%\n<size=20>{resource.AmountConsumed} {resource.UnitAbbrev}{text} / {resource.TotalAvailable} {resource.UnitAbbrev}{text2}</size>";
     }

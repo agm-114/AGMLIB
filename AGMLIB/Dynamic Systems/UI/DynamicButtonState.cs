@@ -29,7 +29,7 @@
 
     protected void Start()
     {
-       
+
         for (int i = 0; i < LockButtonNames.Count; i++)
         {
             ForcedButtonState newstate = new();
@@ -57,7 +57,7 @@
         base.FixedUpdate();
         if (!active)
             return;
-        foreach(ForcedButtonState forcedButtonState in forcedButtonStates)
+        foreach (ForcedButtonState forcedButtonState in forcedButtonStates)
         {
             ShipInfoButton button = GetButton(forcedButtonState.ButtonName);
 

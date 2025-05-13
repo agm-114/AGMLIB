@@ -1,15 +1,4 @@
-﻿using HarmonyLib;
-using Munitions;
-using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Utility;
-
-public class GunLauncher : AmmoCompatiblity
+﻿public class GunLauncher : AmmoCompatiblity
 {
     public bool ConsumesResourcesWhileCycling;
 
@@ -45,7 +34,7 @@ class HullComponentConsumeResourcesDead
             return true;
         }
 
-        
+
 
         TargetingMode _targetMode = Common.GetVal<TargetingMode>(tube, "_targetMode");
         LauncherProgrammingQueue _pendingLaunches = Common.GetVal<LauncherProgrammingQueue>(tube, "_pendingLaunches");
@@ -55,11 +44,11 @@ class HullComponentConsumeResourcesDead
         float _cycleLength = Common.GetVal<float>(tube, "_cycleLength");
         bool _operatingConsumingResources = _nextShotTime > Time.time;
         bool TEST =
-            _targetMode != 0 || 
+            _targetMode != 0 ||
             _isCyclingNextShot ||
-            _pendingLaunches == null || 
-            tube.CurrentlyFiring || 
-            _isReloading || 
+            _pendingLaunches == null ||
+            tube.CurrentlyFiring ||
+            _isReloading ||
             _isCyclingNextShot;
 
         return !_operatingConsumingResources;

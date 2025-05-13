@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Ships.HullComponent;
-using UnityEngine.Serialization;
+﻿using static Ships.HullComponent;
 using Priority = Ships.Priority;
 
 namespace Lib.Editor.Yaml.Components
 {
-    public struct YamlVector3Int 
+    public struct YamlVector3Int
     {
-        public int X; 
-        public int Y; 
+        public int X;
+        public int Y;
         public int Z;
     }
 

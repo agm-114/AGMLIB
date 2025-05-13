@@ -20,18 +20,18 @@
     {
 
         base.FixedUpdate();
-        if(active != lastactive)
+        if (active != lastactive)
         {
             Common.RunFunc(ShipController, "HandlePowerplantsWorkingChanged", new object[] { null });
             Common.RunFunc(ShipController, "HandleDrivesWorkingChanged", new object[] { null });
 
-            if(Knockback == KnockbackMode.COM)
+            if (Knockback == KnockbackMode.COM)
                 Rigidbody?.AddRelativeForce(Force, Mode);
             else if (Knockback == KnockbackMode.TransformPostion && Postion != null)
                 Rigidbody?.AddForceAtPosition(Localize(Rigidbody.transform, Force), Postion.position, Mode);
-            else if(Knockback == KnockbackMode.ComponentPostion)
+            else if (Knockback == KnockbackMode.ComponentPostion)
                 Rigidbody?.AddForceAtPosition(Localize(Rigidbody.transform, Force), transform.position, Mode);
-                
+
         }
         //Debug.LogError("Last Fired " + lastfired + " Current Time " + Time.fixedTime + " Activate Time " +  (lastfired + fireactivetime) + " Status " + OnFireState);
         //Rigidbody?.AddForceAtPosition(transform.TransformDirection(Force/10), transform.position, Mode);
@@ -78,7 +78,7 @@ class ShipControllerHandleDrivesWorkingChanged
         Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
-        if(cache._allDrives != null )
+        if (cache._allDrives != null)
             Common.SetVal(__instance, "_allDrives", cache._allDrives);
         cache._allDrives = null;
     }

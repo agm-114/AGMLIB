@@ -23,7 +23,7 @@ public class ResourceBar : MonoBehaviour
 
     void Start()
     {
-        
+
         try
         {
             rectTransform = transform as RectTransform;
@@ -51,7 +51,7 @@ public class ResourceBar : MonoBehaviour
 
         }
         _tooltip = gameObject.GetComponentInChildren<TooltipAttribute>();
-        
+
         //if (_tooltip != null)
         //    Debug.LogError("TOOLTIP FOUND");
     }
@@ -81,7 +81,7 @@ public class ResourceBar : MonoBehaviour
             }
             if (friendlyShipItems.Length > 0 && _shipBar == null)
                 Destroy(this);
-            _searchtimer = 1000;    
+            _searchtimer = 1000;
         }
 
         if (display == null || display.isActiveAndEnabled)

@@ -1,10 +1,5 @@
 using Game.Map;
-using Ships.Controls;
-using Sound;
-using UnityEngine;
 using UnityEngine.Profiling;
-using Utility;
-using System;
 
 namespace Ships
 {
@@ -69,7 +64,8 @@ namespace Ships
                 this.gameObject.GetComponents<CustomBehaviorThrusterPartConfig>(),
                 item => (CustomBehaviorThrusterPartConfig)item
             );
-            if (this._customBehaviors.Length == 0) {
+            if (this._customBehaviors.Length == 0)
+            {
                 throw new InvalidOperationException(
                     "CustomBehaviorThrusterPart gameObject does not contain any CustomBehaviorThrusterPartConfig components"
                 );

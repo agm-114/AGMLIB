@@ -41,7 +41,7 @@ class SensorTrackUpdate
             ConvertAll(a => a?.GetAdvancedRadar()).
             Where(a => a?.PingTracksOnly ?? false)
             .ToList();
-        
+
         if (_pingSensors.Count > 0)
         {
             if (__instance.Age > _pingSensors.ConvertAll(a => a.CycleTime).Min())
@@ -86,13 +86,13 @@ class BaseActiveSensorComponentCanSeeSignature
         if (AR == null)
             return true;
 
-        if(AR.RequireIllumination && !sig.IsIlluminated)
+        if (AR.RequireIllumination && !sig.IsIlluminated)
         {
             __result = false;
             return false;
         }
 
-        if(AR.IgnoreLos)
+        if (AR.IgnoreLos)
         {
             Vector3 toSig = __instance.transform.position.To(sig.Position);
             Vector3 localPosition = __instance.transform.root.InverseTransformDirection(toSig);

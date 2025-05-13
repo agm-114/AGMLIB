@@ -45,9 +45,9 @@ public class DynamicDamage : ActiveSettings
             }
             ShipController?.MarkAsDamaged();
         }
-        else if(damageTarget == DamageTarget.All)
+        else if (damageTarget == DamageTarget.All)
         {
-            foreach(HullPart part in parts)
+            foreach (HullPart part in parts)
                 part.DoDamage(damagepertick);
             ShipController?.MarkAsDamaged();
         }

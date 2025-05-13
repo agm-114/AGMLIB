@@ -1,18 +1,5 @@
-﻿
-// Nebulous, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+﻿// Nebulous, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // Munitions.MissileImpactWarhead
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using Game;
-using Game.Reports;
-using Game.Units;
-using Munitions;
-using Ships;
-using UnityEngine;
-using UnityEngine.Serialization;
-using Utility;
-
 public class AdvancedShellWarhead : MissileWarhead
 {
     [SerializeField]

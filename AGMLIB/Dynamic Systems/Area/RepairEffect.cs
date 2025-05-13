@@ -38,7 +38,7 @@
         }
     }
 
-        public class RepairEffect : FalloffEffect<Ship>
+    public class RepairEffect : FalloffEffect<Ship>
     {
         public int MaxRepairsPerHull = 3;
         public float RepairPerSecond = 1;
@@ -48,7 +48,7 @@
         {
             //
             _accum += Time.fixedDeltaTime;
-            if(_accum < 1)
+            if (_accum < 1)
                 return;
             _accum -= 1;
             if (Active)
@@ -67,23 +67,23 @@
                         parts = parts.OrderByDescending(h => h.DCPriority);
                         parts = parts.Take(MaxRepairsPerHull);
                     }
-                    if(parts.Any())
+                    if (parts.Any())
                         ships = ships.Append(parts);
                     else
                     {
-                        IEnumerable<RestoreStatus>  hulllockers = root.GetComponentsInChildren<DCLockerComponent>().ToList().OrderByDescending(h => h.DCPriority).ConvertAll(locker => RestoreStatus.GetRestoreStatus(locker)).Where(status => status.NeedsRestores).Take(1);
+                        IEnumerable<RestoreStatus> hulllockers = root.GetComponentsInChildren<DCLockerComponent>().ToList().OrderByDescending(h => h.DCPriority).ConvertAll(locker => RestoreStatus.GetRestoreStatus(locker)).Where(status => status.NeedsRestores).Take(1);
                         if (hulllockers.Any())
                             lockers = lockers.Append(hulllockers.First());
                     }
 
                 }
-                float repairsperhull =  RepairPerSecond / (ships.Count() + lockers.Count());
-                foreach(IEnumerable<HullPart> repairparts in ships)
+                float repairsperhull = RepairPerSecond / (ships.Count() + lockers.Count());
+                foreach (IEnumerable<HullPart> repairparts in ships)
                 {
                     //continue;
                     float repairsperpart = repairsperhull / repairparts.Count();
 
-                    foreach(HullPart hullPart in repairparts)
+                    foreach (HullPart hullPart in repairparts)
                         hullPart.DoHeal(repairsperpart);
                 }
                 float restoresperhull = RestoresPerSecond / (ships.Count() + lockers.Count());

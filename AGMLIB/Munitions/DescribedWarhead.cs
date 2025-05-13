@@ -1,5 +1,5 @@
-﻿using Munitions.ModularMissiles.Descriptors.Warheads;
-using Munitions.ModularMissiles;
+﻿using Munitions.ModularMissiles;
+using Munitions.ModularMissiles.Descriptors.Warheads;
 public class DescribedWarhead : MissileWarhead
 {
     [SerializeField]
@@ -16,14 +16,14 @@ public class DescribedWarhead : MissileWarhead
         destroyed = false;
         HitResult hitResult = HitResult.None;
 
-            //float missiledamage;
-            //bool missledestroyed;
-            //hitResult = _warhead.Detonate(hitObject, hitInfo, out missiledamage, out missledestroyed);
-            //damageDone += missiledamage;
-            //destroyed = missledestroyed || destroyed;
-            //Debug.LogError("Warhead " + hitResult + " at " + hitObject.GameObj.name + " dealing " + missiledamage + " damage");
-            //ReportDamageDone(hitResult, missiledamage, missledestroyed);
-            //DoImpactEffect(hitInfo, hitResult);
+        //float missiledamage;
+        //bool missledestroyed;
+        //hitResult = _warhead.Detonate(hitObject, hitInfo, out missiledamage, out missledestroyed);
+        //damageDone += missiledamage;
+        //destroyed = missledestroyed || destroyed;
+        //Debug.LogError("Warhead " + hitResult + " at " + hitObject.GameObj.name + " dealing " + missiledamage + " damage");
+        //ReportDamageDone(hitResult, missiledamage, missledestroyed);
+        //DoImpactEffect(hitInfo, hitResult);
 
         return hitResult;
     }

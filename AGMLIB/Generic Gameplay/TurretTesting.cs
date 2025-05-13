@@ -30,9 +30,9 @@ public class CustomTraversalLimits : MonoBehaviour
             if (socket == null)
             {
                 //Debug.LogError("No locked socket");
-                return false; 
+                return false;
             }
-            if(socket.Component == null)
+            if (socket.Component == null)
             {
                 //Debug.LogError("No Blocking component");
                 return true;
@@ -54,7 +54,7 @@ class TurretControllerFaceTarget
         {
             return;
         }
-        if(customlimits.Ignore)
+        if (customlimits.Ignore)
         {
             Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
             return;
@@ -64,7 +64,7 @@ class TurretControllerFaceTarget
         Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
         Transform _body = Common.GetVal<Transform>(__instance, "_body"); ;
         Transform _barrel = Common.GetVal<Transform>(__instance, "_barrel"); ;
-        
+
         float traverse = MathHelpers.ConvertAngle360to180(_body.localRotation.eulerAngles.y);
         float elevation = MathHelpers.ConvertAngle360to180(_barrel.localRotation.eulerAngles.x) * -1;
         //Debug.LogError("Limits test " + __instance + " "  + _forwardLimits.LeftAngle * -1 + " " + _forwardLimits.RightAngle + " " +  (int)traverse);

@@ -63,7 +63,7 @@ class FollowingInstanceMuzzleFire : MonoBehaviour
         //__instance.gameObject.GetOrAddComponent<FratricidalWeapon>().affectfriendlies = true;
 
         //TEMP
-        FratricidalWeapon weapon = __instance.GetComponentInChildren<FratricidalWeapon>() 
+        FratricidalWeapon weapon = __instance.GetComponentInChildren<FratricidalWeapon>()
                                 ?? __instance.GetComponentInParent<FratricidalWeapon>();
         if (weapon == null)
             return;

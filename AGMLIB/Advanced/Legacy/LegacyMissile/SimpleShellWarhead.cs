@@ -1,19 +1,8 @@
-﻿
-// Nebulous, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+﻿// Nebulous, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // Munitions.MissileImpactWarhead
-using System.Collections.Generic;
-using System.ComponentModel;
-using Bundles;
-using Game;
-using Munitions;
-using Ships;
-using UnityEngine;
-using UnityEngine.Serialization;
-using Utility;
-
 public class SimpleShellWarhead : MissileWarhead
 {
-   
+
     [SerializeField]
     private LightweightKineticShell _appliedTemplate;
 

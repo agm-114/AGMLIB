@@ -1,13 +1,7 @@
-﻿using Object = System.Object;
-using static Ships.WeaponComponent;
-using static Ships.ContinuousWeaponComponent;
-using Ships.Controls;
+﻿using Lib.Generic_Gameplay.Ewar;
 using static Ships.HullPart;
-using System.Linq;
-using System.Collections.Generic;
-using System.Reflection;
-using Lib.Generic_Gameplay.Ewar;
-using UnityEngine;
+using static Ships.WeaponComponent;
+using Object = System.Object;
 public class MultiBeam : MultiTarget { }
 
 public class MultiTarget : MonoComponent

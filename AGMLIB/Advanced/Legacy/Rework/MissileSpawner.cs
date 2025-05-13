@@ -1,11 +1,4 @@
-﻿using Munitions;
-using UnityEngine;
-using Game.Units;
-using Utility;
-using System.Collections;
-using FleetEditor;
-
-public class MissileSpawner : MonoBehaviour
+﻿public class MissileSpawner : MonoBehaviour
 {
     public GameObject missile;
     private ShipController _myShip;
@@ -34,7 +27,7 @@ public class MissileSpawner : MonoBehaviour
         //Debug.LogError("Getting Ins Missile");
         IMissile basicMissile = missileObj.GetComponent<IMissile>();
 
-        
+
         if (basicMissile != null && _myShip != null)
         {
             //Debug.LogError("Imbuing");
@@ -48,12 +41,12 @@ public class MissileSpawner : MonoBehaviour
         //else
         //    Debug.LogError("Missile failed to spawn");
         //Debug.LogError("Grabbing Ridgidbody");
-        missileObj.GetComponent<Rigidbody>().isKinematic = false ;
+        missileObj.GetComponent<Rigidbody>().isKinematic = false;
         //if (body == null)
         //    Debug.LogError("No rigidbody on missile, cannot launch");
 
         //Debug.LogError("Launching Missile");
         //callback?.Invoke(basicMissile);
-        basicMissile?.Launch( _myShip, 0, false, false, true);
+        basicMissile?.Launch(_myShip, 0, false, false, true);
     }
 }

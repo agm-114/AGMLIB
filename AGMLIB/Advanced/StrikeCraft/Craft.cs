@@ -4,7 +4,7 @@ public class CraftKinematics2
     public static void MoveTarget(ICraft craft, MovementTarget target = null, float speed = 1)
     {
         craft.Rigidbody.velocity = craft.Rigidbody.transform.forward * craft.FlightSpeed * speed;
-        craft.Rigidbody.rotation = Quaternion.RotateTowards(craft.Rigidbody.rotation, Quaternion.LookRotation(target.transform.position - craft.Rigidbody.transform.position, target.transform.up), 1f);   
+        craft.Rigidbody.rotation = Quaternion.RotateTowards(craft.Rigidbody.rotation, Quaternion.LookRotation(target.transform.position - craft.Rigidbody.transform.position, target.transform.up), 1f);
     }
 }
 public class Craft : DumbfireRocket, ICraft
@@ -25,7 +25,7 @@ public class Craft : DumbfireRocket, ICraft
     public PID _pid;
     public string GUID = "0318fdb1c69d4aca8a48d40e0723e3e5";
     public override Guid SavedNetworkSpawnKey => new(GUID);
-    private MovementTarget _target;    
+    private MovementTarget _target;
     protected string _filter = "";
     protected ComponentHullPaint[] _paints;
     protected bool NeedsHealing => HealthPercentage < Rtbthreshold;
@@ -48,7 +48,7 @@ public class Craft : DumbfireRocket, ICraft
             paint.SetColors(LaunchedFrom.OwnedBy.Colors.BaseColor, LaunchedFrom.OwnedBy.Colors.StripeColor);
         SetTarget();
         EngineOn();
-        if(_target != null)
+        if (_target != null)
         {
             if (NeedsHealing && (_target?.CanRepair ?? false))
                 (this as ISubDamageable).DoDamage(-_target.RepairRate);
@@ -77,7 +77,7 @@ public class Craft : DumbfireRocket, ICraft
                     _randomps = UnityEngine.Random.onUnitSphere;
                 _time = 0;
             }
-            if(!_evasive)
+            if (!_evasive)
                 _randomps = _targetps - Rigidbody.transform.position;
             Rigidbody.rotation = Quaternion.RotateTowards(Rigidbody.rotation, target, 2f);
             _time += Time.fixedDeltaTime;

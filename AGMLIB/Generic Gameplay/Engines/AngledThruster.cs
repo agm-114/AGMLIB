@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.Profiling;
+﻿using UnityEngine.Profiling;
 
 namespace Lib.Generic_Gameplay.Engines
 {
@@ -35,7 +30,7 @@ namespace Lib.Generic_Gameplay.Engines
             {
                 if (_warpEffectPlaying)
                     return 1;
-                if(_subthrusters.Count > 0)
+                if (_subthrusters.Count > 0)
                     return _subthrusters.ConvertAll(rt => rt.CurrentThottle).Sum();
 
                 return 0;
@@ -54,7 +49,7 @@ namespace Lib.Generic_Gameplay.Engines
         {
             if (_particles == null)
             {
-                _particles = GetComponent<DynamicVisibleParticles>();  
+                _particles = GetComponent<DynamicVisibleParticles>();
             }
         }
 
@@ -240,7 +235,7 @@ namespace Lib.Generic_Gameplay.Engines
             }
         }
 
-        
+
     }
 
 }

@@ -1,11 +1,4 @@
-﻿using Ships.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static UnityEngine.ParticleSystem;
-using UnityEngine.Profiling;
+﻿using UnityEngine.Profiling;
 
 namespace Lib.Generic_Gameplay.Engines
 {
@@ -94,7 +87,7 @@ namespace Lib.Generic_Gameplay.Engines
         {
             //Debug.LogError(gameObject.name + " child controller setup");
             _thrustController = controller;
-            if(_parent == null)
+            if (_parent == null)
             {
                 //Debug.LogError("nullparent");
                 //return;
@@ -114,7 +107,7 @@ namespace Lib.Generic_Gameplay.Engines
             _parent.OnIsFunctionalChanged += ParentDisabled;
             _thrustDirection = componentVector.ClosestSide().Flip();
             //Debug.LogError("subthruster" + _thrustDirection);
-            _localpower =  componentVector.magnitude;
+            _localpower = componentVector.magnitude;
 
             Vector3 relToCenter = base.transform.localPosition;
             relToCenter.x = ((Mathf.Abs(relToCenter.x) < 0.1f) ? 0f : relToCenter.x);

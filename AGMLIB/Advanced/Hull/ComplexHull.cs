@@ -1,12 +1,4 @@
-﻿using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-
-public class ComplexHull : Hull
+﻿public class ComplexHull : Hull
 {
 
     private GameObject _sampler => Common.GetVal<GameObject>(this, "_colliderSamplerPrefab");

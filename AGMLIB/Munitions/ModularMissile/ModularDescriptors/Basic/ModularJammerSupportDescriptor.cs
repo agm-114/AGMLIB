@@ -1,7 +1,6 @@
-﻿using Munitions.ModularMissiles.Descriptors.Support;
-using Munitions.ModularMissiles;
-using Game.EWar;
+﻿using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors;
+using Munitions.ModularMissiles.Descriptors.Support;
 using Munitions.ModularMissiles.Runtime;
 [CreateAssetMenu(fileName = "New Modular Jammer Support", menuName = "Nebulous/Missiles/Support/Modular Jammer")]
 public class ModularJammerSupportDescriptor : JammerSupportDescriptor, IModular
@@ -18,7 +17,7 @@ public class ModularJammerSupportDescriptor : JammerSupportDescriptor, IModular
     public float MaxBeamSteer = 10f;
     public override void FinalSetup(ModularMissile missile)
     {
-        if(ConicalScan)
+        if (ConicalScan)
             missile.AddRuntimeBehaviour<BeamRuntimeJammerSupport>(this);
         else
             base.FinalSetup(missile);
@@ -28,7 +27,7 @@ public class ModularJammerSupportDescriptor : JammerSupportDescriptor, IModular
 
 public class BeamRuntimeJammerSupport : RuntimeMissileBehaviour
 {
-    private float _fullScanSeconds = 0; 
+    private float _fullScanSeconds = 0;
     private float _conicalScanStartDelay = 0f;
     private float _conicalScanProgress = 0f;
     private Vector3 _topVector = Vector3.up;
@@ -94,8 +93,8 @@ public class BeamRuntimeJammerSupport : RuntimeMissileBehaviour
         }
         else
         {
-            if(_supportDesc.ConicalScan)
-                    DoConicalScan(Time.fixedDeltaTime);
+            if (_supportDesc.ConicalScan)
+                DoConicalScan(Time.fixedDeltaTime);
             _effect.transform.rotation = Quaternion.LookRotation(_worldBeamDirection, Vector3.up);
         }
     }

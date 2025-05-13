@@ -1,19 +1,4 @@
-﻿using Lib.Generic_Gameplay.Discrete;
-using Lib.Munitions.LightweightMunition;
-using Munitions.InstancedDamagers;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using UI.Controls;
-using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UI.Extensions;
-using static Sound.AnnouncerVoiceSet;
-using Random = UnityEngine.Random;
+﻿using Lib.Munitions.LightweightMunition;
 
 namespace Lib.Munitions.LightweightMunition
 {
@@ -22,10 +7,15 @@ namespace Lib.Munitions.LightweightMunition
         public VisualEffect effect;
         public static Queue<Fragment> pool = new Queue<Fragment>();
         public static Vector3 offsetRange = Vector3.one * 10;
+        public float life = 0;
+        public Vector3 shotDirection = Vector3.forward; // The direction the shell was fired in
+        private float spawnTime = 0;
+        Vector3 horizontalComponent = Vector3.zero;
+        float elapsedTime => Time.time - spawnTime;
         // Create the child object at the position of the parent + random offset
 
 
-        public static Fragment SpawnFrag(Transform parent, LightweightKineticShell simmedshell)
+        public static Fragment SpawnFrag(Transform parent, LightweightMultiShell simmedshell)
         {
             Fragment frag = null;
             GameObject gameObject;
@@ -38,30 +28,39 @@ namespace Lib.Munitions.LightweightMunition
             {
                 gameObject = new GameObject("New Frag");
                 frag = gameObject.AddComponent<Fragment>();
-                
+
             }
 
             frag.SetupFrag(parent, simmedshell);
             return frag;
         }
 
-        public void SetupFrag(Transform parent, LightweightKineticShell simmedshell)
+        public void SetupFrag(Transform parent, LightweightMultiShell simmedshell)
         {
-            Vector3 randomOffset = new Vector3(
-            Random.Range(-offsetRange.x, offsetRange.x),
-            Random.Range(-offsetRange.y, offsetRange.y),
-            Random.Range(-offsetRange.z, offsetRange.z)
-            );
+            shotDirection = MathHelpers.RandomRayInCone(shotDirection, simmedshell.Angle);
+            spawnTime = Time.time;
+            Vector3 deviation = shotDirection - parent.forward.normalized;
+            horizontalComponent = deviation * simmedshell.FlightSpeed;
             //randomOffset = Vector3.zero;
             transform.SetParent(parent);  // Set the parent of the child object
-            transform.localPosition = randomOffset;
+            //transform.localPosition = randomOffset;
             if (effect == null)
                 effect = gameObject.AddComponent<VisualEffect>();
             gameObject.SetActive(true);
 
-            simmedshell.TracerEffect.ApplyToEffect(effect);
+            simmedshell.ChildShellTemplate.TracerEffect.ApplyToEffect(effect);
             effect.Play();
+            FixedUpdate();
         }
+        public void FixedUpdate()
+        {
+            transform.localPosition = elapsedTime * horizontalComponent;
+        }
+        public void Update()
+        {
+            transform.localPosition = elapsedTime * horizontalComponent;
+        }
+
         public void Sleep()
         {
             effect.Stop();
@@ -76,7 +75,7 @@ namespace Lib.Munitions.LightweightMunition
     {
         GameObject _childprefab;
         public List<Fragment> fragments = new List<Fragment>();
-        public List<Vector3> offset = new List<Vector3>();
+        //public List<Vector3> offset = new List<Vector3>();
         LightweightKineticMunitionContainer Container;
         public Rigidbody body;
         LightweightMultiShell parent;
@@ -93,11 +92,11 @@ namespace Lib.Munitions.LightweightMunition
 
             for (int i = 0; i < parent.Count; i++)
             {
-                Fragment fragment = Fragment.SpawnFrag(this.transform, parent.ChildShellTemplate);
+                Fragment fragment = Fragment.SpawnFrag(this.transform, simmedshell);
                 fragments.Add(fragment);
-                offset.Add(fragment.transform.localPosition);
+                //offset.Add(fragment.transform.localPosition);
             }
-            
+
         }
 
         public void KillFragments()
@@ -106,7 +105,7 @@ namespace Lib.Munitions.LightweightMunition
             foreach (Fragment fragment in fragments)
                 fragment.Sleep();
             fragments.Clear();
-            offset.Clear();
+            //offset.Clear();
         }
 
         public bool DoLookAhead(out RaycastHit hit, out bool isTrigger)
@@ -151,15 +150,14 @@ namespace Lib.Munitions.LightweightMunition
         public LightweightKineticShell ChildShellTemplate => _childShellTemplate;
         public override bool CustomLookaheadMethod => true;
 
-        public float Angle => 30;
-
-        public int Count => 30;
+        public float Angle = 30;
+        public int Count = 30;
 
         public override NetworkPoolable InstantiateSelf(Vector3 startPosition, Quaternion startRotation, Vector3 startVelocity)
         {
             Common.Trace("test frag");
-            
-            
+
+
             Common.SetVal(this, "_tracerEffect", _childShellTemplate.TracerEffect);
             Common.SetVal(this, "_whine", _childShellTemplate.Whine);
             LightweightKineticMunitionContainer container = base.InstantiateSelf(startPosition, startRotation, startVelocity) as LightweightKineticMunitionContainer;
@@ -188,7 +186,7 @@ namespace Lib.Munitions.LightweightMunition
 
 
 
-            Physics.SphereCast(new Ray(Vector3.zero, Vector3.zero), 0, out hit, 0, 513 , QueryTriggerInteraction.Ignore);
+            Physics.SphereCast(new Ray(Vector3.zero, Vector3.zero), 0, out hit, 0, 513, QueryTriggerInteraction.Ignore);
 
             return Common.SkipFunction;
         }
@@ -213,7 +211,7 @@ class LightweightKineticMunitionContainerOnRepooled
 [HarmonyPatch(typeof(LightweightKineticMunitionContainer), "DoLookAhead")]
 class LightweightKineticMunitionContainerDoLookAhead
 {
-    static bool Prefix(out RaycastHit hit, out bool isTrigger, LightweightKineticMunitionContainer __instance,  ref bool __result) //
+    static bool Prefix(out RaycastHit hit, out bool isTrigger, LightweightKineticMunitionContainer __instance, ref bool __result) //
     {
         Common.LogPatch();
         __result = false;

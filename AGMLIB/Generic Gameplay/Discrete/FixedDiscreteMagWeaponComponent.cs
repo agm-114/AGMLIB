@@ -1,5 +1,5 @@
 ﻿// Need to patch InitializeStatValues
-public class FixedDiscreteMagWeaponComponent : FixedDiscreteWeaponComponent, IMagazineProvider, IConfigurableMagazineLoadout 
+public class FixedDiscreteMagWeaponComponent : FixedDiscreteWeaponComponent, IMagazineProvider, IConfigurableMagazineLoadout
 {
 
 

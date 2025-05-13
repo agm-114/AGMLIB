@@ -1,20 +1,20 @@
-﻿using static Game.Orders.Tasks.OrderTask;
-using static UI.SequentialButton;
+﻿using static UI.SequentialButton;
 using TooltipTrigger = UI.TooltipTrigger;
 
 public class ShipInfoButton : ShipState
 {
-    public bool Unique  = false;
+    public bool Unique = false;
     public string ButtonName = "BTN";
     public StringFormatter? Tooltip;
-    public String TooltipString => Tooltip?.ToString() ?? ""; 
-    public List<string> States = new() { "ACTV", "DEAD"};
+    public String TooltipString => Tooltip?.ToString() ?? "";
+    public List<string> States = new() { "ACTV", "DEAD" };
     public List<GameColors.ColorName> Colors = new() { GameColors.ColorName.Red, GameColors.ColorName.Green };
     public int SelectedOption = 1;
     public bool Override = false;
     public ButtonData? Data;
     public SequentialButton Button => Data?.Button;
-    public static ShipInfoButton FindButton(ShipController shipController, string buttonname) {
+    public static ShipInfoButton FindButton(ShipController shipController, string buttonname)
+    {
         IEnumerable<ShipInfoButton> buttons = shipController.GetComponentsInChildren<ShipInfoButton>().Where(a => a.ButtonName == buttonname).ToList();
         if (buttons.Any())
             return buttons.First();
@@ -44,7 +44,7 @@ public class ShipInfoButton : ShipState
             Button?.SetOverride(value);
         else
             Button?.SetOverride(null);
-            Button?.SetEnabled(enabled: true);
+        Button?.SetEnabled(enabled: true);
     }
     public SequenceOption[] Options => States.Zip(Colors, (name, color) => CreateOption(name, color)).ToArray();
     public SequenceOption CurrentOption => Options[SelectedOption];
@@ -78,16 +78,16 @@ public class ButtonData
 
         PrimaryInfoButton = buttondata;
 
-        IEnumerable<ShipInfoButton>  newAuxButtonStates = shipGroup.ConvertAll(ship => ShipInfoButton.FindButton(ship, PrimaryInfoButton.ButtonName));
+        IEnumerable<ShipInfoButton> newAuxButtonStates = shipGroup.ConvertAll(ship => ShipInfoButton.FindButton(ship, PrimaryInfoButton.ButtonName));
         newAuxButtonStates = newAuxButtonStates.Where(s => s != null);
 
 
         Transform templatetransform = template.gameObject.transform.parent;
         GameObject = UnityEngine.Object.Instantiate(templatetransform.gameObject, templatetransform.parent);
 
-        Text.text       = ButtonName;
+        Text.text = ButtonName;
         GameObject.name = ButtonName;
-        Tooltip.Text   = PrimaryInfoButton.TooltipString;
+        Tooltip.Text = PrimaryInfoButton.TooltipString;
         //Layout.minWidth = 550 / 3 * 4;
         OnValueChanged.RemoveAllListeners();
         Common.GetVal<SequenceOption[]>(Button, "_options");
@@ -123,7 +123,7 @@ public class ButtonData
     public static void Resize(SequentialButton template, int extrabuttons = 0)
     {
         LayoutElement Layout = template.gameObject.transform.parent.GetComponent<LayoutElement>();
-        if(Layout != null) 
+        if (Layout != null)
             Layout.minWidth = 550 / 3 * (3 + (int)Math.Ceiling(extrabuttons / 2.0));
     }
 }
@@ -153,9 +153,9 @@ class ShipInfoBarMatchAllButtons
 
         foreach (ShipInfoButton infobut in shipbuttons)
         {
-            if(uibuttons.TryGetValue(infobut.ButtonName, out ButtonData? value))
+            if (uibuttons.TryGetValue(infobut.ButtonName, out ButtonData? value))
             {
-                if(infobut.Unique)
+                if (infobut.Unique)
                 {
                     ButtonData newrandombutton = new();
                     newrandombutton.Setup(____battleshort, infobut, _shipGroup);

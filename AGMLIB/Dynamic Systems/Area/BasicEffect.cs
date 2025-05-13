@@ -37,7 +37,7 @@
 
     public class GenericBasicEffect<TargetObject> : BasicEffect where TargetObject : MonoBehaviour
     {
-        
+
 
         [HideInInspector]
         public HashSet<TargetObject> Targets = new();
@@ -64,7 +64,7 @@
             }
         }
 
-  
+
         public override void FixedUpdate()
         {
             //Debug.LogError($"Fixed Update Active:{Active} Ingame:{AreaEffect.InGame} Shipcontroller Null:{AreaEffect.EditorShipController == null}");
@@ -84,7 +84,7 @@
             }
 
         }
-        
+
 
         public virtual void TargetFixedUpdate(TargetObject target)
         {
@@ -92,7 +92,7 @@
         }
         public virtual void ClearEffect(TargetObject target)
         {
-            
+
         }
 
         public override void Exit(MonoBehaviour target)

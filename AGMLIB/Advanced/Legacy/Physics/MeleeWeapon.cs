@@ -1,8 +1,3 @@
-using Ships;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class MeleeWeapon : MonoBehaviour
 {
     public GameObject body;
@@ -25,7 +20,7 @@ public class MeleeWeapon : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -35,7 +30,7 @@ public class MeleeWeapon : MonoBehaviour
 
         if (TurretComponent.CurrentlyFiring && TurretController.DistanceToTarget < 250)
         {
-            if(verticaloffset.transform.localPosition.y > 4 )
+            if (verticaloffset.transform.localPosition.y > 4)
             {
                 if (UnityEngine.Random.value < .01f && TurretController.DistanceToTarget < 50) // 45% of the time
                 {
@@ -54,7 +49,7 @@ public class MeleeWeapon : MonoBehaviour
                 sholder.transform.localRotation = Quaternion.RotateTowards(sholder.transform.localRotation, elevation, armrate * 4); //(barrel.transform.localEulerAngles + sholder.transform.localEulerAngles)/2;
                 grabber.transform.localRotation = Quaternion.RotateTowards(grabber.transform.localRotation, Quaternion.Euler(Vector3.right * -89), armrate);
             }
-            else 
+            else
             {
                 verticaloffset.transform.localPosition = new Vector3(0, verticaloffset.transform.localPosition.y + liftrate, 0);
             }

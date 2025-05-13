@@ -1,14 +1,7 @@
-﻿using Game;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Lib.Generic_Gameplay.Muzzles
+﻿namespace Lib.Generic_Gameplay.Muzzles
 {
     public class DelayedPulseRaycastMuzzle : RaycastMuzzle, IDirectDamageMuzzle
-    
+
     {
         [SerializeField]
         protected GameObject _beamEffect;

@@ -1,13 +1,4 @@
-﻿using Game.Units;
-using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Utility;
-
-//[HarmonyPatch(typeof(DynamicVisibleParticles), "UpdatePlaying")]
+﻿//[HarmonyPatch(typeof(DynamicVisibleParticles), "UpdatePlaying")]
 class DynamicVisibleParticlesUpdatePlaying
 {
     public static void Prefix(ref DynamicVisibleParticles __instance)
@@ -30,7 +21,7 @@ class ShipControllerInitialize
 {
     public static void Prefix(ShipController __instance)
     {
-        var parts = __instance.gameObject.GetComponentsInChildren<IDynamicCollectablePart>(includeInactive:true);
+        var parts = __instance.gameObject.GetComponentsInChildren<IDynamicCollectablePart>(includeInactive: true);
         //Debug.LogError("Creating " + parts.Length + " children");
 
         foreach (var part in parts)

@@ -1,10 +1,4 @@
-﻿using HarmonyLib;
-using System;
-using UnityEngine;
-using Object = UnityEngine.Object;
-
-
-namespace AGMLIB.Server
+﻿namespace AGMLIB.Server
 {
     internal class Logging
     {

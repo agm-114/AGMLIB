@@ -1,11 +1,4 @@
-﻿using Missions.Nodes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-[HarmonyPatch(typeof(DiscreteWeaponComponent), "OnTarget")]
+﻿[HarmonyPatch(typeof(DiscreteWeaponComponent), "OnTarget")]
 class DiscreteWeaponComponentOnTarget
 {
     static bool Prefix(DiscreteWeaponComponent __instance, Vector3 aimPoint)

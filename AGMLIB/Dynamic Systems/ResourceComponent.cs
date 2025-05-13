@@ -32,7 +32,7 @@ public class ResourceComponent : ActiveSettings
         //if(parent == null)
         //    parent = ShipController.gameObject.GetComponent<ResourceComponent>();
         //Ship = ShipController.Ship;
-        if(ResourceIcon != null)
+        if (ResourceIcon != null)
         {
             ResourceBar newicon = Instantiate(ResourceIcon).GetComponentInChildren<ResourceBar>();
             newicon.ResourceComponent = this;
@@ -62,5 +62,5 @@ public class ResourceComponent : ActiveSettings
         }
         fillpercentage = currentamount / capacity; ;
 
-}
+    }
 }

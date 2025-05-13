@@ -32,16 +32,16 @@
     {
         base.FixedUpdate();
         //Debug.LogError("Module? " + gameObject.name + " " + base.active + " Generating: " + generation * scaling + " "+ activateButtonState.ToString());
-     
+
         if (generation * scaling < 0)
         {
             //Debug.LogError("Module? " + gameObject.name + " " + base.active + " Generating: " + generation * scaling);
-            foreach(KeyValuePair<string, string> item in ActiveStates)
+            foreach (KeyValuePair<string, string> item in ActiveStates)
             {
                 //Debug.LogError(item.Key + " " + item.Value);
             }
         }
-            
+
 
         if (!base.active)
         {
@@ -49,12 +49,12 @@
             return;
         }
         float size;
-        if(false && scalingmode == GenerationScaling.ModuleSize)
+        if (false && scalingmode == GenerationScaling.ModuleSize)
         {
             foreach (HullComponent part in base.ShipController.gameObject.GetComponentsInChildren<HullComponent>())
             {
                 HullSocket partsocket = part.gameObject.transform.parent.gameObject.GetComponent<HullSocket>();
-                if(partsocket.Type == Type)
+                if (partsocket.Type == Type)
                 {
                     //Debug.LogError("Scaling heat based on: " + part.gameObject.name);
                     //size = partsocket.Size.x * partsocket.Size.y * partsocket.Size.y;
@@ -66,7 +66,7 @@
         {
             size = 1;
         }
-        
+
         base.ResourceComponent.currentamount = base.ResourceComponent.currentamount += generation * size * scaling * Time.deltaTime;
     }
 }

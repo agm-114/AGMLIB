@@ -1,12 +1,3 @@
-using Munitions;
-using Ships;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using Utility;
-
 [ExecuteInEditMode]
 public class AdvancedRezzingMuzzle : RezzingMuzzle
 {
@@ -38,7 +29,7 @@ public class AdvancedRezzingMuzzle : RezzingMuzzle
     // Update is called once per frame
     void Update()
     {
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         ammo = new List<ShellMunition>();
         accuracy = new List<float>();
         foreach (AccuracyModifer mod in AccuracyModifers)
@@ -46,6 +37,6 @@ public class AdvancedRezzingMuzzle : RezzingMuzzle
             ammo.Add(mod.ammo);
             accuracy.Add(mod.accuracy);
         }
-        #endif
+#endif
     }
 }

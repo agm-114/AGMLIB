@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.Serialization;
-using Priority = Ships.Priority;
+﻿using Priority = Ships.Priority;
 
 namespace Lib.Editor.Yaml.Components
 {

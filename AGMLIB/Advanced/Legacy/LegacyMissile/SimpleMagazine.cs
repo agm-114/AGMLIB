@@ -1,19 +1,6 @@
 ﻿
 // Nebulous, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // Munitions.MissileImpactWarhead
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using Bundles;
-using Game;
-using Game.Reports;
-using Munitions;
-using Ships;
-using UnityEngine;
-using UnityEngine.Serialization;
-using Utility;
 using Random = UnityEngine.Random;
 
 public class SimpleMagazine : MonoBehaviour, IMagazine
