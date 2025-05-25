@@ -101,7 +101,7 @@ namespace Lib.Munitions.LightweightMunition
 
         public void KillFragments()
         {
-            Common.Trace("clear frag");
+            Common.Hint("clear frag");
             foreach (Fragment fragment in fragments)
                 fragment.Sleep();
             fragments.Clear();
@@ -155,7 +155,7 @@ namespace Lib.Munitions.LightweightMunition
 
         public override NetworkPoolable InstantiateSelf(Vector3 startPosition, Quaternion startRotation, Vector3 startVelocity)
         {
-            Common.Trace("test frag");
+            Common.Hint("test frag");
 
 
             Common.SetVal(this, "_tracerEffect", _childShellTemplate.TracerEffect);

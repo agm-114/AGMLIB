@@ -1,5 +1,5 @@
 ﻿using FleetEditor.CraftEditor;
-using QFSW.QC.Demo;
+using static UnityEngine.GUI;
 using System.Drawing;
 using UnityEngine;
 using static Steamworks.InventoryItem;

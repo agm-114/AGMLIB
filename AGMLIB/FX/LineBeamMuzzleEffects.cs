@@ -10,7 +10,7 @@
             _beam.material = LineMaterial.GetMaterial();
         }
         if (_beam.useWorldSpace)
-            Common.Trace("Worldspace beams may cause issues");
+            Common.Hint("Worldspace beams may cause issues");
 
         base.Awake();
     }

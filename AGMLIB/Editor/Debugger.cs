@@ -17,7 +17,7 @@ public class KeyDebugger : ShipState
 
         }
         List<ShipStatusDisplayPart> display = dcboardgo?.GetComponentsInChildren<ShipStatusDisplayPart>().ToList();
-        if(display == null || display.Count == 0)
+        if (display == null || display.Count == 0)
         {
             Debug.LogError("No ShipStatusDisplayPart Detected");
 
@@ -28,7 +28,7 @@ public class KeyDebugger : ShipState
             if (keys.Contains(key))
             {
 
-                continue; 
+                continue;
             }
             else
             {
@@ -47,7 +47,7 @@ public class KeyDebugger : ShipState
                 Debug.LogError("Missing socket key on dc board " + key);
             }
         }
-        
+
     }
 }
 

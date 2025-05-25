@@ -83,7 +83,7 @@ public class ModularFactionDescription : FactionDescription, IModular
             oneoff = false;
         }
 
-        Common.Trace("Checking " + checkKey + " " + primaryFactionKey);
+        //Common.Trace("Checking " + checkKey + " " + primaryFactionKey);
         if (_sharedFactionSet == null)
         {
             _sharedFactionSet = new HashSet<string>(SharedFactionAll);
@@ -123,7 +123,7 @@ public class ModularFactionDescription : FactionDescription, IModular
         }
         foreach (var i in _sharedEquipmentSet)
         {
-            Common.Trace(i);
+            //Common.Trace(i);
         }
 
         if (_sharedEquipmentSetblacklist.Contains(checkKey))
@@ -216,7 +216,7 @@ class SpacecraftUseableByFaction
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(__instance.FrameKey, __instance.FactionKey, true);
         bool delta = oldresult != __result;
-        Debug.Log("delta: " + delta + " checkKey:" + __instance.FrameKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
+        //Debug.Log("delta: " + delta + " checkKey:" + __instance.FrameKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
     }
 }
 
