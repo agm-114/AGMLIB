@@ -2,7 +2,26 @@
 
 using Object = System.Object;
 
+[HarmonyPatch(typeof(Muzzle), nameof(Muzzle.StopFireEffect))]
+class MuzzleStopFireEffect
+{
+    static void Postfix(Muzzle __instance)
+    {
+        Common.LogPatch();
+        MuzzleEffects.CancelEffects(__instance);
+    }
+}
+[HarmonyPatch(typeof(RaycastMuzzle), nameof(RaycastMuzzle.StopFireEffect))]
+class RaycastMuzzleStopFireEffect
+{
+    static void Postfix(RaycastMuzzle __instance)
+    {
+        Common.LogPatch();
+        //Common.Trace("RaycastMuzzleFireEffect");
+        MuzzleEffects.CancelEffects(__instance);
 
+    }
+}
 //[HarmonyPatch(typeof(Muzzle), nameof(Muzzle.FireEffect))]
 class MuzzleFireEffect
 {
@@ -17,7 +36,7 @@ class RaycastMuzzleFire
 {
     static void Postfix(RaycastMuzzle __instance)
     {
-                Common.LogPatch();
+        Common.LogPatch();
         if (__instance is SinglePulseRaycastMuzzle singlePulseRaycastMuzzle)
         {
             MuzzleEffects.FireEffects(__instance);
@@ -27,21 +46,23 @@ class RaycastMuzzleFire
 [HarmonyPatch(typeof(RaycastMuzzle), nameof(RaycastMuzzle.FireEffect))]
 class RaycastMuzzleFireEffect
 {
-    static void Postfix(RaycastMuzzle __instance) {
+    static void Postfix(RaycastMuzzle __instance)
+    {
         Common.LogPatch();
         //Common.Trace("RaycastMuzzleFireEffect");
         MuzzleEffects.FireEffects(__instance);
-            
+
     }
 }
 [HarmonyPatch(typeof(RezzingMuzzle), nameof(RezzingMuzzle.FireEffect))]
 class RezzingMuzzleFireEffect
 {
-    static void Postfix(RezzingMuzzle __instance) {
+    static void Postfix(RezzingMuzzle __instance)
+    {
         Common.LogPatch();
         //Common.Trace("RezzingMuzzleFireEffect");
         MuzzleEffects.FireEffects(__instance);
-    } 
+    }
 }
 [HarmonyPatch(typeof(SinglePulseRaycastMuzzle), nameof(SinglePulseRaycastMuzzle.FireEffect))]
 class SinglePulseRaycastMuzzleFireEffect
@@ -64,7 +85,7 @@ class RaycastMuzzleDoRaycast
     static void Postfix(RaycastMuzzle __instance, MunitionHitInfo __result)
     {
         Common.LogPatch();
-        MuzzleEffects.SpawnImpacts(__instance , __result);
+        MuzzleEffects.SpawnImpacts(__instance, __result);
 
     }
 }
@@ -129,11 +150,11 @@ class BallisticRaycastMuzzleFixedUpdate
         foreach (var bulletobj in enumerable)
         {
             RaycastBulletObject bullet = new RaycastBulletObject(bulletobj);
-            if((bullet.Lifetime - Time.fixedDeltaTime) <= 0)
+            if ((bullet.Lifetime - Time.fixedDeltaTime) <= 0)
             {
                 continue;
             }
-        
+
             MunitionHitInfo hitInfo = new MunitionHitInfo();
             hitInfo.Point = bullet.Position;
             MuzzleEffects.SpawnImpacts(__instance, hitInfo);
