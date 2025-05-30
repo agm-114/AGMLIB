@@ -54,14 +54,6 @@ public class ModularFactionDescription : FactionDescription, IModular
 
     public string[] SharedEquipmentPatterns => Common.GetVal<string[]>(this, "_sharedEquipmentPatterns");
 
-    [SerializeField]
-    [HideInInspector]
-    private string _saveKey;
-
-    [SerializeField]
-    [HideInInspector]
-    private ulong _modId;
-
     private HashSet<string> _sharedFactionSet;
 
     private HashSet<string> _sharedEquipmentSet;
