@@ -1,10 +1,11 @@
 ﻿using System.Reflection;
-using System.Runtime.Serialization;
 
 class Common
 {
     public static bool SkipFunction => false;
     public static bool RunFunction => true;
+
+    public static bool InventoryDebug => false;
 
     public static string Cat = "≽^•⩊•^≼";
 
@@ -36,7 +37,7 @@ class Common
             SetVal(instance, fieldName, value, type.BaseType);
         return value;
     }
-    
+
     public static void RunFunc(object instance, string functionname, object[] paramters = null, Type type = null)
     {
         MethodInfo protectedMethod = instance.GetType().GetMethod(functionname, FunFlags);
@@ -80,7 +81,7 @@ class Common
         {
             pobject = hullComponent.gameObject;
         }
-        else if(pobject is GameObject go)
+        else if (pobject is GameObject go)
         {
 
             name += go.GetComponentInChildren<HullComponent>()?.ComponentName ?? "";
@@ -95,7 +96,7 @@ class Common
     {
         StringFormatter formatter = new StringFormatter();
         formatter.Color = CustomColor.LightBlueTextColor;
-        formatter.Text =  message.ToString();
+        formatter.Text = message.ToString();
         Debug.LogError("" + formatter);
     }
 
@@ -161,9 +162,10 @@ public static class CommonNonStatic
 
 public class MonoComponent : MonoBehaviour
 {
-    public void Trace(object message) {
+    public void Trace(object message)
+    {
         //Debug.LogError(message);
-        Common.Trace(this, message); 
+        Common.Trace(this, message);
     }
 
 }

@@ -1,12 +1,13 @@
 ﻿using AGMLIB.Dynamic_Systems.Area;
 using Modding;
 using Shapes;
+using Steamworks;
 using Steamworks.Ugc;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 
-public class EntryPoint : IModEntryPoint 
+public class EntryPoint : IModEntryPoint
 {
     private static readonly FilePath[] _stockBundles = new FilePath[5]
     {
@@ -27,42 +28,24 @@ public class EntryPoint : IModEntryPoint
     public void HandleLog(string logString, string stackTrace, LogType logType)
     {
         logString = $"LOGA: {DateTime.Now}: {logString}";
-        if(!logString.Contains("LOGA"))
+        if (!logString.Contains("LOGA"))
             Debug.LogError(logString);
     }
     public void PreLoad()
     {
-        if (false)
+
+        if (Common.InventoryDebug)
         {
-            SerializedInventory inventory = new();
-            List<string> items = new();
-
-            foreach (HullComponent comp in BundleManager.Instance.AllComponents)
-            {
-                items.Add(comp.SaveKey);
-                Common.Hint(comp.ComponentName + comp.HealthPercentage);
-            }
-
-            inventory.Stuff = items.ToArray();
-
-            FilePath invpath = Fleet.FullLocalFleetPath(FilePath.Empty.Directory, "test.inv");
-            if (!Directory.Exists(invpath.Directory))
-            {
-                Debug.Log("Creating missing save directory");
-                Directory.CreateDirectory(invpath.Directory);
-            }
-
-            using FileStream stream = new FileStream(invpath.RelativePath, FileMode.Create);
-            XmlSerializer serializer = new XmlSerializer(typeof(SerializedInventory));
-            serializer.Serialize(stream, inventory);
-            stream.Close();
+            FleetTools.Inventory = FleetTools.DefaultInventory();
+            FleetTools.SaveInventory();
         }
 
 
         DependencyPatch.window = false;
         Debug.Log($"AGMLIB: {Assembly.GetExecutingAssembly().GetName().Version.ToString()} Preload");
 
-        if (Harmony.HasAnyPatches("neb.lib.harmony.product")) {
+        if (Harmony.HasAnyPatches("neb.lib.harmony.product"))
+        {
             //Debug.LogError("Illegal Load Order");
             return;
         }
@@ -140,7 +123,7 @@ public class EntryPoint : IModEntryPoint
             Debug.LogError("Recompiling Assetbundle at " + path.Source.FullPath);
             FilePath test = new("Assets/ComAssetBundles/");
             Directory.CreateDirectory(test.FullPath);
-            
+
             AssetBundle.RecompressAssetBundleAsync(path.Source.FullPath, path.Dest.FullPath, BuildCompression.LZ4Runtime);
         }
 
@@ -157,7 +140,7 @@ public class EntryPoint : IModEntryPoint
         //LobbyModPane modPane = new LobbyModPane();
         //List<ulong> _missingmods = ModDatabase.Instance.GetMissingMods(new ulong[1] { 2960504230 });
 
-        ModRecord modByID = ModDatabase.Instance.GetModByID(2960504230);  
+        ModRecord modByID = ModDatabase.Instance.GetModByID(2960504230);
         IEnumerable<ModRecord> mods = new List<ModRecord>();
         //Debug.LogError("Checking Missing Mods");
 
@@ -179,7 +162,7 @@ public class EntryPoint : IModEntryPoint
             foreach (ulong depedencyid in info.Dependencies)
             {
                 ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
-                if(dependencyrecord == null || dependencyrecord.Missing)
+                if (dependencyrecord == null || dependencyrecord.Missing)
                     dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
                 if (record.LoadOrder < dependencyrecord.LoadOrder)
                 {
@@ -188,7 +171,7 @@ public class EntryPoint : IModEntryPoint
                 }         //
             }
             //Debug.Log("Writing field " + modlist[i].Info.ModName);
-            
+
             //Debug.Log("Wrote field " + modlist[i].Info.ModName);
 
         }
@@ -213,7 +196,7 @@ public class EntryPoint : IModEntryPoint
                 ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
                 if (dependencyrecord == null || dependencyrecord.Missing)
                 {
-                    
+
                     Debug.LogError("Grabbing Depedency");
                     dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
                 }
@@ -269,6 +252,22 @@ public class EntryPoint : IModEntryPoint
 
     public void PostLoad()
     {
+
+        foreach (FactionDescription faction in BundleManager.Instance.AllFactions)
+        {
+            if (faction is not IModular modularFaction)
+                continue;
+            //Common.Hint("Found Modular Faction: " + faction.FactionName);
+            foreach (var mod in modularFaction.Modules)
+            {
+                if (mod is not InventoryRules inventory)
+                    continue;
+                Common.Hint("Found Inventory Rules for " + faction.FactionName);
+                FleetTools.Inventory = FleetTools.DefaultInventory(inventory.DefaultAmount);
+            }
+        }
+
+
         var csv = new StringBuilder();
         return;
         foreach (BaseHull _hull in BundleManager.Instance.AllHulls)
@@ -277,12 +276,12 @@ public class EntryPoint : IModEntryPoint
             //File.WriteAllText(path.FullPath, _hull.LongDescription);
             static string tocsv(string? input) => '"' + (input?.Replace('"', ' ') ?? "") + '"' + ",";
             string newLine = tocsv(_hull.ClassName);
-            newLine += tocsv("(" + _hull.HullClassification + " Class)" );
+            newLine += tocsv("(" + _hull.HullClassification + " Class)");
             //image = _hull.HullScreenshot;
             newLine += tocsv(_hull.LongDescription);
             //newLine += tocsv(_hull.EditorFormatHullStats(showBreakdown: false)); ;
             newLine += tocsv("<b>Modifiers:</b>\n" + _hull.EditorFormatHullBuffs());
-            newLine += tocsv("<i><color=#FFEF9E>" + _hull.FlavorText+ "</color></i>");
+            newLine += tocsv("<i><color=#FFEF9E>" + _hull.FlavorText + "</color></i>");
             csv.AppendLine(newLine);
 
             static string toheader(string? input) => "== " + (input ?? "") + " ==\n";

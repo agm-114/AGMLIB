@@ -1,87 +1,122 @@
 ﻿using FleetEditor.CraftEditor;
 using static UnityEngine.GUI;
-using System.Drawing;
-using UnityEngine;
-using static Steamworks.InventoryItem;
 using Image = UnityEngine.UI.Image;
 
-    public class Lore : MonoBehaviour
-    {
-        [SerializeField] protected Sprite? _loreicon;
-        
-        [SerializeField] protected StringFormatter _prefixstring = new();
-        [SerializeField] protected StringFormatter _postdescriptionstring = new();
-        [SerializeField] protected StringFormatter _poststatsstring = new();
-        [SerializeField] protected StringFormatter _postresourcesstring = new();
-        [SerializeField] protected StringFormatter _postbuffstring = new();
-        [SerializeField] protected StringFormatter _postlorestring = new();
-        [SerializeField] protected StringFormatter _postdetailtext = new();
-
-        public string Prefixstring => _prefixstring?.ToString() ?? "";
-        public string Postdescriptionstring => _postdescriptionstring?.ToString() ?? "";
-        public string Poststatsstring => _poststatsstring?.ToString() ?? "";
-        public string Postresourcesstring => _postresourcesstring?.ToString() ?? "";
-        public string Postbuffstring => _postbuffstring?.ToString() ?? "";
-        public string Postlorestring => _postlorestring?.ToString() ?? "";
-
-        public string Postdetailtext => _postdetailtext?.ToString() ?? "";
-        public Sprite? LoreIcon => _loreicon;
-        public TMP_FontAsset? LoreFont => _postdetailtext?.Font;
-        public TextMeshProUGUI? _detailTitle;
-
-        public static TextMeshProUGUI GetExtraLoreTMP(TextMeshProUGUI detailText)
-        {
-            GameObject returnval = detailText.transform.parent.transform.Find("ExtraLore")?.gameObject ?? Instantiate(detailText.gameObject, detailText.transform.parent.transform);
-            returnval.name = "ExtraLore";
-
-
-
-            return returnval.GetComponent<TextMeshProUGUI>(); 
-        }
-    }
-
-    [HarmonyPatch(typeof(PaletteItem), nameof(PaletteItem.SetComponent))]
-    static class ComponentPaletteCreateItemPatch
-    {
-        static void Postfix(PaletteItem __instance, HullComponent component, Image ____modBadge)
-        {
-            Common.LogPatch();
-            //foreach (HullComponent pcomp in BundleManager.Instance.AllComponents)
-            //    Debug.Log(pcomp.ComponentName + " bndl2 " + pcomp.SaveKey);
-
-            if (component == null)
-                    return;
-            //Debug.Log("pltset " + component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category + " " + component);
-
-            if (!component.SourceModId.HasValue)
-                    return;
-
-
-            component.gameObject.GetComponentInChildren<Lore>(true);
-            component.GetComponentInChildren<Lore>(true);
-            Sprite? _loreicon = component.GetComponentInChildren<Lore>(true)?.LoreIcon ?? null;
-            if (_loreicon != null)
-                ____modBadge.sprite = _loreicon;
-            //____modBadge.sprite = BundleManager.Instance.AllFactions.ToList()[2].SmallLogo;
-        }
-    }
-
-
-    //[HarmonyPatch(typeof(PaletteItem), nameof(PaletteItem.SetCurrentCount))]
-    static class PaletteItemSetCurrentCount
+public class Lore : MonoBehaviour
 {
+    [SerializeField] protected Sprite? _loreicon;
+
+    [SerializeField] protected StringFormatter _prefixstring = new();
+    [SerializeField] protected StringFormatter _postdescriptionstring = new();
+    [SerializeField] protected StringFormatter _poststatsstring = new();
+    [SerializeField] protected StringFormatter _postresourcesstring = new();
+    [SerializeField] protected StringFormatter _postbuffstring = new();
+    [SerializeField] protected StringFormatter _postlorestring = new();
+    [SerializeField] protected StringFormatter _postdetailtext = new();
+
+    public string Prefixstring => _prefixstring?.ToString() ?? "";
+    public string Postdescriptionstring => _postdescriptionstring?.ToString() ?? "";
+    public string Poststatsstring => _poststatsstring?.ToString() ?? "";
+    public string Postresourcesstring => _postresourcesstring?.ToString() ?? "";
+    public string Postbuffstring => _postbuffstring?.ToString() ?? "";
+    public string Postlorestring => _postlorestring?.ToString() ?? "";
+
+    public string Postdetailtext => _postdetailtext?.ToString() ?? "";
+    public Sprite? LoreIcon => _loreicon;
+    public TMP_FontAsset? LoreFont => _postdetailtext?.Font;
+    public TextMeshProUGUI? _detailTitle;
+
+    public static TextMeshProUGUI GetExtraLoreTMP(TextMeshProUGUI detailText)
+    {
+        GameObject returnval = detailText.transform.parent.transform.Find("ExtraLore")?.gameObject ?? Instantiate(detailText.gameObject, detailText.transform.parent.transform);
+        returnval.name = "ExtraLore";
+
+
+
+        return returnval.GetComponent<TextMeshProUGUI>();
+    }
+}
+
+[HarmonyPatch(typeof(PaletteItem), nameof(PaletteItem.SetComponent))]
+static class ComponentPaletteCreateItemPatch
+{
+    static void Postfix(PaletteItem __instance, HullComponent component, Image ____modBadge)
+    {
+        Common.LogPatch();
+        //foreach (HullComponent pcomp in BundleManager.Instance.AllComponents)
+        //    Debug.Log(pcomp.ComponentName + " bndl2 " + pcomp.SaveKey);
+
+        if (component == null)
+            return;
+        //Debug.Log("pltset " + component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category + " " + component);
+
+        if (!component.SourceModId.HasValue)
+            return;
+
+
+        component.gameObject.GetComponentInChildren<Lore>(true);
+        component.GetComponentInChildren<Lore>(true);
+        Sprite? _loreicon = component.GetComponentInChildren<Lore>(true)?.LoreIcon ?? null;
+        if (_loreicon != null)
+            ____modBadge.sprite = _loreicon;
+        //____modBadge.sprite = BundleManager.Instance.AllFactions.ToList()[2].SmallLogo;
+    }
+}
+[HarmonyPatch(typeof(FleetStatsPane), nameof(FleetStatsPane.UpdateFleetStats))]
+static class FleetStatsPaneUpdateFleetStats
+{
+    static void Prefix(FleetStatsPane __instance, Fleet fleet)
+    {
+        FleetTools.FleetComponents.Clear();
+        //Common.Hint("FleetTools.FleetComponents cleared");
+        foreach (Ship ship in fleet.FleetShips)
+        {
+            //Common.Hint(ship.ShipDisplayName);
+
+            foreach (HullSocket sock in ship.Hull.AllSockets)
+            {
+                HullComponent comp = sock.Component;
+                if (comp == null)
+                    continue;
+                //Common.Hint(comp.SaveKey);
+
+                if (!FleetTools.FleetComponents.ContainsKey(comp.SaveKey))
+                {
+                    FleetTools.FleetComponents[comp.SaveKey] = 0;
+                }
+                FleetTools.FleetComponents[comp.SaveKey] += 1;
+            }
+        }
+        foreach(KeyValuePair<string, int> kvp in FleetTools.FleetComponents)
+        {
+            //Common.Hint(kvp.Key + " " + kvp.Value);
+        }
+    }
+}
+
+    [HarmonyPatch(typeof(PaletteItem), nameof(PaletteItem.SetCurrentCount))]
+    static class PaletteItemSetCurrentCount
+    {
         static void Postfix(PaletteItem __instance, int typeCount, int compoundingClassCount)
         {
-            int _currentCount = typeCount;
-            int _compoundingClassCount = compoundingClassCount;
-            TextMeshProUGUI _count  = Common.GetVal<TextMeshProUGUI>(__instance, "_count"); ;
-            if (typeCount == 0)
+
+            if (!FleetTools.Components.ContainsKey(__instance.Component.SaveKey))
             {
-                _count.gameObject.SetActive(value: false);
                 return;
             }
+
+            int _currentCount = typeCount;
+            int _compoundingClassCount = compoundingClassCount;
+            TextMeshProUGUI _count = Common.GetVal<TextMeshProUGUI>(__instance, "_count"); ;
             _count.gameObject.SetActive(value: true);
-            if (compoundingClassCount == typeCount)
+
+
+            if (typeCount == 0)
+            {
+                _count.text = "";
+                //return;
+            }
+            else if (compoundingClassCount == typeCount)
             {
                 _count.text = $"({typeCount})";
             }
@@ -89,7 +124,17 @@ using Image = UnityEngine.UI.Image;
             {
                 _count.text = $"({typeCount}) [{compoundingClassCount}]";
             }
-            _count.text += "\n<i><color=" + GameColors.FlavorTextColor + ">" + 12 + "</color></i>";
+
+            StringFormatter text = new StringFormatter();
+            if (FleetTools.FleetComponents.ContainsKey(__instance.Component.SaveKey))
+            {
+                _count.text += $"{StringFormatter.GetColorTag(CustomColor.LightBlue)}({FleetTools.FleetComponents[__instance.Component.SaveKey]})</color>";
+                //Common.Hint("SetCurrentCount" + __instance.Component.SaveKey + " " + _count.text);
+
+            }
+
+
+            _count.text += " <i>" + StringFormatter.GetColorTag(CustomColor.Gray) + FleetTools.Components[__instance.Component.SaveKey] + "</color></i>";
             Common.SetVal<int>(__instance, "_currentCount", _currentCount);
             Common.SetVal<int>(__instance, "_compoundingClassCount", _compoundingClassCount);
         }
@@ -124,7 +169,7 @@ using Image = UnityEngine.UI.Image;
 
 
             if (loreobject?.GetComponentInChildren<Lore>() is not Lore lore)
-                    return;
+                return;
             extralore.text = lore.Postdetailtext;
             //Debug.LogError("lor " + lore.Postdetailtext);
 
@@ -137,7 +182,7 @@ using Image = UnityEngine.UI.Image;
 
             //____detailText.font = font;
         }
-    }    
+    }
 
     [HarmonyPatch(typeof(PaletteItem), "GetDetailText")]
     static class ComponentPaletteGetDetailTextPatch
