@@ -1,4 +1,5 @@
 ﻿using Lib.Munitions.LightweightMunition;
+using UnityEngine;
 
 namespace Lib.Munitions.LightweightMunition
 {
@@ -15,7 +16,7 @@ namespace Lib.Munitions.LightweightMunition
         // Create the child object at the position of the parent + random offset
 
 
-        public static Fragment SpawnFrag(Transform parent, LightweightMultiShell simmedshell)
+        public static Fragment SpawnFrag(Fragments parent, LightweightMultiShell simmedshell)
         {
             Fragment frag = null;
             GameObject gameObject;
@@ -35,14 +36,16 @@ namespace Lib.Munitions.LightweightMunition
             return frag;
         }
 
-        public void SetupFrag(Transform parent, LightweightMultiShell simmedshell)
+        public void SetupFrag(Fragments parent, LightweightMultiShell simmedshell)
         {
+            //shotDirection = parent.body.velocity;
             shotDirection = MathHelpers.RandomRayInCone(shotDirection, simmedshell.Angle);
+            //transform.rotation = Quaternion.LookRotation(shotDirection, transform.up);
             spawnTime = Time.time;
-            Vector3 deviation = shotDirection - parent.forward.normalized;
+            Vector3 deviation = shotDirection - parent.transform.forward.normalized;
             horizontalComponent = deviation * simmedshell.FlightSpeed;
             //randomOffset = Vector3.zero;
-            transform.SetParent(parent);  // Set the parent of the child object
+            transform.SetParent(parent.transform);  // Set the parent of the child object
             //transform.localPosition = randomOffset;
             if (effect == null)
                 effect = gameObject.AddComponent<VisualEffect>();
@@ -76,7 +79,7 @@ namespace Lib.Munitions.LightweightMunition
         GameObject _childprefab;
         public List<Fragment> fragments = new List<Fragment>();
         //public List<Vector3> offset = new List<Vector3>();
-        LightweightKineticMunitionContainer Container;
+        public LightweightKineticMunitionContainer Container;
         public Rigidbody body;
         LightweightMultiShell parent;
 
@@ -92,7 +95,7 @@ namespace Lib.Munitions.LightweightMunition
 
             for (int i = 0; i < parent.Count; i++)
             {
-                Fragment fragment = Fragment.SpawnFrag(this.transform, simmedshell);
+                Fragment fragment = Fragment.SpawnFrag(this, simmedshell);
                 fragments.Add(fragment);
                 //offset.Add(fragment.transform.localPosition);
             }
@@ -101,7 +104,7 @@ namespace Lib.Munitions.LightweightMunition
 
         public void KillFragments()
         {
-            Common.Hint("clear frag");
+            //Common.Hint("clear frag");
             foreach (Fragment fragment in fragments)
                 fragment.Sleep();
             fragments.Clear();
@@ -126,14 +129,88 @@ namespace Lib.Munitions.LightweightMunition
                 return false;
             */
 
+
+            //if (parent is LightweightClusterShell or parent is LightweightProximityShell)
+            List<Fragment> deadfrags = new List<Fragment>();
+
             foreach (Fragment fragment in fragments)
             {
-                Ray r = new Ray(fragment.transform.position, body.velocity);
+                transform.rotation = Quaternion.LookRotation(body.velocity, transform.up);
+                Ray r = new Ray(fragment.transform.position, transform.forward);
+                LineRenderer? lineRenderer = null;
 
-                if (!Physics.Raycast(ray: r, out hit, maxDistance: raydistance, layerMask: _includeMunitions ? 524801 : 513, QueryTriggerInteraction.Ignore))
+                if (parent.DebugMode)
+                {
+
+                    //Debug.LogError("Beam Spawn");
+                    GameObject lineObj = new GameObject("BeamLine");
+                    Destroy(lineObj, 2);
+                    lineRenderer = lineObj.AddComponent<LineRenderer>();
+
+                    // Configure LineRenderer settings
+                    lineRenderer.startWidth = 0.05f;
+                    lineRenderer.endWidth = 0.05f;
+                    lineRenderer.material = new Material(Shader.Find("Sprites/Default")); // Use a simple shader
+                    lineRenderer.startColor = Color.white;
+                    lineRenderer.endColor = Color.white;
+
+                    // Set the positions to visualize the ray
+                    lineRenderer.positionCount = 2;
+                    lineRenderer.SetPosition(0, r.origin); 
+                    lineRenderer?.SetPosition(1, r.GetPoint(raydistance));
+
+                }
+
+                if (parent.CustomLookaheadMethod)
+                {
+
+
+                    bool lookaheadCheck = parent.DoLookAhead(r.origin, Quaternion.LookRotation(r.direction, transform.up), body.velocity, out hit, out isTrigger);
+                    if (lookaheadCheck)
+                    {
+                        if (lineRenderer != null)
+                        {
+                            lineRenderer.startColor = Color.red;
+                            lineRenderer.endColor = Color.red;
+                        }
+                        deadfrags.Add(fragment);
+                        continue;
+
+                    }
+
+
+                }
+                if (parent.LookaheadSphereRadius > 0.01 && Physics.SphereCast(r, parent.LookaheadSphereRadius, out hit, raydistance, _includeMunitions ? 524801 : 513, QueryTriggerInteraction.Ignore))
+                {
+                    if (lineRenderer != null)
+                    {
+                        lineRenderer.startColor = Color.green;
+                        lineRenderer.endColor = Color.green;
+                    }
+                    deadfrags.Add(fragment);
                     continue;
+                }
+                if (Physics.Raycast(ray: r, out hit, maxDistance: raydistance, layerMask: _includeMunitions ? 524801 : 513, QueryTriggerInteraction.Ignore))
+                {
+                    //Common.Hint("hit frag");
+                    if (lineRenderer != null)
+                    {
+                        lineRenderer.startColor = Color.blue;
+                        lineRenderer.endColor = Color.blue;
+                    }
+                    deadfrags.Add(fragment);
 
+                }
+
+
+
+
+            }
+            foreach (Fragment fragment in deadfrags)
+            {
                 parent.ChildShellTemplate.InstantiateSelf(fragment.transform.position, fragment.transform.rotation, body.velocity);
+                fragments.Remove(fragment);
+                fragment.Sleep();
             }
 
             //
@@ -150,12 +227,15 @@ namespace Lib.Munitions.LightweightMunition
         public LightweightKineticShell ChildShellTemplate => _childShellTemplate;
         public override bool CustomLookaheadMethod => true;
 
+        public bool DebugMode = false;
         public float Angle = 30;
         public int Count = 30;
+        public float LookaheadSphereRadius = 4;
+
 
         public override NetworkPoolable InstantiateSelf(Vector3 startPosition, Quaternion startRotation, Vector3 startVelocity)
         {
-            Common.Hint("test frag");
+            //Common.Hint("test frag");
 
 
             Common.SetVal(this, "_tracerEffect", _childShellTemplate.TracerEffect);
