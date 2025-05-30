@@ -1,13 +1,16 @@
 ﻿namespace AGMLIB.Generic_Gameplay.Continuous
 {
 
-    public class CasemateContinuousWeaponComponent : FixedContinuousWeaponComponent
+    public class CasemateContinuousWeaponComponent : FixedContinuousWeaponComponent, IFixedWeapon
     {
         [Serializable]
         public class CasemateContinuousWeaponState : ContinuousWeaponState
         {
             public CasemateController.CasemateControllerState CasemateState;
         }
+
+        [Tooltip("Ships are hard to turn to exact targets.  If true, the shot fired will take its base vector from direct line to the target, and then inaccuracy is added on top.  If false, the shot will use the forward vector of the muzzle.")]
+        [SerializeField] protected bool _fudgeShotVector = true;
 
         [SerializeField]
         private CasemateController _turretController;
@@ -61,12 +64,14 @@
 
         public Direction FacingDirection => (this as IFixedWeapon).FacingDirection;
 
-        public bool NeedsTightPID => _turretController == null;
+        //grab from the parent
+        bool IFixedWeapon.NeedsTightPID => _turretController == null;
 
         protected override void SocketSet()
         {
             base.SocketSet();
-
+            //Vector3 facingDirection = base.Socket.MyHull.MyShip.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients();
+            //_facingDirection = facingDirection.ClosestSide();
             if (_turretController != null)
             {
                 _turretController.OnHitLimits += delegate
@@ -89,7 +94,10 @@
 
         protected override void BearToTarget(Vector3 aimPoint)
         {
-            _turretController?.FaceTarget(aimPoint, _statTraverseRate.Value + 10, _statElevationRate.Value + 10);
+            if (_turretController != null)
+            {
+                _turretController.FaceTarget(aimPoint, _statTraverseRate.Value, _statElevationRate.Value);
+            }
 
             base.BearToTarget(aimPoint);
         }
@@ -97,8 +105,10 @@
         protected override void OnTrackingChanged()
         {
             base.OnTrackingChanged();
-            _turretController?.StopMovement();
-
+            if (_turretController != null)
+            {
+                _turretController.StopMovement();
+            }
         }
 
         protected override bool IsAimingBlocked()
