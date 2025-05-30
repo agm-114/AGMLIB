@@ -1,15 +1,10 @@
-﻿using Ships;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Lib.Generic_Gameplay.Discrete
+﻿namespace Lib.Generic_Gameplay.Discrete
 {
     public interface IMuzzleEffect
     {
         public void FireEffect();
+
+        public void CancelEffect();
         public void SpawnHit(MunitionHitInfo? rayHit);
     }
 
@@ -26,6 +21,18 @@ namespace Lib.Generic_Gameplay.Discrete
             {
                 //Common.Trace("Spawning Flash");
                 effect.FireEffect();
+            }
+        }
+
+        public static void CancelEffects(Muzzle muzzle)
+        {
+            //Common.Trace("Spawning Flashs");
+
+
+            foreach (BaseMuzzleEffects effect in muzzle.gameObject.GetComponentsInChildren<BaseMuzzleEffects>())
+            {
+                //Common.Trace("Spawning Flash");
+                effect.CancelEffect();
             }
         }
 
@@ -47,7 +54,14 @@ namespace Lib.Generic_Gameplay.Discrete
     public abstract class BaseMuzzleEffects : MonoBehaviour, IMuzzleEffect
     {
         public abstract void FireEffect();
-        public abstract void SpawnHit(MunitionHitInfo? rayHit);
+        public virtual void CancelEffect()
+        {
+
+        }
+        public virtual void SpawnHit(MunitionHitInfo? rayHit)
+        {
+
+        }
     }
 
 
@@ -66,9 +80,9 @@ namespace Lib.Generic_Gameplay.Discrete
             //GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             //sphere.transform.position = _muzzleEffectEffectlocation?.position ?? transform.position;
         }
-        public override void SpawnHit(MunitionHitInfo? rayHit)  
+        public override void SpawnHit(MunitionHitInfo? rayHit)
         {
-            if(rayHit == null || _hitEffect == null)
+            if (rayHit == null || _hitEffect == null)
                 return;
             Common.Trace("Custom Hit Effect");
 
@@ -85,7 +99,7 @@ namespace Lib.Generic_Gameplay.Discrete
 
             //hitob = ObjectPooler.Instance.GetNextOrNew(_hitEffect);
 
-           
+
             //GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             //sphere.transform.position = rayHit.HitObject.transform.position;
         }
@@ -124,7 +138,7 @@ namespace Lib.Generic_Gameplay.Discrete
 
 
         }
-        public  void Reset()
+        public void Reset()
         {
             _isTimerActive = false;
             _muzzleeffect.StopEffect();
@@ -152,14 +166,14 @@ namespace Lib.Generic_Gameplay.Discrete
             if (rayHit != null)
             {
                 _currentlen = Vector3.Distance(rayHit.Point, transform.position);
-                Common.Trace($"hit {_currentlen}" );
+                Common.Trace($"hit {_currentlen}");
             }
             else
             {
                 Common.Trace($"miss {_currentlen}");
             }
             _muzzleeffect.StartEffect();
-            _muzzleeffect.SetBeamLength(_currentlen);  
+            _muzzleeffect.SetBeamLength(_currentlen);
             _timer = _effectDuration;
         }
     }
@@ -173,17 +187,24 @@ namespace Lib.Generic_Gameplay.Discrete
         {
             if (rayHit != null)
                 GlobalSFX.PlayOneShotSpatial(_impactSound, rayHit.HitObject.transform);
-    
+
         }
     }
 
-    /*
-    public class MuzzleSoundSource : MuzzleSoundEffects
+    public class MuzzleGlowerEffects : BaseMuzzleEffects
     {
-        public override void FireEffect() => GlobalSFX.PlayOneShotSpatial(_muzzleSound, transform);
-        public override void SpawnHit(MunitionHitInfo rayHit) => GlobalSFX.PlayOneShotSpatial(_muzzleSound, rayHit.HitObject.transform);
+        [SerializeField] protected BarrelGlow _glower;
+        public override void FireEffect() => _glower.SetFiring(firing: true);
+        public override void CancelEffect() => _glower.SetFiring(firing: false);
+
+        /*
+        public class MuzzleSoundSource : MuzzleSoundEffects
+        {
+            public override void FireEffect() => GlobalSFX.PlayOneShotSpatial(_muzzleSound, transform);
+            public override void SpawnHit(MunitionHitInfo rayHit) => GlobalSFX.PlayOneShotSpatial(_muzzleSound, rayHit.HitObject.transform);
+        }
+        */
     }
-    */
 
     public class LongPulseRaycastMuzzle : SinglePulseRaycastMuzzle
     {
