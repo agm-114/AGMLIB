@@ -54,7 +54,7 @@ public class ExperimentalStringFormatter : StringFormatter
         base.ToString();
         string returnstring = string.Empty;
         if (_colortext)
-            returnstring += "<color=" + GetColorTag() + ">";
+            returnstring += GetColorTag(_textcolor);
         foreach (BasicTag tag in _taglist)
             returnstring += GetEntryTag(tag);
         foreach (KeyValuePair<AdvancedTag, string> tag in AdvancedTagList)

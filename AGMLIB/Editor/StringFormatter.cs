@@ -49,8 +49,6 @@ public class StringFormatter : MonoBehaviour
     [SerializeField]
     protected bool _colortext = false;
     [SerializeField]
-    protected ColorName _color = ColorName.White;
-    [SerializeField]
     protected CustomColor _textcolor = CustomColor.White;
     public CustomColor Color { get => _textcolor; set { _textcolor = value; _colortext = true; } }
     public string Text { get => _text; set => _text = value; }
@@ -106,9 +104,9 @@ public class StringFormatter : MonoBehaviour
         return returnstring;
     }
 
-    public string GetColorTag()
+    public static string GetColorTag(CustomColor color)
     {
-        return _textcolor switch
+        var textColor = color switch
         {
             CustomColor.Red => GameColors.GetTextColor(ColorName.Red),
             CustomColor.Orange => GameColors.GetTextColor(ColorName.Orange),
@@ -129,12 +127,13 @@ public class StringFormatter : MonoBehaviour
             CustomColor.FlavorTextColor => GameColors.FlavorTextColor,
             _ => GameColors.GetTextColor(ColorName.White),
         };
+        return "<color=" + textColor + ">";
     }
     public override string ToString()
     {
         string returnstring = string.Empty;
         if (_colortext || _textcolor != CustomColor.White)
-            returnstring += "<color=" + GetColorTag() + ">";
+            returnstring += GetColorTag(_textcolor);
         foreach (BasicTag tag in _taglist)
             returnstring += GetEntryTag(tag);
         returnstring += MergeStrings(_prefixes);
@@ -147,9 +146,4 @@ public class StringFormatter : MonoBehaviour
         return returnstring;
     }
 
-    void Awake()
-    {
-        if (_color != ColorName.White)
-            Common.Hint(this, " has as string formatter that is using the color field, this has been depricated please use the text color field and set the color field to white");
-    }
 }
