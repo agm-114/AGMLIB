@@ -1,4 +1,4 @@
-namespace AGMLIB.Generic_Gameplay.Discrete
+﻿namespace AGMLIB.Generic_Gameplay.Discrete
 {
     public class MuzzleList : MonoBehaviour
     {
@@ -63,7 +63,7 @@ namespace AGMLIB.Generic_Gameplay.Discrete
             {
                 __result = muzzleLists.Find(mlist => mlist.IsAmmoCompatible(__instance.SelectedAmmoType)).GetNextMuzzle(out num);
                 if (__instance.SelectedAmmoType.SimMethod != __result.SimMethod)
-                    Common.Hint($"Possible Sim Method Issue Ammo: {__instance.SelectedAmmoType.SimMethod} Muzzle: {__result.SimMethod}" ) ;
+                    Common.Hint($"Possible Sim Method Issue Ammo: {__instance.SelectedAmmoType.SimMethod} Muzzle: {__result.SimMethod}");
 
 
                 Common.Hint("Returning Muzzle" + nameof(__result));
@@ -74,10 +74,10 @@ namespace AGMLIB.Generic_Gameplay.Discrete
             {
                 Common.Hint("Hey none of your muzzle lists are compatible with the ammo you want to use");
                 Common.Hint($"Ammo C {__instance.SelectedAmmoType.Tags.Class} S {__instance.SelectedAmmoType.Tags.Subclass}");
-                foreach(MuzzleList muzzleList in muzzleLists)
+                foreach (MuzzleList muzzleList in muzzleLists)
                 {
                     Common.Hint("List");
-                    foreach(MunitionTags tags in muzzleList.CompatibleAmmoTags)
+                    foreach (MunitionTags tags in muzzleList.CompatibleAmmoTags)
                     {
                         Common.Hint($"Ammo C {tags.Class} S {tags.Subclass}");
                     }
@@ -156,7 +156,7 @@ namespace AGMLIB.Generic_Gameplay.Discrete
             {
                 Common.Hint("Found Good List");
 
-                
+
 
                 Muzzle[] _tempmuzzles = muzzleLists.Find(mlist => mlist.IsAmmoCompatible(__instance.SelectedAmmoType)).Muzzles;
                 if (__instance.SelectedAmmoType.SimMethod != _tempmuzzles[0].SimMethod)
@@ -191,7 +191,7 @@ namespace AGMLIB.Generic_Gameplay.Discrete
         static void Postfix(ContinuousWeaponComponent __instance)
         {
             Common.LogPatch();
- 
+
         }
     }
 }

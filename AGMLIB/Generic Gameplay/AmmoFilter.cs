@@ -8,20 +8,20 @@ public class AmmoCompatiblity : MonoBehaviour
     {
         //return _filter.IsAmmoCompatible(ammo, debugmode);
 
-        
+
         if (_filter == null)
             _filter = gameObject.GetComponent<SimpleFilter>();
         if (_filter == null)
         {
             Common.Hint(this, "has Ammo Filter that must be configured using simple filter");
-            return this.IsAmmoCompatible(ammo,debugmode);
+            return false;
         }
         return _filter.IsAmmoCompatible(ammo, debugmode);
-        
+
     }
     public static bool IsAmmoCompatible(IMunition ammo, HullComponent component, out bool value, bool debugmode = false)
     {
-        
+
         value = true;
         AmmoCompatiblity filter = component?.GetComponentInChildren<AmmoCompatiblity>();
 
@@ -33,7 +33,7 @@ public class AmmoCompatiblity : MonoBehaviour
         return true;
     }
 }
-public class AmmoFilter : AmmoCompatiblity { public void Awake( ) { Common.Hint(this.gameObject, "Replace Ammo filter with AmmoCompatiblity"); } }
+public class AmmoFilter : AmmoCompatiblity { public void Awake() { Common.Hint(this.gameObject, "Replace Ammo filter with AmmoCompatiblity"); } }
 
 
 
@@ -43,8 +43,8 @@ class BaseCellLauncherComponentIsAmmoCompatible
     public static void Postfix(BaseCellLauncherComponent __instance, IMunition ammo, ref bool __result)
     {
         Common.LogPatch();
-        if (AmmoCompatiblity.IsAmmoCompatible(ammo, __instance, out bool value, true))
-            __result =  value;
+        if (AmmoCompatiblity.IsAmmoCompatible(ammo, __instance, out bool value ))
+            __result = value;
     }
 }
 
