@@ -44,7 +44,7 @@ public class PaintScheme : MonoBehaviour
         {
             if (Hull.ClassName == ClassName && Index >= 0)
             {
-                Common.Hint(SegmentName + " not found in " + hullsegs.Length + " hull segs named " + string.Join(",", hullsegs.ToList().ConvertAll<string>(a => a.gameObject.name)));
+                //Common.Hint(SegmentName + " not found in " + hullsegs.Length + " hull segs named " + string.Join(",", hullsegs.ToList().ConvertAll<string>(a => a.gameObject.name)));
 
             }
             Destroy(this);

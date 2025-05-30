@@ -94,6 +94,8 @@ public class AdvancedPaintScheme : MonoBehaviour
             SerializedSegmentNames = new List<string>();
             SerializedTextures = new List<Texture2D>();
             SerializedIndexes = new List<int>();
+            SerializedValidTargets = new List<bool>();
+            SerializedTargets = new List<FastNameplateBaker.BakeTarget>();
 
             foreach (SegmentOverride textureOverride in HullSegmentTextures)
             {
