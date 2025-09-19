@@ -1,4 +1,5 @@
 ﻿using Lib.Generic_Gameplay.Ewar;
+using Utility;
 using static Ships.HullPart;
 using static Ships.WeaponComponent;
 using Object = System.Object;
@@ -9,8 +10,11 @@ public class MultiTarget : MonoComponent
     //public int TruePostionWeight = 10;
     //public int KnownPositionWeight = 1;
     public bool SingleTargetMode = false;
+    public bool RespectMuzzleRange = true;
     //public List<FireControlSensor> fireControlSensors = new List<FireControlSensor>();
     public List<BaseTrackLogic> trackLogics = new();
+    public List<Muzzle> SingleTargetMuzzles = new();
+    public List<Muzzle> MultiTargetMuzzles = new();
 
     public WeaponComponent Weapon => this.GetComponentInParent<WeaponComponent>();
     public bool MuzzlesActive => Common.GetVal<bool>(Weapon, "_muzzlesActive");
@@ -19,7 +23,7 @@ public class MultiTarget : MonoComponent
     private bool NoTarget => Weapon.CurrentTargetingMode == TargetingMode.None;
     bool SplitBeams(bool fire)
     {
-        if (Weapon.TargetAssignedByPlayer)
+        if (Weapon.TargetAssignedByPlayer && SingleTargetMuzzles.Count == 0)
         {
             //Trace($"Error should not be triggered");
             return false;
@@ -90,7 +94,7 @@ public class MultiTarget : MonoComponent
 
         if (trackLogics.Count > 0)
         {
-            trackLogics[muzzle % trackLogics.Count].UpdateTrack(target, out pos, out Vector3 _);
+            trackLogics[muzzle % trackLogics.Count]?.UpdateTrack(target, out pos, out Vector3 _);
 
         }
         //  Time.timeScale = 0.1f;
@@ -105,9 +109,9 @@ public class MultiTarget : MonoComponent
     {
         //return; 
         //Common.Trace((this.gameObject), "StopFire");
-        Muzzles[muzzle].gameObject.transform.localRotation = Quaternion.identity;
-        if (muzzle == 0)
-            return;
+        //Muzzles[muzzle].gameObject.transform.localRotation = Quaternion.identity;
+        //if (muzzle == 0)
+        //    return;
         Muzzles[muzzle]?.StopFire();
         Muzzles[muzzle]?.StopFireEffect();
 
@@ -177,13 +181,44 @@ public class MultiTarget : MonoComponent
 
         }
 
+        int targetindex = 0;
+        List<Muzzle> ActiveMuzzles;
+        if(tracks[0].IsPointDefenseTarget)
+        {
+            Trace("SimBeam multitarget point defense");
+            ActiveMuzzles = MultiTargetMuzzles;
+        }
+        else
+        {
+            Trace("SimBeam multitarget antiship defense");
+            ActiveMuzzles = SingleTargetMuzzles;
+        }
         for (int i = 0; i < Muzzles.Count; i++)
         {
-            if (i < tracks.Count)
-                StartFire(i, tracks.ElementAt(i), fire);
-            else
+            
+
+            if (targetindex >= tracks.Count || !ActiveMuzzles.Contains(Muzzles[i]))
+            {
                 StopFire(i);
+                continue;
+            }
+            if (Muzzles[i] is IRangedMuzzle rangedmuzzle && RespectMuzzleRange)
+            {
+                Vector3 toSig = transform.position.To(tracks.ElementAt(targetindex).TruePosition);
+                if (toSig.magnitude > rangedmuzzle.MaxRange)
+                {
+                    StopFire(i);
+                    continue;
+                }
+            }
+
+            Trace("Firing Muzzle " + i);
+            StartFire(i, tracks.ElementAt(targetindex), fire);
+
+            targetindex++;
+
         }
+
         return Common.RunFunction;
     }
 
