@@ -59,19 +59,19 @@
         };
 
         protected override Vector3 _aimPosition => _aimCheckFrom.position;
-
+        private Direction _facingDirection = Direction.Forward;
         protected override Vector3 _aimLook => _aimCheckFrom.forward;
 
-        public Direction FacingDirection => (this as IFixedWeapon).FacingDirection;
+        public Direction FacingDirection => _facingDirection;
 
         //grab from the parent
         bool IFixedWeapon.NeedsTightPID => _turretController == null;
-
+        
         protected override void SocketSet()
         {
             base.SocketSet();
-            //Vector3 facingDirection = base.Socket.MyHull.MyShip.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients();
-            //_facingDirection = facingDirection.ClosestSide();
+            Vector3 facingDirection = base.Socket.MyHull.MyShip.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients();
+            _facingDirection = facingDirection.ClosestSide();
             if (_turretController != null)
             {
                 _turretController.OnHitLimits += delegate
@@ -135,7 +135,7 @@
                 wepState.CasemateState = _turretController.GetSaveState();
             }
         }
-
+        
         public override void RestoreSavedState(PersistentComponentState state)
         {
             base.RestoreSavedState(state);
