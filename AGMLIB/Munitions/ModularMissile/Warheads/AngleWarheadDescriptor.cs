@@ -1,10 +1,45 @@
 ﻿using Game.Reports;
+using Lib.Generic_Gameplay;
 using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors.Warheads;
 using Munitions.ModularMissiles.Runtime;
 
 abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
 {
+    [Header("Warhead Costing")]
+    public float FixedPointCost = 0;
+    public enum ThresholdType
+    {
+        SocketWeight,
+        SocketSize
+    }
+    public ThresholdType CostThresholdType = ThresholdType.SocketWeight;
+    public float SizeCostPenaltyThreshold = 0;
+    public float FixedSizeCostPenalty = 0;
+    public float ScalingCostPenalty = 0;
+    public float SizeCostPenaltyMultiplier = 1;
+    public override float PointCost
+    {
+        get
+        {
+            float baseCost = _pointCost * base._weightedSocketCost + FixedPointCost;
+            float socketSize = base._weightedSocketSize;
+            if (CostThresholdType == ThresholdType.SocketSize)
+            {
+                socketSize = _socketSize;
+            }
+
+            if (socketSize >= SizeCostPenaltyThreshold)
+            {
+                return baseCost;
+            }
+            float penalty = FixedSizeCostPenalty;
+            float stepsBelowThreshold = SizeCostPenaltyThreshold - socketSize;
+            penalty += stepsBelowThreshold * ScalingCostPenalty;
+            return SizeCostPenaltyMultiplier* ( baseCost + penalty);
+        }
+    }
+
     [Header("Flavor Blobs")]
     public string Summary = "CODE";
     public string DetailedSummary = "Description Below Code";
@@ -30,6 +65,8 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
     public float BeamCount = 100;
     public float EffectiveBeamCount => LaunchAngle * BeamAngleScaling.Evaluate(WeightedSocketSize);
 
+    private ContactClassification _targetType = ContactClassification.Unknown;
+
 
     public override void GetWarheadStatsBlock(ref List<(string, string)> rows)
     {
@@ -48,6 +85,18 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
 
     }
 
+    public override void SetTrackTarget(ModularMissile missile, TrackIdentifier trackId)
+    {
+        base.SetTrackTarget(missile, trackId);
+        if (missile.LaunchedFrom != null && missile.LaunchedFrom.Sensors != null)
+        {
+            ITrack sensorTrack = missile.LaunchedFrom.Sensors.GetSensorTrack(trackId);
+            if (sensorTrack != null)
+            {
+                _targetType = sensorTrack.Trackable.ContactType;
+            }
+        }
+    }
     public Vector3 RandomConeRay(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
     {
         if (SelectRandomPointInTarget && hitObject != null || hitInfo != null)
@@ -113,6 +162,12 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
     public Poolable SpawnEffect(GameObject prefab, Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime)
     {
         Poolable poolable = ObjectPooler.Instance.GetNextOrNew(prefab, position, rotation);
+        foreach (IWeightedEffect effect in poolable.GetComponentsInChildren<IWeightedEffect>())
+        {             
+            effect.SetWeight(WeightedSocketSize);
+        }
+
+
         //ShortDurationEffect sde = poolable?.GetComponent<ShortDurationEffect>();
         foreach (ILocalImbued imbued in poolable.gameObject.GetComponentsInChildren<ILocalImbued>())
         {
@@ -123,5 +178,30 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
             foreach (IEffectModule effect in poolable.gameObject.GetComponentsInChildren<IEffectModule>())
                 effect.Play();
         return poolable;
+    }
+
+    public override void ResetWarhead()
+    {
+        base.ResetWarhead();
+        _targetType = ContactClassification.Unknown;
+    }
+
+    public override bool ShouldFuzeOnTarget(MunitionHitInfo hitInfo, bool trigger)
+    {
+        if (!trigger)
+        {
+            return true;
+        }
+
+        if (_targetType != 0)
+        {
+            ISensorTrackable component = hitInfo.HitObject.transform.root.GetComponent<ISensorTrackable>();
+            if (component != null && (component.ContactType == ContactClassification.SmallCraft || component.ContactType == ContactClassification.Missile) && _targetType != component.ContactType)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
