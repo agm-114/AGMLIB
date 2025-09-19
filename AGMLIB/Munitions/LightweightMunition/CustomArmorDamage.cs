@@ -58,36 +58,42 @@ namespace AGMLIB.Munitions.LightweightMunition
                 return;
             ArmorDamage model = test.First();
             ShipController controller = __instance;
-
+            armordamage = 0;
             if (model is MultiplierArmorDamage mult)
             {
+                //Debug.LogError("Multiplier Armor Damage");
                 if (mult.MaxThickness)
                 {
+                    //Debug.LogError("Max Thickness");
                     IArmorSection[] _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
                     doarmordamage = true;
-                    //Debug.LogError("Armor Sections " + _dynamicArmor.FirstOrDefault().Thickness + " % " + damage.ArmorStripPercentage);
-                    armordamage = _dynamicArmor.FirstOrDefault().Thickness * mult.ArmorStripMultiplier;
+                    //Debug.LogError("Armor Sections " + _dynamicArmor.FirstOrDefault().Thickness + " % " + mult.ArmorStripMultiplier);
+                    armordamage += _dynamicArmor.FirstOrDefault().Thickness * mult.ArmorStripMultiplier;
                     return;
                 }
                 if (GetArmorThickness(hitInfo, controller, out float armor))
                     return;
                 doarmordamage = true;
+                //Debug.LogError("Armor Sections " + armor  + " % " + mult.ArmorStripMultiplier);
+
                 armordamage = armor * mult.ArmorStripMultiplier;
                 return;
             }
 
             if (model is FixedArmorDamage fixeddamage)
             {
+                //Debug.LogError("Fixed Armor Damage is very buggy please contact agm");
+
                 if (fixeddamage.ClampArmorDamage)
                 {
-
-                    armordamage = fixeddamage.ArmorDamageAmount;
+                    //Debug.LogError("Clamp Armor Damage");
+                    armordamage += fixeddamage.ArmorDamageAmount;
                     return;
                 }
                 if (GetArmorThickness(hitInfo, controller, out float armor))
                     return;
                 doarmordamage = true;
-                armordamage = Mathf.Min(armor, fixeddamage.ArmorDamageAmount);
+                armordamage += Mathf.Min(armor, fixeddamage.ArmorDamageAmount);
                 return;
             }
             //Debug.LogError("Armor "  + armor + " % " + damage.ArmorStripPercentage + " armordamage " + armordamage);

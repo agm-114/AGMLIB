@@ -110,7 +110,7 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
         if (ShipController == null)
             return;
         lastactive = active;
-        if (!this.Active(Ship))
+        if (Ship != null && !this.Active(Ship))
         {
             active = false;
         }

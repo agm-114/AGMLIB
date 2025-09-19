@@ -19,7 +19,16 @@ public class EffectSpawner : MonoBehaviour
 
     private void Start()
     {
+        if(prefabToSpawn == null )
+        {
+            Debug.LogError("Effect Spawner missing prefab");
+        }
+        if(spawnArea ==  null)
+        {
+            Debug.LogError("Effect Spawner missing spawn area");
+        }
         rng = new System.Random(randomSeed);
+        Debug.LogError("Effect Spawner Coroutine Started " + minSpawnInterval);
         StartCoroutine(SpawnEffectCoroutine());
     }
 
@@ -28,12 +37,15 @@ public class EffectSpawner : MonoBehaviour
         while (true)
         {
             float waitTime = Mathf.Lerp(minSpawnInterval, maxSpawnInterval, (float)rng.NextDouble());
+            Debug.LogError("Waiting " + waitTime);
             yield return new WaitForSeconds(waitTime);
+            Debug.LogError("Effect Spawner spawning");
+
 
             Vector3 spawnPos = GetRandomPointInCollider(spawnArea);
             Quaternion rotation = randomizeRotation ? GetRandomRotation() : Quaternion.identity;
 
-            ObjectPooler.Instance.GetNextOrNew<PersistentEffect>(prefabToSpawn, spawnPos, rotation);
+            Poolable poolable = ObjectPooler.Instance.GetNextOrNew(prefabToSpawn, spawnPos, rotation);
             Instantiate(prefabToSpawn, transform.position, rotation);
         }
     }

@@ -80,8 +80,6 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
     public float FuseDelay = 0.0f;
     public float BeamLength = 2000;
 
-    public float PKill = 1;
-
     public CastType CastType = CastType.Ray;
     public DamageSpreadingMethod SpreadingMethod => DamageSpreadingMethod.EvenSpread;
 
