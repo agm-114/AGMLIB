@@ -12,10 +12,10 @@ public class InternalShipState : MonoBehaviour
     public ShipState ShipState;
 
     // Start is called before the first frame update
-    public ConditionalState FlankState => ShipController.Throttle == MovementSpeed.Flank ? ConditionalState.Enabled : ConditionalState.Disabled;
-    public ConditionalState BattleshortState => ShipController.BattleShortEnabled == true ? ConditionalState.Enabled : ConditionalState.Disabled;
-    public ConditionalState ControlState => ShipController.CommandState == CommandFunctions.None ? ConditionalState.Disabled : ConditionalState.Enabled;
-    public ConditionalState ElimnatedState => ShipController.IsEliminated ? ConditionalState.Disabled : ConditionalState.Enabled;
+    public ConditionalState FlankState => ShipController?.Throttle == MovementSpeed.Flank ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState BattleshortState => ShipController?.BattleShortEnabled == true ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState ControlState => ShipController?.CommandState == CommandFunctions.None ? ConditionalState.Disabled : ConditionalState.Enabled;
+    public ConditionalState ElimnatedState => ShipController?.IsEliminated ?? false ? ConditionalState.Disabled : ConditionalState.Enabled;
 
 
 
@@ -23,6 +23,10 @@ public class InternalShipState : MonoBehaviour
 
     public ShipInfoButton GetButton(string key)
     {
+        if(ShipController == null)
+        {
+            return null;
+        }
         if (!_buttons.TryGetValue(key, out ShipInfoButton button))
         {
             ShipInfoButton shipInfoButton = ShipInfoButton.FindButton(ShipController, key);
@@ -32,12 +36,12 @@ public class InternalShipState : MonoBehaviour
         return button;
     }
 
-    public Ship Ship;
-    public ShipController ShipController;
-    public ResourceComponent ResourceComponent;
-    public EditorShipController EditorShipController;
-    public Hull Hull;
-    private Rigidbody _rigidbody = null;
+    public Ship? Ship;
+    public ShipController? ShipController = null;
+    public ResourceComponent? ResourceComponent = null;
+    public EditorShipController? EditorShipController = null;
+    public Hull? Hull = null;
+    private Rigidbody? _rigidbody = null;
     public Rigidbody Rigidbody
     {
         get
@@ -126,11 +130,11 @@ public class ShipState : MonoBehaviour
     private InternalShipState InternalShipState;
     public float Velocity => InternalShipState.Velocity;
     public ShipInfoButton GetButton(string key) => InternalShipState.GetButton(key);
-    public Ship Ship => InternalShipState.Ship;
-    public ShipController ShipController => InternalShipState.ShipController;
-    public Hull Hull => InternalShipState.Hull;
-    public ResourceComponent ResourceComponent => InternalShipState.ResourceComponent;
-    public EditorShipController EditorShipController => InternalShipState.EditorShipController;
+    public Ship? Ship => InternalShipState.Ship;
+    public ShipController? ShipController => InternalShipState.ShipController;
+    public Hull? Hull => InternalShipState.Hull;
+    public ResourceComponent? ResourceComponent => InternalShipState.ResourceComponent;
+    public EditorShipController? EditorShipController => InternalShipState.EditorShipController;
     public Rigidbody Rigidbody => InternalShipState.Rigidbody;
     public bool InEditor => InternalShipState.InEditor;
     public bool InGame => InternalShipState.InGame;
