@@ -1,4 +1,6 @@
-﻿namespace AGMLIB.Dynamic_Systems.Area
+﻿using Munitions;
+
+namespace AGMLIB.Dynamic_Systems.Area
 {
     public class ResupplyEffect : FalloffEffect<Ship>
     {
@@ -8,6 +10,12 @@
 
         public bool BulkMagazines = true;
         public bool CellLaunchers = true;
+        public MunitionTags[] GenericAmmoTypes;
+
+        public float SpecficAmmoMultiplier = 1;
+        public float GenericAmmoMultiplier = 1;
+        public bool UseSpecificAmmoFirst = true;
+        public AmmoFeeder AmmoFeed => AreaEffect.Hull.MyShip.AmmoFeed;
 
         [SerializeField] protected BaseFilter AmmoFilter;
 
@@ -37,13 +45,32 @@
                 test2 = test2.Where(pair => AmmoFilter.IsAmmoCompatible(pair.Key.AmmoType));
             IOrderedEnumerable<KeyValuePair<IMagazine, HullComponent>> test3 = test2.OrderBy(kvp => kvp.Key.PercentageAvailable);
 
+            if(GenericAmmoTypes == null)
+                GenericAmmoTypes = Array.Empty<MunitionTags>();
+
+            IEnumerable<IMunition> genericammo = Array.Empty<IMunition>();
+
+            if (GenericAmmoTypes.Length > 0)
+            {
+                genericammo = AmmoFeed.AllAmmoTypes;
+                genericammo = genericammo.Where(ammo => GenericAmmoTypes.Contains(ammo.Tags));
+                genericammo = genericammo.Where(ammo => AmmoFeed.GetAmmoSource(ammo).QuantityAvailable > 1);
+
+            }
+
 
 
 
             foreach (var kvp in test3)
             {
                 IMagazine sink = kvp.Key;
-                IMagazine source = AreaEffect.Hull.MyShip.AmmoFeed.GetAmmoSource(sink.AmmoType);
+                IMagazine source = AmmoFeed.GetAmmoSource(sink.AmmoType);
+                
+                if (source == null)
+                {
+
+                }
+
                 HullComponent hullComponent = kvp.Value;
 
                 if (sink.AmmoType.PointCost > ReloadPoints || sink == null || source == null)
