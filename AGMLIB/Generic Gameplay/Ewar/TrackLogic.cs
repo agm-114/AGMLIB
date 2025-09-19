@@ -7,7 +7,7 @@
         public static void DefaultUpdateTrack(ITrack track, out Vector3 position, out Vector3 velocity, CachedCrossSectionData? cachedCS = null)
         {
             position = track.KnownPosition;
-            velocity = Vector3.zero; ;
+            velocity = track.AbsoluteVelocity; ;
         }
     }
     public class ListTrackLogic : BaseTrackLogic
@@ -71,7 +71,8 @@
         public override void UpdateTrack(ITrack track, out Vector3 position, out Vector3 velocity, CachedCrossSectionData? cachedCS = null)
         {
             position = ((track.KnownPosition * KnownPositionWeight) + (track.TruePosition * TruePostionWeight)) / (TruePostionWeight + KnownPositionWeight);
-            velocity = Vector3.zero;
+            //position = track.KnownPosition;
+            velocity = track.AbsoluteVelocity; ;
         }
     }
 
