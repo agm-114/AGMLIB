@@ -1,4 +1,6 @@
-﻿namespace AGMLIB.Dynamic_Systems.Area
+﻿using Lib.Dynamic_Systems.Area;
+
+namespace AGMLIB.Dynamic_Systems.Area
 {
 
     public class RestoreStatus : MonoBehaviour
@@ -38,12 +40,16 @@
         }
     }
 
-    public class RepairEffect : FalloffEffect<Ship>
+    public class RepairEffect : AmmoConsumingFalloffEffect
     {
         public int MaxRepairsPerHull = 3;
         public float RepairPerSecond = 1;
         public float RestoresPerSecond = 0.2f;
         protected float _accum = 0;
+
+        public List<MunitionTags> RestoreAmmoTypes = new();
+        public AmmoFeeder AmmoFeed => AreaEffect.Hull.MyShip.AmmoFeed;
+
         public override void FixedUpdate()
         {
             //
@@ -77,7 +83,7 @@
                     }
 
                 }
-                float repairsperhull = RepairPerSecond / (ships.Count() + lockers.Count());
+                float repairsperhull = RepairPerSecond / (ships.Count());
                 foreach (IEnumerable<HullPart> repairparts in ships)
                 {
                     //continue;
@@ -86,11 +92,19 @@
                     foreach (HullPart hullPart in repairparts)
                         hullPart.DoHeal(repairsperpart);
                 }
-                float restoresperhull = RestoresPerSecond / (ships.Count() + lockers.Count());
+                float restoresperlocker = RestoresPerSecond / (lockers.Count());
 
                 foreach (RestoreStatus status in lockers)
                 {
-                    status.DoPartialRestore(restoresperhull);
+                    
+                    if (RestoreAmmoTypes.Count > 0)
+                    {
+                        IMagazine? restoremagazine = GetAmmoSource(RestoreAmmoTypes);
+                        if(restoremagazine == null || restoremagazine.QuantityAvailable < 1)
+                            continue;
+                        DiscreteReload(restoresperlocker, restoremagazine);
+                    }
+                    status.DoPartialRestore(restoresperlocker);
                 }
             }
 

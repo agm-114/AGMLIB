@@ -197,7 +197,7 @@ public class Information : EditorWindow
 [InitializeOnLoad]
 public class AGMMULTITOOL : EditorWindow
 {
-    static string[] bundles = { "stock", "stock-f1", "stock-f2", "stock-maps" };
+    static string[] bundles = { "stock", "stock-f1", "stock-f2" };
     static AssetBundle stock;
     string abloc = "";
 
