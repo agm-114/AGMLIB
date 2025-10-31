@@ -14,31 +14,40 @@ namespace Lib.Dynamic_Systems.Area
 
         public uint DiscreteReload(float truereloadamount, IMagazine source)
         {
+            //Common.Hint($"reloading {truereloadamount} of {source.AmmoType.MunitionName}");
             if (_residuals.TryGetValue(source.AmmoType.SaveKey, out float residual))
             {
                 truereloadamount += residual;
+                //Common.Hint($"including residual {residual} new total {truereloadamount}");
             }
-            _residuals[source.AmmoType.SaveKey] = 0;
+            _residuals.Remove(source.AmmoType.SaveKey);
+            
 
 
             uint reloadamount = (uint)truereloadamount;
+            //Common.Hint($"discrete reload amount {reloadamount}");
             float fractionalpart = truereloadamount - (uint)truereloadamount;
+            //Common.Hint($"fractional part {fractionalpart}");
             _residuals[source.AmmoType.SaveKey] = fractionalpart;
             source.Withdraw(reloadamount);
             return reloadamount;
         }
 
-        public IMagazine? GetAmmoSource(List<MunitionTags> AllowedAmmoTags)
+        public IMagazine? GetAmmoSource(BaseFilter SourceAmmoFilter)
 
         {
             IEnumerable<IMunition> possibleammos = AmmoFeed.AllAmmoTypes;
 
-            if (AllowedAmmoTags.Count <= 0)
+            if (SourceAmmoFilter == null)
             {
+                
                 return null;
             }
-            possibleammos = possibleammos.Where(ammo => AllowedAmmoTags.Contains(ammo.Tags));
+            //Common.Hint(this, $"total possible ammo {possibleammos.Count()}");
+            possibleammos = possibleammos.Where(ammo => SourceAmmoFilter.IsAmmoCompatible(ammo));
+            //Common.Hint(this, $"total compatible ammo {possibleammos.Count()}");
             possibleammos = possibleammos.Where(ammo => AmmoFeed.GetAmmoSource(ammo).QuantityAvailable > 1);
+            //Common.Hint(this, $"total real ammo {possibleammos.Count()}");
             if (possibleammos.Any())
             {
                 return AmmoFeed.GetAmmoSource(possibleammos.First());

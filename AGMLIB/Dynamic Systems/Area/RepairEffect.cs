@@ -47,7 +47,10 @@ namespace AGMLIB.Dynamic_Systems.Area
         public float RestoresPerSecond = 0.2f;
         protected float _accum = 0;
 
-        public List<MunitionTags> RestoreAmmoTypes = new();
+        public float RestoreAmmoMultiplier = 1;
+        public float RepairAmmoMultiplier = 1;
+        public BaseFilter? RestoreAmmoFilter = null;
+        public BaseFilter? RepairAmmoFilter = null;
         public AmmoFeeder AmmoFeed => AreaEffect.Hull.MyShip.AmmoFeed;
 
         public override void FixedUpdate()
@@ -86,23 +89,37 @@ namespace AGMLIB.Dynamic_Systems.Area
                 float repairsperhull = RepairPerSecond / (ships.Count());
                 foreach (IEnumerable<HullPart> repairparts in ships)
                 {
-                    //continue;
                     float repairsperpart = repairsperhull / repairparts.Count();
 
+                    //continue;
+
+
                     foreach (HullPart hullPart in repairparts)
-                        hullPart.DoHeal(repairsperpart);
+                    {
+                        float actualrepair = Math.Min(hullPart.MaxHealth - hullPart.CurrentHealth, repairsperpart); 
+                        if (RestoreAmmoFilter != null)
+                        {
+                            IMagazine? repairmag = GetAmmoSource(RestoreAmmoFilter);
+                            if (repairmag == null || repairmag.QuantityAvailable < 1)
+                                continue;
+                            DiscreteReload(actualrepair * RepairAmmoMultiplier, repairmag);
+
+                        }
+                        hullPart.DoHeal(actualrepair);
+                    }
+                        
                 }
                 float restoresperlocker = RestoresPerSecond / (lockers.Count());
 
                 foreach (RestoreStatus status in lockers)
                 {
                     
-                    if (RestoreAmmoTypes.Count > 0)
+                    if (RepairAmmoFilter != null)
                     {
-                        IMagazine? restoremagazine = GetAmmoSource(RestoreAmmoTypes);
+                        IMagazine? restoremagazine = GetAmmoSource(RepairAmmoFilter);
                         if(restoremagazine == null || restoremagazine.QuantityAvailable < 1)
                             continue;
-                        DiscreteReload(restoresperlocker, restoremagazine);
+                        DiscreteReload(restoresperlocker * RestoreAmmoMultiplier, restoremagazine);
                     }
                     status.DoPartialRestore(restoresperlocker);
                 }
