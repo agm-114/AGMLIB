@@ -2,7 +2,7 @@
 {
     public class LightweightGenericShell : LightweightKineticShell
     {
-        public override float MaxComponentDamagePotential => Mathf.Max(DamageableImpactShell.MaxComponentDamagePotential, TriggerImpactShell.MaxComponentDamagePotential);
+        public override float MaxComponentDamagePotential => Mathf.Max(DamageableImpactShell?.MaxComponentDamagePotential ?? 0, TriggerImpactShell?.MaxComponentDamagePotential ?? 0);
         public override bool CustomLookaheadMethod => DoLookaheadShell != null;
 
         [Header("Generic Shell")]

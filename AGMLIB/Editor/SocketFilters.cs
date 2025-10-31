@@ -37,6 +37,22 @@ public abstract class BaseFilter : MonoBehaviour, ISimpleFilter
 }
 
 
+public class AmmoTagFilter : BaseFilter
+{
+    public List<MunitionTags>  WhiteListTags= new();
+
+    public override bool IsAmmoCompatible(IMunition ammo, bool debugmode = false)
+    {
+        for (int i = 0; i < WhiteListTags.Count; i++)
+        {
+            //Common.Hint(WhiteListTags[i].Class + " " + WhiteListTags[i].Subclass);
+        }
+
+        //Common.Hint(ammo?.Tags.Class + " " + ammo?.Tags.Subclass);
+        return WhiteListTags.Any(x => x.Equals(ammo.Tags));
+    }
+}
+
 public interface IFilter : ICoreFilter
 {
     public bool Whitelisteverything { get; }
@@ -286,6 +302,7 @@ class SocketOutlineManagerSetSockets
 {
     static void Prefix(SocketOutlineManager __instance, Camera cam)
     {
+
     }
 }
 

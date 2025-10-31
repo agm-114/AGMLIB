@@ -41,6 +41,7 @@ public abstract class BaseShellWarheadDescriptor : AngleWarheadDescriptor
 public class ShellWarheadDescriptor : BaseShellWarheadDescriptor
 {
     public GameObject ShellMunitionPrefab;
+    
 
     public ShellMunition ShellMunition => ShellMunitionPrefab.GetComponentInChildren<ShellMunition>();
 
@@ -66,7 +67,20 @@ public class ShellWarheadDescriptor : BaseShellWarheadDescriptor
 public class LightWeightShellWarheadDescriptor : BaseShellWarheadDescriptor
 {
 
-    public LightweightKineticShell Ammo => BundleManager.Instance.GetMunition("Stock/120mm HE Shell") as LightweightKineticShell;
+    public string ShellName = "Stock/120mm HE Shell";
+    public LightweightKineticShell Ammo
+    {
+        get
+        {
+            IMunition munition = BundleManager.Instance.GetMunition(ShellName);
+            if (munition == null)
+                Common.Hint("Failed to find munition " + ShellName);
+            if (munition is LightweightKineticShell ashell)
+                return ashell;
+            Common.Hint("Munition " + ShellName + " is not a LightweightKineticShell");
+            return null;
+        }
+    }
 
     public override IDamageCharacteristic AmmoCharacteristic => Ammo;
     public override string ShellText => Ammo.GetDetailText();
