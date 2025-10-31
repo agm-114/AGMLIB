@@ -1,4 +1,13 @@
 //using HarmonyLib;
+
+public enum ShaderProperties
+{
+    PaintMask,
+    BaseColorMap,
+    MaskMap,
+    NormalMap,
+    None
+}
 public class PaintScheme : MonoBehaviour
 {
     // Start is called before the first frame update
@@ -6,35 +15,33 @@ public class PaintScheme : MonoBehaviour
     //private string shaderproperty = "_PaintMask";
     //private static bool baking = false;
 
-    public Texture2D Replacementtexture;
-    public bool ValidBaketraget = false;
-    public FastNameplateBaker.BakeTarget Baketarget;
-    //public Texture2D ospseedtecture;
-    private Material replacementmat;
+
+
+    public Texture2D ReplacementTexture;
     public string ClassName = "Raines";
     public string SegmentName = "Bow";
     public int Index = -1;
-    public string shaderproperty = "_PaintMask";
-    private Hull Hull => GetComponentInParent<Hull>();
+    public ShaderProperties ShaderProperty = ShaderProperties.PaintMask;
+    public string CustomShaderProperty = "";
+    //public bool ValidBaketraget = false;
+    //public FastNameplateBaker.BakeTarget Baketarget;
+    //public Texture2D ospseedtecture;
+
+    //private Material replacementmat;
     //private int count = 0;
     //private Material _originalMaterial;
-    private Ship Ship => GetComponentInParent<Ship>();
     //private Material _bakedMaterial
+    private Hull Hull => GetComponentInParent<Hull>();
+    private Ship Ship => GetComponentInParent<Ship>();
     private int ship = 0;
 
     private HullSegmentBasic[] hullsegs => Hull.gameObject.GetComponentsInChildren<HullSegmentBasic>();
     private IEnumerable<HullSegmentBasic> validsegs => hullsegs.Where(hullSegment => hullSegment.gameObject.name == SegmentName);
     private HullSegmentBasic targetedhullseg => validsegs.First();
-    void Awake()
-    {
-    }
-    void Start()
-    {
-    }
 
     void FixedUpdate()
     {
-        if (ClassName == null || SegmentName == null || Replacementtexture == null)
+        if (ClassName == null || SegmentName == null || ReplacementTexture == null)
         {
             Common.Hint("Null Value");
             Destroy(this);
@@ -64,7 +71,11 @@ public class PaintScheme : MonoBehaviour
         //Material[] mats = Common.GetVal<Material[]>(hullSegment, "_bakedMaterials", null);
         foreach (MeshRenderer mesh in targetedhullseg.GetComponentsInChildren<MeshRenderer>())
         {
-            mesh.sharedMaterials[Index].SetTexture(shaderproperty, Replacementtexture);
+            if (CustomShaderProperty == "" && ShaderProperty != ShaderProperties.None)
+            {
+                CustomShaderProperty = "_" + ShaderProperty.ToString();
+            }
+            mesh.sharedMaterials[Index].SetTexture(CustomShaderProperty, ReplacementTexture);
         }
         //hullSegment.BakeNameplateAsync(Ship.ShipName, Ship.HullNumber, Ship.Fleet.FleetBadge);
         Destroy(this);

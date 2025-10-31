@@ -8,13 +8,7 @@ public class AdvancedPaintScheme : MonoBehaviour
 
     //public GameObject PaintSchemesChild; 
 
-    public enum ShaderProperties
-    {
-        PaintMask,
-        BaseColorMap,
-        MaskMap,
-        NormalMap
-    }
+
 
     public ShaderProperties shaderproperty = ShaderProperties.PaintMask;
     public GameObject Hull;
@@ -66,9 +60,9 @@ public class AdvancedPaintScheme : MonoBehaviour
             PaintScheme newpaintscheme = gameObject.AddComponent<PaintScheme>();
             newpaintscheme.ClassName = SerializedClassNames[i];
             newpaintscheme.SegmentName = SerializedSegmentNames[i];
-            newpaintscheme.Replacementtexture = SerializedTextures[i];
+            newpaintscheme.ReplacementTexture = SerializedTextures[i];
             newpaintscheme.Index = SerializedIndexes[i];
-            newpaintscheme.shaderproperty = "_" + shaderproperty.ToString();
+            newpaintscheme.ShaderProperty = shaderproperty;
             //newpaintscheme.ValidBaketraget = SerializedValidTargets[i];
             //stnewpaintscheme.Baketarget = SerializedTargets[i];
             //if (SerializedTextures[i] == null)
