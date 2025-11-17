@@ -1,11 +1,13 @@
+using FleetEditor;
 using Lib;
+using Lib.Dynamic_Systems.Area;
 using Munitions.ModularMissiles;
 using Shapes;
+using SmallCraft;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 //using static UnityEditorInternal.ReorderableList;#dll
 using Random = System.Random;
-
 /*
     <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
       <HintPath>libs\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
@@ -607,6 +609,77 @@ class ShipEditorPanePatch
                 : data is HullComponent hullComponent && SocketFilters.CheckLegal(socket, hullComponent);
         }, initialState: true);
         //Debug.LogError("Finished Delegates");
+    }
+}
+
+
+[HarmonyPatch(typeof(SettingsMagazineLoadout), nameof(SettingsMagazineLoadout.AddMagazine))]
+class SettingsMagazineLoadoutAddMagazine
+{
+    static void Prefix(SettingsMagazineLoadout __instance)
+    {
+        //
+        Common.LogPatch();
+
+
+    }
+
+    static void Postfix(SettingsMagazineLoadout __instance)
+    {
+        Common.LogPatch();
+        return;
+        ModalListSelectDetailed select = (ModalListSelectDetailed)MenuController.Instance.GetTopMenu();
+        if (select == null)
+            return;
+
+        IMagazineProvider _provider = Common.GetVal<IMagazineProvider>(__instance, "_provider");
+        BaseHull _hull = Common.GetVal<BaseHull>(__instance, "_hull");
+        /*
+        _openPalette.AddFilter("Show Only Filtered", delegate (object data)
+        {
+            IMunition ammo2 = data as IMunition;
+            return true;
+        }, initialState: true);
+        */
+        select.RemoveFilters();
+        //Debug.LogError("Finished Delegates");
+ 
+
+        bool anyTemplates = false;
+        foreach (MissileTemplate template in _hull.MyShip.Fleet.AvailableMunitions.AllMissileTemplates)
+        {
+            if (!template.InstanceInFleet && _provider.RestrictionCheck(template.MissileBody))
+            {
+                anyTemplates = true;
+                break;
+            }
+        }
+        if (_provider.CanFeedExternally)
+        {
+            List<IWeapon> weapons = _hull.CollectComponents<IWeapon>();
+            List<Spacecraft> craft = _hull.MyShip.UniqueCraftTypesOnShip();
+            List<AmmoConsumingFalloffEffect> ammoeffects = _hull.gameObject.GetComponentsInChildren<AmmoConsumingFalloffEffect>().ToList();
+            select.AddFilter("$UI_FLTED_SELECTAMMO_CURRENTONLY", delegate (object data)
+            {
+                IMunition ammo2 = data as IMunition;
+                if (ammo2 != null)
+                {
+                    return 
+                        weapons.Any((IWeapon x) => x.NeedsExternalAmmoFeed && x.IsAmmoCompatible(ammo2)) || 
+                        craft.Any((Spacecraft x) => x.AnyLoadoutUsesAmmoType(ammo2)) ||
+                        ammoeffects.Any(effect => effect.ValidAmmo.Any(x => x.IsAmmoCompatible(ammo2)));
+                        ;
+                }
+                MissileTemplate template2 = data as MissileTemplate;
+                return template2 == null || 
+                weapons.Any((IWeapon x) => x.NeedsExternalAmmoFeed && x.IsAmmoCompatible(template2.MissileBody));
+            }, initialState: true);
+            //select.AddFilter("Actually Good", delegate (object data) { return false; }, true);
+        }
+        if (anyTemplates)
+        {
+            select.AddFilter("$UI_FLTED_SELECTAMMO_ADDEDONLY", (object data) => !(data is MissileTemplate), initialState: true);
+        }
     }
 }
 

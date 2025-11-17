@@ -9,8 +9,10 @@ namespace Lib.Dynamic_Systems.Area
 {
     public class AmmoConsumingFalloffEffect : FalloffEffect<Ship>
     {
+
         public AmmoFeeder AmmoFeed => AreaEffect.Hull.MyShip.AmmoFeed;
         protected Dictionary<string, float> _residuals = new();
+        public virtual List<BaseFilter> ValidAmmo => new ();
 
         public uint DiscreteReload(float truereloadamount, IMagazine source)
         {

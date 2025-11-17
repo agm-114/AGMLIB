@@ -20,6 +20,7 @@ namespace AGMLIB.Dynamic_Systems.Area
 
         public BaseFilter?  TargetAmmoFilter = null;
 
+        public override List<BaseFilter> ValidAmmo => new() { GenericAmmoFilter };
 
 
         void CalcCommonStats(IMagazine sink, out uint sinkquantitylimit, out float componentratelimit, out List<float> limits)

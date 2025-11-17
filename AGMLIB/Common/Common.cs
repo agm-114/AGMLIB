@@ -18,6 +18,9 @@ class Common
             return default;
         if (type == null)
             type = instance.GetType();
+        //PropertyInfo property = type.GetProperty(fieldName, Flags);
+        //if (property != null)
+        //    return (T)property.GetValue(instance);
         FieldInfo field = type.GetField(fieldName, ValFlags);
         if (field != null)
             return (T)field.GetValue(instance);
@@ -30,6 +33,9 @@ class Common
     {
         if (type == null)
             type = instance.GetType();
+        //PropertyInfo property = type.GetProperty(fieldName, Flags);
+        //if (property != null)
+        //    property.SetValue(instance, value);
         FieldInfo field = type.GetField(fieldName, ValFlags);
         if (field != null)
             field.SetValue(instance, value);
