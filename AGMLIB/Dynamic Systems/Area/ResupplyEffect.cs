@@ -60,6 +60,7 @@ namespace AGMLIB.Dynamic_Systems.Area
 
         float ReplaceGeneric(IMagazine sink, IMagazine source, HullComponent hullComponent, out bool dirtymissiles)
         {
+            dirtymissiles = false;
             //Common.Hint($"{sink.PeakQuantity}-{sink.QuantityAvailable} of {sink.AmmoType.MunitionName} needs resupply");
             int avaliablepoints = source.QuantityAvailable * source.AmmoType.PointCost;
             int avaliablepointsratelimit = avaliablepoints / sink.AmmoType.PointCost;
@@ -68,14 +69,16 @@ namespace AGMLIB.Dynamic_Systems.Area
             
             
             uint replacereloadamount = (uint)limits.Append((uint)avaliablepointsratelimit).Min();
+            if (replacereloadamount == 0)
+                return 0;
 
-            float removereloadamount = ((float)(replacereloadamount * source.AmmoType.PointCost) / ((float)source.AmmoType.PointCost)) * GenericAmmoMultiplier;
+            float removereloadamount = ((float)(replacereloadamount * sink.AmmoType.PointCost) / ((float)source.AmmoType.PointCost)) * GenericAmmoMultiplier;
+            //Common.Hint($"{}")
             //Common.Hint($"Generic reload calc srl {sinkquantitylimit} crl {componentratelimit} ap {avaliablepoints} rpra {replacereloadamount} rvra {removereloadamount}");
 
             DiscreteReload(removereloadamount, source);
             //BulkMagazineData magdata = hullComponent.gameObject.GetComponent<StartState>().saveData as BulkMagazineData;
-            //List<IMagazine> mags = hullComponent.Magazines.ToList();
-            dirtymissiles = false;
+            //List<IMagazine> mags = hullComponent.Magazines.ToList();      
             //Debug.LogError($"{AreaEffect.Ship.gameObject.name} Resupply Ship {target.gameObject.name} {sink.AmmoType.MunitionName} {sink.QuantityAvailable}/{sink.PeakQuantity}");
             if (hullComponent is BulkMagazineComponent magcomp)
                 magcomp.AddToMagazine(sink.AmmoType, replacereloadamount);
