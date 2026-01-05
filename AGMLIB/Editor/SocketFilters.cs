@@ -627,7 +627,7 @@ class SettingsMagazineLoadoutAddMagazine
     static void Postfix(SettingsMagazineLoadout __instance)
     {
         Common.LogPatch();
-        return;
+        
         ModalListSelectDetailed select = (ModalListSelectDetailed)MenuController.Instance.GetTopMenu();
         if (select == null)
             return;
