@@ -1,41 +1,93 @@
-﻿using Munitions.ModularMissiles;
+﻿using Game.UI.Chessboard;
+using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles.Runtime.Seekers;
+using Shapes;
+using UnityEngine.Rendering.HighDefinition;
+using static PositionSeekerDescriptor;
 using static Utility.GameColors;
+
+
+
 
 public class AdvancedModularMissile : ModularMissile
 {
     public override bool SupportsVisualTargeting => true;
 
 }
+public struct DebugLine
+{
+    public Vector3 Start;
+    public Vector3 End;
+    public Color Color;
+    public float Thickness = 0.5f; // Default to 0.5f in logic if 0
 
+    public DebugLine()
+    {
+    }
+}
+
+public interface IDebugableMissileSeeker
+{
+    List<DebugLine> GetDebugLines();
+}
 [CreateAssetMenu(fileName = "New Position Seeker", menuName = "Nebulous/Missiles/Seekers/Position")]
 public class PositionSeekerDescriptor : CommandSeekerDescriptor
 {
     public override bool SupportsPositionTargeting => true;
     public override bool RequiresCommunicator => false;
     public ColorName Color => ColorName.Orange;
-    public bool MemoryMode = false;
-    public bool MultiSensorMemoryMode = false;
+    public enum SensorUpdateMode
+    {
+        None,
+        FirstSource,
+        BestSource,
+        WorstSource,
+        Average
+    }
+    public enum SeekerMode
+    {
+        TrueCenter,
+        SensorCenter,
+        LaunchPlatform,
+        None,
+    }
+
+    [Header("Launch Settings")]
+    public SeekerMode PrimarySource = SeekerMode.SensorCenter;
+    public bool PrimaryUseBounds = true;
+    public bool PrimaryUseSphereNoise = false;
+    public SeekerMode SecondarySource = SeekerMode.TrueCenter;
+    public bool SecondaryUseBounds = true;
+    public bool SecondaryUseSphereNoise = false;
+    public SensorUpdateMode SourceSelection = SensorUpdateMode.Average;
+    public float RandomScale = 1f;
+
+    [Header("Inflight Settings")]
+    public SensorUpdateMode SeekerUpdateMode = SensorUpdateMode.BestSource;
+
     public override string GetSummarySegment()
     {
-        if (MemoryMode)
-            return "<color=" + GameColors.GetTextColor(Color) + ">GOT</color>";
-        return "<color=" + GameColors.GetTextColor(Color) + ">GOLIS</color>";
+        if (SeekerUpdateMode == SensorUpdateMode.None)
+            return "<color=" + GameColors.GetTextColor(Color) + ">GOLIS</color>";
+        return "<color=" + GameColors.GetTextColor(Color) + ">GOT</color>";
+        
     }
     public override string GetDetailSummarySegment()
     {
-        if (MemoryMode)
-            return "GOTO TARGET";
-        return "GOTO LOCATION IN SPACE";
+        if (SeekerUpdateMode == SensorUpdateMode.None)
+            return "GOTO LOCATION IN SPACE";
+        return "GOTO TARGET";
+        
     }
 
     public override string GetFunctionalDescriptionSegment()
     {
-        if (MemoryMode)
-            return "predicts target postion based on last good target data";
-        return "predicts target postion based on target kinematics before launch";
+        if (SeekerUpdateMode == SensorUpdateMode.None)
+            return "predicts target postion based on target kinematics before launch";
+        return "predicts target postion based on last good target data";
+        
     }
 
     public override void FinalSetup(ModularMissile missile)
@@ -54,32 +106,59 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
         return other is PositionSeekerDescriptor;
     }
 }
-public class RuntimePostionSeeker : RuntimeCommandSeeker
+public class TimedDestroyer : MonoBehaviour
 {
-    private ISensorProvider _sensorProvider;
-    private ITrack _targetedTrack;
+    public float duration = 1.0f;
+
+    void Start()
+    {
+        // Unity's built-in way to queue a destruction
+        Destroy(gameObject, duration);
+    }
+}
+public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeker
+{
+    private ISensorProvider SensorProvider => Missile?.LaunchedFrom?.Sensors;
+    private ITrack? _cachedTrack;
+    private ITrack? TargetedTrack
+    {
+        get
+        {
+            if (_cachedTrack == null && _trackTargetID.HasValue && SensorProvider != null)
+            {
+                _cachedTrack = SensorProvider.GetSensorTrack(_trackTargetID.Value);
+            }
+
+            return _cachedTrack;
+        }
+    }
     private Vector3? _startposition = null; //=> _trackTargetInitialPos ?? Vector3.zero;
+    private Vector3 _primarypos;
+    private Vector3 _secondarypos;
     private Vector3 _startvelocity = Vector3.zero;
     private Vector3 _startaccel = Vector3.zero;
     private Vector3 PredictedPosition => (_startposition ?? _trackTargetInitialPos ?? Vector3.zero) + _startvelocity * _age;
-    private Vector3 KnownPosition => _sensorProvider?.GetSensorTrack(base._trackTargetID.Value)?.KnownPosition ?? Vector3.zero;
-    private Vector3 TruePosition => _sensorProvider?.GetSensorTrack(base._trackTargetID.Value)?.TruePosition ?? Vector3.zero;
+    private Vector3 KnownPosition => TargetedTrack?.KnownPosition ?? Vector3.zero;
+    private Vector3 TruePosition => TargetedTrack?.TruePosition ?? Vector3.zero;
 
+    public Transform Transform => base.Missile.transform;
 
     private float _age = 0f;
 
-    public override Vector3 LocalBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(base.Missile.transform.InverseTransformDirection(base.Missile.transform.position.To(PredictedPosition).normalized)), 90) * Vector3.forward; //;// 
-    public Vector3 TrueBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(base.Missile.transform.InverseTransformDirection(base.Missile.transform.position.To(KnownPosition).normalized)), 90) * Vector3.forward; //;//
+    public override Vector3 LocalBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(Transform.InverseTransformDirection(Transform.position.To(PredictedPosition).normalized)), 90) * Vector3.forward; //;// 
+    public Vector3 TrueBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(Transform.InverseTransformDirection(Transform.position.To(KnownPosition).normalized)), 90) * Vector3.forward; //;//
 
     //KnownPosition - base.Missile.transform.position;
 
-
+    [SerializeField]
     PositionSeekerDescriptor _comdesc;
 
     public override void OnAdded(ModularMissile missile, MissileComponentDescriptor descriptor)
     {
-        base.OnAdded(missile, descriptor);
+        Common.Trace($"Position Seeker Added to Missile. {descriptor.GetType().Name}");
         _comdesc = descriptor as PositionSeekerDescriptor;
+        base.OnAdded(missile, descriptor);
+
     }
 
     public override ConeDescriptor? GetAimingCone()
@@ -90,19 +169,84 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
 
     private void SetupTrack()
     {
-        if (base.Missile == null || base.Missile.LaunchedFrom == null || _trackTargetID == null)
-        {
-            return;
-        }
-        _sensorProvider = base.Missile?.LaunchedFrom?.Sensors;
-        _targetedTrack = _sensorProvider?.GetSensorTrack(base._trackTargetID.Value);
-        _startvelocity = (_targetedTrack?.AbsoluteVelocity ?? Vector3.zero);// + Vector3.up * 3;
-        _startaccel = _targetedTrack?.Acceleration ?? Vector3.zero;
-        _startposition = _targetedTrack?.KnownPosition;
+
     }
+    public Vector3 GetPostionWithNoise(Vector3 initialPosition, PositionSeekerDescriptor.SeekerMode possource,  bool useBounds, bool useSphereNoise)
+    {
+        Vector3 vector3 = GetPostion(initialPosition, possource);
+        if (useBounds)
+        {
+            vector3 += TargetedTrack.Trackable.Rotation * (TargetedTrack?.Trackable.RandomPointInBounds() ?? Vector3.zero);
+        }
+        if (useSphereNoise)
+        {
+            vector3 += UnityEngine.Random.insideUnitSphere * 10f * _comdesc.RandomScale;
+        }
+        return vector3;
+    }
+
+    public Vector3 GetPostion(Vector3 initialPosition, PositionSeekerDescriptor.SeekerMode possource)
+    {
+        switch (possource)
+        {
+            case PositionSeekerDescriptor.SeekerMode.TrueCenter:
+                return TruePosition;
+            case PositionSeekerDescriptor.SeekerMode.SensorCenter:
+                return KnownPosition;
+            case PositionSeekerDescriptor.SeekerMode.LaunchPlatform:
+                return initialPosition;
+            case PositionSeekerDescriptor.SeekerMode.None:
+                return initialPosition;
+                break;
+            default:
+                return initialPosition;
+        }
+    }
+
     public override void SetTrackTarget(TrackIdentifier target, Vector3 initialPosition)
     {
-        base.SetTrackTarget(target, initialPosition);
+        _cachedTrack = null;
+
+
+        if (base.Missile == null || base.Missile.LaunchedFrom == null || _trackTargetID == null)
+        {
+            base.SetTrackTarget(target, initialPosition);
+        }
+        _startvelocity = (TargetedTrack?.AbsoluteVelocity ?? Vector3.zero);// + Vector3.up * 3;
+        
+        _startaccel = TargetedTrack?.Acceleration ?? Vector3.zero;
+
+        Vector3 primaryPostion = GetPostionWithNoise(initialPosition, _comdesc.PrimarySource, _comdesc.PrimaryUseBounds, _comdesc.PrimaryUseSphereNoise);
+
+
+        if (_comdesc.SecondarySource != PositionSeekerDescriptor.SeekerMode.None && _comdesc.SourceSelection != SensorUpdateMode.None)
+        {
+            Vector3 secondaryPosition = GetPostionWithNoise(initialPosition, _comdesc.SecondarySource, _comdesc.SecondaryUseBounds, _comdesc.SecondaryUseSphereNoise);
+            _primarypos = primaryPostion;
+            _secondarypos = secondaryPosition;
+            switch (_comdesc.SourceSelection)
+            {
+                case SensorUpdateMode.FirstSource:
+                    break;
+                case SensorUpdateMode.BestSource:
+                    primaryPostion = TruePosition.Closest(primaryPostion, secondaryPosition);
+                    break;
+                case SensorUpdateMode.WorstSource:
+                    primaryPostion = TruePosition.Furthest(primaryPostion, secondaryPosition);
+                    break;
+                case SensorUpdateMode.Average:
+                    primaryPostion = (primaryPostion + secondaryPosition) / 2f;
+                    break;
+                case SensorUpdateMode.None:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+
+        _startposition = primaryPostion;
+        base.SetTrackTarget(target, primaryPostion);
         SetupTrack();
     }
 
@@ -117,46 +261,86 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
         _age += Time.fixedDeltaTime;
 
 
-        if (_comdesc == null || !_comdesc.MemoryMode)
+        if (_comdesc == null || _comdesc.SeekerUpdateMode == SensorUpdateMode.None)
             return;
 
         List<RuntimeMissileSeeker> _validationSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_validationSeekers") ?? new();
         List<RuntimeMissileSeeker> _targetingSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_targetingSeekers") ?? new();
+
+        List<Vector3> _velocities = new List<Vector3>();
+        List<Vector3> _accelerations = new List<Vector3>();
+        List<Vector3> _positions = new List<Vector3>();
 
         foreach (RuntimeMissileSeeker targetingSeeker in _targetingSeekers)
         {
             if (targetingSeeker is RuntimePostionSeeker)
                 continue;
 
-            RuntimeMissileSeeker.SeekerSearchResult seekerSearchResult = targetingSeeker.SearchForTarget(_validationSeekers, out Vector3 position, out Vector3 velocity, out Vector3 acceleration);
-            if (seekerSearchResult == RuntimeMissileSeeker.SeekerSearchResult.Found)
+            SeekerSearchResult seekerSearchResult = targetingSeeker.SearchForTarget(_validationSeekers, out Vector3 position, out Vector3 velocity, out Vector3 acceleration);
+            if (seekerSearchResult != SeekerSearchResult.Found)
             {
-                Vector3 ClosestVector(Vector3 a, Vector3 b, Vector3 target)
-                {
-                    float distanceToA = Vector3.Distance(a, target);
-                    float distanceToB = Vector3.Distance(b, target);
+                continue;
 
-                    return distanceToA < distanceToB ? a : b;
-                }
+            }
 
-                if (!_comdesc.MultiSensorMemoryMode)
+
+
+            if (_comdesc.SeekerUpdateMode == SensorUpdateMode.FirstSource)
+            {
+                _startvelocity = velocity;
+                _startaccel = acceleration;
+                _startposition = position;
+                _age = 0;
+                return;
+            }
+            else if (_comdesc.SeekerUpdateMode == SensorUpdateMode.BestSource)
+            {
+                _startvelocity = (TargetedTrack?.Trackable?.Velocity ?? Vector3.zero).Closest(_startvelocity, velocity);
+                _startaccel = (TargetedTrack?.Acceleration ?? Vector3.zero).Closest(_startaccel, acceleration);
+                _startposition = TruePosition.Closest(_startaccel, position);
+                _age = 0;
+            }
+            else if (_comdesc.SeekerUpdateMode == SensorUpdateMode.WorstSource)
+            {
+                if (_age != 0)
                 {
                     _startvelocity = velocity;
                     _startaccel = acceleration;
                     _startposition = position;
                     _age = 0;
-                    return;
                 }
-
-                // Check if C is closer to B than A
-
-                // Check if C is closer to B than A
-                _startvelocity = ClosestVector(_startvelocity, velocity, (_targetedTrack?.Trackable?.Velocity ?? Vector3.zero));
-                _startaccel = ClosestVector(_startaccel, acceleration, (_targetedTrack?.Acceleration ?? Vector3.zero));
-                _startposition = ClosestVector(_startaccel, position, (_targetedTrack?.Trackable?.Position ?? Vector3.zero));
+                _startvelocity = (TargetedTrack?.Trackable?.Velocity ?? Vector3.zero).Furthest(_startvelocity, velocity);
+                _startaccel = (TargetedTrack?.Acceleration ?? Vector3.zero).Furthest(_startaccel, acceleration);
+                _startposition = TruePosition.Furthest(_startaccel, position);
                 _age = 0;
-
             }
+            else if (_comdesc.SeekerUpdateMode == SensorUpdateMode.Average)
+            {
+                _velocities.Add(velocity);
+                _accelerations.Add(acceleration);
+                _positions.Add(position);
+            }
+            // Check if C is closer to B than A
+
+            // Check if C is closer to B than A
+
+        }
+
+        if (_comdesc.SeekerUpdateMode == SensorUpdateMode.Average && _positions.Count > 0)
+        { 
+            _startvelocity = Vector3.zero;
+            _startaccel = Vector3.zero;
+            _startposition = Vector3.zero;
+            foreach (Vector3 vel in _velocities)
+                _startvelocity += vel;
+            foreach (Vector3 accel in _accelerations)
+                _startaccel += accel;
+            foreach (Vector3 pos in _positions)
+                _startposition += pos;
+            _startvelocity /= _velocities.Count;
+            _startaccel /= _accelerations.Count;
+            _startposition /= _positions.Count;
+            _age = 0;
         }
         /*
         foreach (RuntimeMissileSeeker seeker in .gameObject.GetComponents<RuntimeMissileSeeker>())
@@ -172,16 +356,92 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker
     {
         return base._trackTargetInitialPos;
     }
+
+
+    private List<DebugLine> _currentDebugLines = new List<DebugLine>();
     protected override SeekerSearchResult SearchForTargetInternal(IReadOnlyList<RuntimeMissileSeeker> validators, out Vector3 position, out Vector3 velocity, out Vector3 acceleration)
     {
         //Debug.LogError(PredictedPosition);
         position = PredictedPosition;
         velocity = _startvelocity;
         acceleration = _startaccel;
+        _currentDebugLines.Clear();
         if (PredictedPosition == Vector3.zero)
             return SeekerSearchResult.NotFound;
-
+        _currentDebugLines.Add(new DebugLine
+        {
+            Start = Transform.position,
+            End = PredictedPosition,
+            Color = Color.cyan,
+        });
+        _currentDebugLines.Add(new DebugLine
+        {
+            Start = _startposition ?? Vector3.zero,
+            End = PredictedPosition,
+            Color = Color.red,
+        });
+        /*
+        _currentDebugLines.Add(new DebugLine
+        {
+            Start = _primarypos,
+            End = KnownPosition,
+            Color = Color.yellow,
+        });
+        _currentDebugLines.Add(new DebugLine
+        {
+            Start = _secondarypos,
+            End = KnownPosition,
+            Color = Color.red,
+        });
+        */
         return SeekerSearchResult.Found;
+    }
+
+    public List<DebugLine> GetDebugLines()
+    {
+        return _currentDebugLines;
+    }
+}
+
+[HarmonyPatch(typeof(MissileDetailOverlay), "DrawShapes")]
+class MissileDetailOverlayDrawShapesPatch
+{
+    // We use ___missile to access the private field of the same name
+    static void Postfix(MissileDetailOverlay __instance, Camera cam)
+    {
+        ISelectableMissile _missile = Common.GetVal<ISelectableMissile>(__instance, "_missile");
+        // Basic safety check: same logic as original DrawShapes
+        if (_missile == null || !_missile.Alive) return;
+
+        // Iterate through seekers just like the original code
+        foreach (var seeker in _missile.Seekers)
+        {
+            // Check if this seeker implements the debug interface
+            if (seeker is IDebugableMissileSeeker debugSeeker)
+            {
+                List<DebugLine> lines = debugSeeker.GetDebugLines();
+                if (lines == null || lines.Count == 0) continue;
+
+                // Open a Draw Command using the same injection point as the original overlay
+                using (Draw.Command(cam, CustomPassInjectionPoint.AfterPostProcess))
+                {
+                    // Set global states for this command block
+                    Draw.ThicknessSpace = ThicknessSpace.Noots;
+                    Draw.DetailLevel = DetailLevel.Extreme;
+                    Draw.LineGeometry = LineGeometry.Volumetric3D;
+                    Draw.Matrix = Matrix4x4.identity; // We are using world space coords
+
+                    foreach (var line in lines)
+                    {
+                        float finalThickness = line.Thickness > 0 ? line.Thickness : 0.5f;
+                        Draw.Thickness = finalThickness;
+                        Draw.Color = line.Color;
+
+                        Draw.Line(line.Start, line.End);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -335,3 +595,5 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
         }
     }
 }
+
+

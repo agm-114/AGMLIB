@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-class Common
+public static class Common
 {
     public static bool SkipFunction => false;
     public static bool RunFunction => true;
@@ -125,6 +125,20 @@ class Common
     //    size: desired new size
     // element: default value to insert
 
+    public static Vector3 Closest(this Vector3 target,  Vector3 a, Vector3 b)
+    {
+        float distanceToA = Vector3.Distance(a, target);
+        float distanceToB = Vector3.Distance(b, target);
+
+        return distanceToA < distanceToB ? a : b;
+    }
+    public static Vector3 Furthest(this Vector3 target, Vector3 a, Vector3 b)
+    {
+        float distanceToA = Vector3.Distance(a, target);
+        float distanceToB = Vector3.Distance(b, target);
+
+        return distanceToA > distanceToB ? a : b;
+    }
 
 }
 
