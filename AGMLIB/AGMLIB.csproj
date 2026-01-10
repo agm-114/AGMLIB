@@ -13,12 +13,12 @@
     <RootNamespace>Lib</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 
-    <VersionPrefix>5.2.14.782</VersionPrefix>
+    <VersionPrefix>5.2.14.836</VersionPrefix>
 
     <Copyright>≽^•⩊•^≼</Copyright>
     <ModName>AGMLIB</ModName>
     <ModDescription>By: AGM</ModDescription>
-    <GameVer>0.5.2</GameVer>
+    <GameVer>0.5.3</GameVer>
   </PropertyGroup>
 
   <ItemGroup>
@@ -318,7 +318,7 @@
 
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="call build.bat $(VersionPrefix)" />
+    <Exec Command="call build.bat $(VersionPrefix) $(GameVer)" />
   </Target>
 
 </Project>

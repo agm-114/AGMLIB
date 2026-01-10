@@ -25,6 +25,7 @@ if "%~1"=="" (
 
 echo set
 set "ModVer=%~1"
+set "GameVer=%~2"
 echo setdone
 
 :: Create the XML content
@@ -46,7 +47,7 @@ echo         ^<string^>Debug/net481/0Harmony.dll^</string^>
 echo.
 echo     ^</Assemblies^>
 echo.
-echo     ^<GameVer^>0.5.2^</GameVer^>
+echo     ^<GameVer^>%GameVer%^</GameVer^>
 echo.
 echo ^</ModInfo^>
 ) > ModInfo.xml
