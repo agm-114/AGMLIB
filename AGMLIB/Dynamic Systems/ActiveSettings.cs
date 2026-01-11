@@ -130,6 +130,7 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
 
     public bool Active(Ship filter)
     {
+        if (filter == null) return false;
         ShipState state = ShipState.GetShipState(filter);
         ConditionalState ShipResourceState = state.ResourceComponent != null && state.ResourceComponent.fillpercentage > threshold ? ConditionalState.Enabled : ConditionalState.Disabled;
         bool objectactive = false;

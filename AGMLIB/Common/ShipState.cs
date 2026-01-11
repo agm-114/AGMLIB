@@ -138,11 +138,19 @@ public class ShipState : MonoBehaviour
     public Rigidbody Rigidbody => InternalShipState.Rigidbody;
     public bool InEditor => InternalShipState.InEditor;
     public bool InGame => InternalShipState.InGame;
-
+    public GameObject Root => gameObject.transform.root.gameObject;
 
     public virtual void Awake()
     {
+        if(InternalShipState != null)
+            return;
         Ship ship = transform.gameObject.GetComponentInParent<Ship>();
+        if (ship == null)
+        {
+            InternalShipState = Root.GetComponent<InternalShipState>() ?? Root.AddComponent<InternalShipState>(); ;
+            return;
+        }
+            
         InternalShipState = InternalShipState.GetInternalShipState(ship);
     }
 
