@@ -12,6 +12,7 @@ public class InternalShipState : MonoBehaviour
     public ShipState ShipState;
 
     // Start is called before the first frame update
+    public MovementSpeed MovementSpeed => ShipController?.Throttle ?? MovementSpeed.OneThird;
     public ConditionalState FlankState => ShipController?.Throttle == MovementSpeed.Flank ? ConditionalState.Enabled : ConditionalState.Disabled;
     public ConditionalState BattleshortState => ShipController?.BattleShortEnabled == true ? ConditionalState.Enabled : ConditionalState.Disabled;
     public ConditionalState ControlState => ShipController?.CommandState == CommandFunctions.None ? ConditionalState.Disabled : ConditionalState.Enabled;
@@ -122,6 +123,7 @@ public class InternalShipState : MonoBehaviour
 
 public class ShipState : MonoBehaviour
 {
+    public MovementSpeed MovementSpeed => InternalShipState.MovementSpeed;
     public ConditionalState FlankState => InternalShipState.FlankState;
     public ConditionalState BattleshortState => InternalShipState.BattleshortState;
     public ConditionalState ControlState => InternalShipState.ControlState;
@@ -139,6 +141,7 @@ public class ShipState : MonoBehaviour
     public bool InEditor => InternalShipState.InEditor;
     public bool InGame => InternalShipState.InGame;
     public GameObject Root => gameObject.transform.root.gameObject;
+
 
     public virtual void Awake()
     {

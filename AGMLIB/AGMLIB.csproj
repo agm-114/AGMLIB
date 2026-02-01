@@ -13,7 +13,7 @@
     <RootNamespace>Lib</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 
-    <VersionPrefix>5.2.14.841</VersionPrefix>
+    <VersionPrefix>5.2.14.844</VersionPrefix>
 
     <Copyright>≽^•⩊•^≼</Copyright>
     <ModName>AGMLIB</ModName>
