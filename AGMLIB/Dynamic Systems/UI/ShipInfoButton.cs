@@ -136,8 +136,16 @@ class ShipInfoBarMatchAllButtons
 {
     static Dictionary<string, ButtonData> uibuttons = new();
 
-    static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort)
+    static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort, IPlayerActionAvailable ____actionLimiter)
     {
+        PlayerActionLimiter? playerActionLimiter = (PlayerActionLimiter)____actionLimiter;
+        PlayerAction action = 0;
+        if (playerActionLimiter != null)
+        {
+            action = Common.GetVal<PlayerAction>(playerActionLimiter, "_availableActions");
+        }
+
+
         Common.LogPatch();
         //Debug.LogError("buttonmatch");
         ShipController _primaryShip = Common.GetVal<ShipController>(__instance, "_primaryShip");
@@ -153,6 +161,7 @@ class ShipInfoBarMatchAllButtons
 
         foreach (ShipInfoButton infobut in shipbuttons)
         {
+            
             if (uibuttons.TryGetValue(infobut.ButtonName, out ButtonData? value))
             {
                 if (infobut.Unique)
@@ -169,6 +178,8 @@ class ShipInfoBarMatchAllButtons
 
             ButtonData newbutton = new();
             newbutton.Setup(____battleshort, infobut, _shipGroup);
+            if (action == 0)
+                newbutton.Button?.SetEnabled(false);
             uibuttons.Add(newbutton.ButtonName, newbutton);
         }
 
