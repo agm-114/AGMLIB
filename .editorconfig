@@ -159,6 +159,9 @@ dotnet_diagnostic.IDE2005.severity = suggestion
 dotnet_diagnostic.IDE2006.severity = suggestion
 dotnet_diagnostic.CA1805.severity = suggestion
 
+# CA1033: Interface methods should be callable by child types
+dotnet_diagnostic.CA1033.severity = none
+
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 tab_width = 4

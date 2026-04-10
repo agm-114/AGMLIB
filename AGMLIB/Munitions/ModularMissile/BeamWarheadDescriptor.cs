@@ -1,32 +1,8 @@
-﻿using Munitions.InstancedDamagers;
+﻿using Lib.Munitions.Damagers;
+using Munitions.InstancedDamagers;
 using Munitions.ModularMissiles.Descriptors.Warheads;
 using Munitions.ModularMissiles.Runtime;
 using System.Runtime.InteropServices;
-
-public class RangeBasedDamageCharacteristic : IDamageCharacteristic
-{
-    BeamWarheadDescriptor Warhead;
-    public float Range = 0;
-    public RangeBasedDamageCharacteristic(BeamWarheadDescriptor warhead, float range = 0)
-    {
-        Warhead = warhead;
-        Range = range;
-    }
-    float IDamageCharacteristic.ArmorPenetration => Warhead.BeamArmorPenetrationSizeScaling.Evaluate(Warhead.WeightedSocketSize) * Warhead.BeamArmorPenetrationRangeScaling.Evaluate(Range);
-    float IDamageCharacteristic.ComponentDamage => Warhead.BeamComponentDamageSizeScaling.Evaluate(Warhead.WeightedSocketSize) * Warhead.BeamComponentDamageRangeScaling.Evaluate(Range);
-    float IDamageCharacteristic.HeatDamage => Warhead.HeatDamage;
-    float IDamageCharacteristic.DamageBrushSize => Warhead.DamageBrushSize;
-    float IDamageCharacteristic.OverpenetrationDamageMultiplier => Warhead.OverpenetrationDamageMultiplier;
-    float IDamageCharacteristic.RandomEffectMultiplier => Warhead.RandomEffectMultiplier;
-    float IDamageCharacteristic.CrewVulnerabilityMultiplier => Warhead.CrewVulnerabilityMultiplier;
-    float? IDamageCharacteristic.MaxPenetrationDepth => Warhead.InternalPenetrationDepth;
-    bool IDamageCharacteristic.NeverCrit => Warhead.NeverCrit;
-    bool IDamageCharacteristic.AlwaysSpreadThroughStructure => Warhead.AlwaysSpreadThroughStructure;
-    bool IDamageCharacteristic.NeverRicochet => Warhead.NeverRicochet;
-    bool IDamageCharacteristic.IgnoreEffectiveThickness => Warhead.IgnoreEffectiveThickness;
-
-    bool IDamageCharacteristic.NeverOverpen => Warhead.NeverOverpen;
-}
 
 
 public class RuntimeTimeFuse : MonoBehaviour
@@ -46,7 +22,6 @@ public class RuntimeTimeFuse : MonoBehaviour
 public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
 {
 
-    IDamageCharacteristic DamageCharacteristic => new RangeBasedDamageCharacteristic(this);
     public override float ArmorPenetration => DamageCharacteristic.ArmorPenetration;
     public override float ComponentDamage => DamageCharacteristic.ComponentDamage;
     public override float TotalComponentDamagePotential => BeamCount * ComponentDamage;
@@ -61,28 +36,12 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
     [Header("IDamageCharacteristic Damage Values")]
     public AnimationCurve BeamArmorPenetrationRangeScaling = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(10f, 0.5f));
     public AnimationCurve BeamArmorPenetrationSizeScaling = new AnimationCurve(new Keyframe(0f, 1000f), new Keyframe(10f, 100f));
-    public float InternalPenetrationDepth = 1000;
     public AnimationCurve BeamComponentDamageRangeScaling = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(10f, 0.5f));
     public AnimationCurve BeamComponentDamageSizeScaling = new AnimationCurve(new Keyframe(0f, 1000f), new Keyframe(10f, 100f));
-    public float HeatDamage = new();
-    public float DamageBrushSize = new();
-    public float OverpenetrationDamageMultiplier = new();
-    public float RandomEffectMultiplier = new();
-    public float CrewVulnerabilityMultiplier = new();
-    [Header("IDamageCharacteristic Damage Flags")]
-    public bool NeverCrit = new();
-    public bool NeverOverpen = new();
-    public bool IgnoreEffectiveThickness = new();
-    public bool NeverRicochet = new();
-    public bool AlwaysSpreadThroughStructure = new();
-    public bool IgnoreDamageReduction = false;
     [Header("Beam Specfic Values")]
     public float FuseDelay = 0.0f;
     public float BeamLength = 2000;
-
-    public CastType CastType = CastType.Ray;
-    public DamageSpreadingMethod SpreadingMethod => DamageSpreadingMethod.EvenSpread;
-
+    public SingleRayDamagerSettings? DamagerSettings  ;
     public bool ConeFrag = false;
     public override void GetWarheadStatsBlock(ref List<(string, string)> rows)
     {
@@ -198,29 +157,20 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
 
     }
 
-    protected virtual IDamageDealer MakeDamageDealer(float range = 0)
+    protected virtual IDamageDealer MakeDamageDealer(float range = 0) => DamagerSettings.MakeDamageDealer(this, range);
+    IDamageCharacteristic DamageCharacteristic
     {
-        int _rayAngle = 1;
-        int _rayCount = 1;
-        IDamageCharacteristic characteristic = new RangeBasedDamageCharacteristic(this, range);
-        if (CastType == CastType.Sphere)
+        get
         {
-            float _spherecastRadius = 1;
-            return new SingleSpherecastDamager(characteristic, _spherecastRadius, SpreadingMethod, alwaysSpreadDamage: false, null, IgnoreDamageReduction);
+            if (DamagerSettings == null)
+             {
+                Debug.LogError("DamagerSettings is null on " + name);
+                return new SingleRayDamagerSettings().MakeDamageCharacteristic(this);
+             }
+            return DamagerSettings.MakeDamageCharacteristic(this);
         }
-        if (CastType == CastType.SpallingRay)
-        {
-            return new SpallingRayDamager(characteristic, _rayAngle, _rayCount, SpreadingMethod, alwaysSpreadDamage: false, null, IgnoreDamageReduction);
-        }
-        if (CastType == CastType.RayCone)
-        {
-            return new MultiRayConeDamager(characteristic, ComponentDamage / (float)_rayCount, _rayAngle, null, IgnoreDamageReduction);
-        }
-        return new SingleRayDamager(characteristic, SpreadingMethod, alwaysSpreadDamage: false, null, IgnoreDamageReduction);
     }
-
-
-
+       
 
     private static ColliderComparer _colliderComparer;
 
