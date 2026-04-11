@@ -1,5 +1,26 @@
-﻿using static UI.SequentialButton;
+﻿using Game;
+using Game.Orders;
+using Game.Orders.Inputs;
+using Game.Orders.Tasks;
+using Steamworks;
+using static UI.SequentialButton;
 using TooltipTrigger = UI.TooltipTrigger;
+
+public class ButtonTask : WarshipOrderTask
+{
+    public ButtonTask(IPlayer fromPlayer, IWarshipOrderReceiver toUnit, List<Input> inputs, Dictionary<string, string> inputMapping = null) : base(fromPlayer, toUnit, inputs, inputMapping)
+    {
+
+    }
+
+    public override string ActivityText => "TestOrder";
+
+    protected override void LoadInputValue(Input info, IOrderInput input)
+    {
+        Common.Hint(info);
+        Common.Hint(input);
+    }
+}
 
 public class ShipInfoButton : ShipState
 {
@@ -13,6 +34,16 @@ public class ShipInfoButton : ShipState
     public bool Override = false;
     public ButtonData? Data;
     public SequentialButton Button => Data?.Button;
+    public void SetPlayer(HumanSkirmishPlayer player)
+    {
+        if(player != null)
+        {
+            //Common.Hint("Player is set");
+            _player = player;
+        }
+           
+        
+    }
     public static ShipInfoButton FindButton(ShipController shipController, string buttonname)
     {
         IEnumerable<ShipInfoButton> buttons = shipController.GetComponentsInChildren<ShipInfoButton>().Where(a => a.ButtonName == buttonname).ToList();
@@ -29,9 +60,37 @@ public class ShipInfoButton : ShipState
         };
         return option;
     }
+    HumanSkirmishPlayer? _player = null;
+
     public void HandleButtonChanged(int value)
+    {
+        SelectedOption = value;
+        /*
+        return;
+        IOrderInput pathInput = ((OrderInput<WorldPositionInput.Output>)new ConstantInput<WorldPositionInput.Output>(new WorldPositionInput.Output
+        {
+            Origin = Vector3.zero,
+            Paths = new List<List<Vector3>>
+            {
+                new List<Vector3> { Vector3.zero }
+            }
+        }));
+        if(_player != null)
+        {
+            Common.Hint("queue player order");
+            PlayerOrder shootOrder = new PlayerOrder(new Dictionary<string, IOrderInput> { { "Target", pathInput } }, [new FirePositionTask(_player, ShipController, null, null)]);
+            shootOrder = new PlayerOrder(new Dictionary<string, IOrderInput> { { "Target", pathInput } }, [new ButtonTask(_player, ShipController, [], new Dictionary<string, string> { })]);
+
+            _player.QueueOrder(shootOrder);
+        }
+        else
+        {
+            Common.Hint("Failed to queue player order");
+        }
+        */
+
         //Debug.LogError("Button Clicked" + value);
-        => SelectedOption = value;
+    }
     public void ForceButtonChange(int value, bool mixed = false)
     {
         //if (value == SelectedOption)
@@ -136,7 +195,7 @@ class ShipInfoBarMatchAllButtons
 {
     static Dictionary<string, ButtonData> uibuttons = new();
 
-    static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort, IPlayerActionAvailable ____actionLimiter)
+    static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort, IPlayerActionAvailable ____actionLimiter, HumanSkirmishPlayer ____localPlayer)
     {
         PlayerActionLimiter? playerActionLimiter = (PlayerActionLimiter)____actionLimiter;
         PlayerAction action = 0;
@@ -161,7 +220,7 @@ class ShipInfoBarMatchAllButtons
 
         foreach (ShipInfoButton infobut in shipbuttons)
         {
-            
+            infobut.SetPlayer(____localPlayer);
             if (uibuttons.TryGetValue(infobut.ButtonName, out ButtonData? value))
             {
                 if (infobut.Unique)
@@ -183,5 +242,19 @@ class ShipInfoBarMatchAllButtons
             uibuttons.Add(newbutton.ButtonName, newbutton);
         }
 
+    }
+}
+//Queueing Order: Game.Orders.PlayerOrder
+//Suborder: Game.Orders.Tasks.FirePositionTask
+[HarmonyPatch(typeof(HumanSkirmishPlayer), nameof(HumanSkirmishPlayer.QueueOrder))]
+class HumanSkirmishPlayerQueueOrder
+{
+    static void Prefix(PlayerOrder order)
+    {
+        //Common.Hint("Queueing Order: " + order);
+        foreach(OrderTask suborder in order.Tasks)
+        {
+            //Common.Hint("Suborder: " + suborder);
+        }
     }
 }
