@@ -171,7 +171,7 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
         //ShortDurationEffect sde = poolable?.GetComponent<ShortDurationEffect>();
         foreach (ILocalImbued imbued in poolable.gameObject.GetComponentsInChildren<ILocalImbued>())
         {
-            imbued.ImbueLocal(Common.GetVal<ShipController>(runtime.Missile, "_localLaunchedFrom"));
+            imbued.ImbueLocal(Common.GetVal<IImbuedObjectSource>(runtime.Missile, "_localLaunchedFrom"));
             imbued.SetWeaponReportPath(Common.GetVal<IWeaponStatReportReceiver>(runtime.Missile, "_reportTo"));
         }
         if (poolable.GetComponent<ModularEffect>() == null)
