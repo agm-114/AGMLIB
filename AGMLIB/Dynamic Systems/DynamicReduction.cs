@@ -1,5 +1,4 @@
-﻿using UnityEngine.UI.Extensions;
-using ResourceType = Ships.ResourceType;
+﻿using ResourceType = Ships.ResourceType;
 public class DynamicReductionCache : MonoBehaviour
 {
     public List<DynamicReduction> dynamicReductions = new List<DynamicReduction>();
@@ -42,7 +41,7 @@ public class DynamicReduction : ActiveSettings
 
     }
 
-    public bool TargetedComponent(HullComponent hullComponent)
+    public bool TargetedComponent(HullPartResourceConnected hullComponent)
     {
         //Common.Trace($"filter {Filter?.gameObject.name ?? "null filter"} hullcomp {hullComponent.SaveKey}");
         //if (!Module.isActiveAndEnabled)
@@ -50,20 +49,20 @@ public class DynamicReduction : ActiveSettings
         return Filter?.CheckComponent(hullComponent) ?? true;
     }
 
-    public static ResourceValue Reduce(ResourceValue basevalue, HullComponent hullComponent)
+    public static ResourceValue Reduce(ResourceValue basevalue, HullPartResourceConnected hullComponent)
     {
         float multiplier = TotalMultiplier(basevalue.Resource, hullComponent);
         if (multiplier == 1)
             return basevalue;
         return new ResourceValue(basevalue.Resource, (int)(float)(basevalue.AmountRequired * multiplier), basevalue.OnlyWhenOperating);
     }
-    public static IEnumerable<DynamicReduction> GetReductions(HullComponent hullComponent)
+    public static IEnumerable<DynamicReduction> GetReductions(HullPartResourceConnected hullComponent)
     {
         return hullComponent?.transform?.root?.GetComponent<DynamicReductionCache>().dynamicReductions.Where(reduction => reduction.TargetedComponent(hullComponent)) ?? new List<DynamicReduction>();
 
     }
 
-    public static float TotalMultiplier(ResourceType type, HullComponent hullComponent)
+    public static float TotalMultiplier(ResourceType type, HullPartResourceConnected hullComponent)
     {
 
         IEnumerable<DynamicReduction> reductions = GetReductions(hullComponent);
@@ -163,8 +162,8 @@ class ShipEditorRecalcCrewAndResources
     }
 }
 
-[HarmonyPatch(typeof(HullComponent), nameof(HullComponent.ConsumeResources))]
-class HullComponentConsumeResources
+[HarmonyPatch(typeof(HullPartResourceConnected), nameof(HullPartResourceConnected.ConsumeResources))]
+class HullPartResourceConnectedConsumeResources
 {
 
     public static void Prefix(HullComponent __instance, ResourcePool pool)
@@ -177,8 +176,8 @@ class HullComponentConsumeResources
 }
 
 
-[HarmonyPatch(typeof(HullComponent), nameof(HullComponent.GetResourceDemand))]
-class HullComponentGetResourceDemand
+[HarmonyPatch(typeof(HullPartResourceConnected), nameof(HullPartResourceConnected.GetResourceDemand))]
+class HullPartResourceConnectedGetResourceDemand
 {
     static void Prefix(HullComponent __instance, ResourcePool pool)
     {
@@ -199,12 +198,14 @@ class ResourcePoolCalculateDemandForEditor
         ResourcePool pool = __instance;
         ResourceType Resource = pool.Resource;
 
-        List<HullComponent> _providers = Common.GetVal<List<HullComponent>>(pool, "_providers");
-        List<HullComponent> _consumers = Common.GetVal<List<HullComponent>>(pool, "_consumers");
-        HashSet<HullComponent> components = new HashSet<HullComponent>(_providers);
-        components.UnionWith(_consumers);
+        List<IResourceSystemConnected> _providers = Common.GetVal<List<IResourceSystemConnected>>(pool, "_providers");
+        List<IResourceSystemConnected> _consumers = Common.GetVal<List<IResourceSystemConnected>>(pool, "_consumers");
+        HashSet<IResourceSystemConnected> allents = new HashSet<IResourceSystemConnected>(_providers);
+        allents.UnionWith(_consumers);
+        List<HullPartResourceConnected> components = allents.ToList().ConvertAll(a => (HullPartResourceConnected)a);
+
         List<float> reductions = new();
-        foreach (HullComponent comp in components)
+        foreach (HullPartResourceConnected comp in components)
         {
 
             float reduction = DynamicReduction.TotalMultiplier(pool.Resource, comp);
@@ -243,7 +244,7 @@ class ResourcePoolCalculateDemandForEditor
         _summary.Details.Add("Consumed:");
 
 
-        foreach (HullComponent consumer in _consumers)
+        foreach (HullPartResourceConnected consumer in _consumers)
         {
             if (consumer.ResourcesRequired.Any((ResourceModifier x) => x.ResourceName == Resource.Name))
             {

@@ -30,6 +30,8 @@ public class SimpleMagazine : MonoBehaviour, IMagazine
 
     public bool IsReinforced => throw new NotImplementedException();
 
+    public string MagKey => throw new NotImplementedException();
+
     IMunition IMagazine.AmmoType
     {
 

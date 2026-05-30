@@ -43,7 +43,7 @@ namespace Lib.Generic_Gameplay.Engines
         public void RuntimeUpdate()
         {
             Profiler.BeginSample("Update Thrusters");
-            if (_thrustController.WarpMode)
+            if (_thrustController.AfterburnerEffect)
                 return;
             if (_lastLateral != _thrustController.LateralThrust || _lastAngular != _thrustController.AngularThrust)
             {

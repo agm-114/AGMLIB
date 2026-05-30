@@ -3,7 +3,6 @@ using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles.Runtime.Seekers;
 using System.Runtime.InteropServices;
-using UnityEngine.UI.Extensions;
 using static Game.EWar.EWarPrefabCollection;
 using static Utility.GameColors;
 using Random = UnityEngine.Random;

@@ -194,7 +194,7 @@ namespace AGMLIB.Dynamic_Systems.Area
 
             //target.BuildMissileGroups();
             if (dirtymissiles)
-                target?.BuildMissileMagazineTracker();
+                target?.BuildMissileGroups();
 
         }
 

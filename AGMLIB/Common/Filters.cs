@@ -2,7 +2,7 @@
 {
     public static class Filters
     {
-        public static bool CheckComponent(HullComponent hullComponent, List<string> Whitelist, List<string> Blacklist, bool defaultvalue)
+        public static bool CheckComponent(HullPartResourceConnected hullComponent, List<string> Whitelist, List<string> Blacklist, bool defaultvalue)
         {
 
             if (hullComponent is not WeaponComponent weaponComponent)

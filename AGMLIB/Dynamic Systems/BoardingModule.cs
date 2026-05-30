@@ -1,5 +1,4 @@
-﻿using UnityEngine.UI.Extensions;
-using Object = UnityEngine.Object;
+﻿using Object = UnityEngine.Object;
 using TooltipTrigger = UI.TooltipTrigger;
 public class BoardingModule : MonoBehaviour
 {

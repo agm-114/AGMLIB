@@ -1,5 +1,4 @@
-﻿using UnityEngine.UI.Extensions;
-
+﻿
 [HarmonyPatch(typeof(ActiveJammingEffect), "CheckTargetValidity")]
 class CheckTargetValidityTweak
 {
