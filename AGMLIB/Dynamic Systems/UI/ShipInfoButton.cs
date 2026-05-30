@@ -2,6 +2,8 @@
 using Game.Orders;
 using Game.Orders.Inputs;
 using Game.Orders.Tasks;
+using Mirror;
+using Mirror.RemoteCalls;
 using Steamworks;
 using static UI.SequentialButton;
 using TooltipTrigger = UI.TooltipTrigger;
@@ -34,6 +36,25 @@ public class ShipInfoButton : ShipState
     public bool Override = false;
     public ButtonData? Data;
     public SequentialButton Button => Data?.Button;
+
+    public override void Awake()
+    {
+        base.Awake();
+        if (netIdentity == null)
+        {
+            NetworkIdentity identity = GetComponentInParent<NetworkIdentity>();
+            if (identity != null)
+            {
+                NetworkBehaviour[] allBehaviours = identity.GetComponentsInChildren<NetworkBehaviour>();
+                Common.SetVal(identity, "NetworkBehaviours", allBehaviours, typeof(NetworkIdentity));
+                for (int i = 0; i < allBehaviours.Length; i++)
+                {
+                    Common.SetVal(allBehaviours[i], "netIdentity", identity, typeof(NetworkBehaviour));
+                    Common.SetVal(allBehaviours[i], "ComponentIndex", i, typeof(NetworkBehaviour));
+                }
+            }
+        }
+    }
     public void SetPlayer(HumanSkirmishPlayer player)
     {
         if(player != null)
@@ -61,10 +82,10 @@ public class ShipInfoButton : ShipState
         return option;
     }
     HumanSkirmishPlayer? _player = null;
-
     public void HandleButtonChanged(int value)
     {
         SelectedOption = value;
+        CmdSyncSelectedOption(value);
         /*
         return;
         IOrderInput pathInput = ((OrderInput<WorldPositionInput.Output>)new ConstantInput<WorldPositionInput.Output>(new WorldPositionInput.Output
@@ -107,6 +128,73 @@ public class ShipInfoButton : ShipState
     }
     public SequenceOption[] Options => States.Zip(Colors, (name, color) => CreateOption(name, color)).ToArray();
     public SequenceOption CurrentOption => Options[SelectedOption];
+
+    // --- Mirror networking for SelectedOption sync (compiled output, no attribute post-processing) ---
+
+    static ShipInfoButton()
+    {
+        RemoteCallHelper.RegisterCommandDelegate(typeof(ShipInfoButton), "CmdSyncSelectedOption", new CmdDelegate(ICmdSyncSelectedOption), false);
+        RemoteCallHelper.RegisterRpcDelegate(typeof(ShipInfoButton), "RpcSyncSelectedOption", new CmdDelegate(IRpcSyncSelectedOption));
+    }
+
+    // Client sends to server
+    public void CmdSyncSelectedOption(int value)
+    {
+        if (NetworkClient.active || NetworkServer.active)
+        {
+            PooledNetworkWriter writer = NetworkWriterPool.GetWriter();
+            NetworkWriterExtensions.WriteInt((NetworkWriter)(object)writer, value);
+            SendCommandInternal(typeof(ShipInfoButton), "CmdSyncSelectedOption", (NetworkWriter)(object)writer, 0, false);
+            NetworkWriterPool.Recycle(writer);
+        }
+    }
+
+    protected static void ICmdSyncSelectedOption(NetworkBehaviour obj, NetworkReader reader, NetworkConnectionToClient senderConnection)
+    {
+        if (NetworkServer.active)
+        {
+            ((ShipInfoButton)(object)obj).UCCmdSyncSelectedOption(
+                NetworkReaderExtensions.ReadInt(reader));
+        }
+    }
+
+    protected void UCCmdSyncSelectedOption(int value)
+    {
+        if (NetworkServer.active)
+        {
+            SelectedOption = value;
+            RpcSyncSelectedOption(value);
+        }
+    }
+
+    // Server broadcasts to other clients
+    private void RpcSyncSelectedOption(int value)
+    {
+        if (NetworkClient.active || NetworkServer.active)
+        {
+            PooledNetworkWriter writer = NetworkWriterPool.GetWriter();
+            NetworkWriterExtensions.WriteInt((NetworkWriter)(object)writer, value);
+            SendRPCInternal(typeof(ShipInfoButton), "RpcSyncSelectedOption", (NetworkWriter)(object)writer, 0, false);
+            NetworkWriterPool.Recycle(writer);
+        }
+    }
+
+    protected static void IRpcSyncSelectedOption(NetworkBehaviour obj, NetworkReader reader, NetworkConnectionToClient senderConnection)
+    {
+        if (NetworkClient.active || NetworkServer.active)
+        {
+            ((ShipInfoButton)(object)obj).UCRpcSyncSelectedOption(
+                NetworkReaderExtensions.ReadInt(reader));
+        }
+    }
+
+    protected void UCRpcSyncSelectedOption(int value)
+    {
+        if (NetworkClient.active || NetworkServer.active)
+        {
+            SelectedOption = value;
+        }
+    }
 }
 
 public class ButtonData

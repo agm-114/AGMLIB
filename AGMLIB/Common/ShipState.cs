@@ -1,4 +1,6 @@
-﻿[System.Serializable]
+﻿using Mirror;
+
+[System.Serializable]
 public enum ConditionalState
 {
     Ignore,
@@ -7,7 +9,7 @@ public enum ConditionalState
 
 }
 
-public class InternalShipState : MonoBehaviour
+public class InternalShipState : NetworkBehaviour
 {
     public ShipState ShipState;
 
@@ -121,7 +123,7 @@ public class InternalShipState : MonoBehaviour
     }
 }
 
-public class ShipState : MonoBehaviour
+public class ShipState : NetworkBehaviour
 {
     public MovementSpeed MovementSpeed => InternalShipState.MovementSpeed;
     public ConditionalState FlankState => InternalShipState.FlankState;
