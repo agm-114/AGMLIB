@@ -2,6 +2,7 @@
 using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles.Descriptors.Support;
 using Munitions.ModularMissiles.Runtime;
+using System.Xml;
 [CreateAssetMenu(fileName = "New Modular Jammer Support", menuName = "Nebulous/Missiles/Support/Modular Jammer")]
 public class ModularJammerSupportDescriptor : JammerSupportDescriptor, IModular
 {
@@ -33,10 +34,6 @@ public class BeamRuntimeJammerSupport : RuntimeMissileBehaviour
     private Vector3 _topVector = Vector3.up;
     protected Vector3 _localBeamDirection { get; private set; } = Vector3.forward;
     protected Vector3 _worldBeamDirection => base.transform.TransformDirection(_localBeamDirection);
-    public class RuntimeJammerState : RuntimeMissileBehaviourState
-    {
-        public bool Active;
-    }
 
     [HideInInspector]
     [SerializeField]
@@ -99,22 +96,14 @@ public class BeamRuntimeJammerSupport : RuntimeMissileBehaviour
         }
     }
 
-    protected override RuntimeMissileBehaviourState NewSaveStateInstance()
+    protected override void WriteSaveStateInternal(XmlElement self)
     {
-        return new RuntimeJammerState();
+        (_effect != null).AppendToDocument(self, "Active");
     }
 
-    protected override void FillSaveState(RuntimeMissileBehaviourState state)
+    protected override void LoadSaveStateInternal(XmlElement self)
     {
-        if (state is RuntimeJammerState runtimeJammerState)
-        {
-            runtimeJammerState.Active = _effect != null;
-        }
-    }
-
-    protected override void RestoreSaveState(RuntimeMissileBehaviourState state)
-    {
-        if (state is RuntimeJammerState runtimeJammerState && runtimeJammerState.Active)
+        if (self.ReadFromDocumentParent("Active", defaultValue: false))
         {
             StartJamming();
         }

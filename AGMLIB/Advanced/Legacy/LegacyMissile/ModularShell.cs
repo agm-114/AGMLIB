@@ -1,5 +1,4 @@
 ﻿using Mirror;
-using UnityEngine.UI.Extensions;
 
 //[CreateAssetMenu(fileName = "New LW Guided Shell", menuName = "Nebulous/LW Shells/Guided Shell")]
 public class ModularShell : ShellMunition
@@ -57,18 +56,18 @@ public class ModularShell : ShellMunition
         HitResult hitResult = HitResult.None;
 
         if (_Warhead != null)
-            hitResult = _Warhead.Detonate(hitObject, hitInfo, out missiledamage, out missledestroyed);
+            hitResult = _Warhead.Detonate(hitObject, hitInfo, trigger, out missiledamage, out missledestroyed);
         if (trigger)
         {
             Debug.LogError("FUSED IMPACT!");
             if (_FusedWarhead != null)
-                hitResult = _FusedWarhead.Detonate(hitObject, hitInfo, out missiledamage2, out missledestroyed);
+                hitResult = _FusedWarhead.Detonate(hitObject, hitInfo, trigger, out missiledamage2, out missledestroyed);
         }
         else
         {
             Debug.LogError("IMPACT!");
             if (_ImpactWarhead != null)
-                hitResult = _ImpactWarhead.Detonate(hitObject, hitInfo, out missiledamage2, out missledestroyed);
+                hitResult = _ImpactWarhead.Detonate(hitObject, hitInfo, trigger, out missiledamage2, out missledestroyed);
         }
 
         missiledamage += missiledamage2;

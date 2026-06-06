@@ -15,14 +15,14 @@ public class CompoundWarhead : MissileWarhead
         }
     }
 
-    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, out float damageDone, out bool destroyed)
+    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger, out float damageDone, out bool destroyed)
     {
         damageDone = 0;
         destroyed = false;
         HitResult hitResult = HitResult.None;
         foreach (MissileWarhead warhead in _Warheads)
         {
-            hitResult = warhead.Detonate(hitObject, hitInfo, out float missiledamage, out bool missledestroyed);
+            hitResult = warhead.Detonate(hitObject, hitInfo,trigger, out float missiledamage, out bool missledestroyed);
             damageDone += missiledamage;
             destroyed = missledestroyed || destroyed;
             Debug.LogError("Warhead " + hitResult + " at " + hitObject.GameObj.name + " dealing " + missiledamage + " damage");

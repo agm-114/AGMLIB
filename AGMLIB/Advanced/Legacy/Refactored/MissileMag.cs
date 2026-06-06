@@ -1,14 +1,16 @@
-﻿public class MagazineCellMissileMagazine : BaseCellMissileMagazine
+﻿using UnityEngine.Profiling;
+
+public class MagazineCellMissileMagazine : BaseCellMissileMagazine
 {
     private List<Magazine> _missiles = new();
 
     private IReadOnlyList<MissileEjector> _cells;
 
-    public override int MaxCapacity => _launcher.Capacity;
+    public override int Capacity => _launcher.Capacity;
 
     public override int UsedCapacity => _missiles.Sum((Magazine x) => x.Quantity);
 
-    public override float RemainingCapacity => MaxCapacity - _missiles.Sum((Magazine x) => x.Quantity);
+    public override float RemainingCapacity => Capacity - _missiles.Sum((Magazine x) => x.Quantity);
 
     public override bool NoLoad => _missiles.Count == 0;
 
@@ -101,7 +103,7 @@
     {
         foreach (Magazine.MagSaveData mag in mags)
         {
-            IMunition munition = _launcher.Socket.MyHull.MyShip.Fleet.AvailableMunitions.GetMunition(mag.MunitionKey);
+            IMunition munition = _launcher.Socket.AvailableMunitions.GetMunition(mag.MunitionKey);
             if (munition != null && munition.Type == MunitionType.Missile)
             {
                 AddToMagazineInternal(munition, mag.Quantity, mag.MagazineKey);
@@ -110,9 +112,44 @@
         UpdateEjectorContents();
     }
 
+    public override void RestoreSavedState(List<Magazine.MagSaveData> mags, List<Magazine.MagStateData> states)
+    {
+        ClearContents();
+        foreach (Magazine.MagStateData magState in states)
+        {
+            Magazine.MagSaveData magSave = mags.Find((Magazine.MagSaveData x) => x.MagazineKey == magState.MagazineKey);
+            if (magSave.Quantity != 0)
+            {
+                IMunition missile = _launcher.Socket.AvailableMunitions.GetMunition(magSave.MunitionKey);
+                if (missile != null && missile.Type == MunitionType.Missile)
+                {
+                    Magazine mag = AddToMagazineInternal(missile, magSave.Quantity, magSave.MagazineKey);
+                    RemoveFromMagazineInternal(mag, magState.Expended, removeIfEmpty: false, updatePeak: false);
+                }
+            }
+        }
+        UpdateEjectorContents();
+    }
 
 
-    protected override IMagazine AddToMagazineInternal(IMunition ammoType, uint quantity, string magKey = null)
+
+    protected override Magazine CreateMissingMagazine(Magazine.MagChange delta)
+    {
+
+        IMunition addAmmoType = _launcher.Socket.AvailableMunitions.GetMunition(delta.AmmoTypeKey);
+        if (addAmmoType != null)
+        {
+            return CreateMagazineInternal(addAmmoType, delta.MagKey);
+        }
+        return null;
+    }
+
+    private Magazine CreateMagazineInternal(IMunition ammoType, string magKey)
+    {
+        return AddToMagazineInternal(ammoType, 0, magKey);
+    }
+
+    protected override Magazine AddToMagazineInternal(IMunition ammoType, uint quantity, string magKey = null)
     {
         if (!RestrictionCheck(ammoType))
         {
@@ -128,13 +165,13 @@
             FireMagAddedEvent(magazine);
         }
 
-        int a = MaxCapacity - _missiles.Sum((Magazine x) => x.Quantity);
+        int a = Capacity - _missiles.Sum((Magazine x) => x.Quantity);
         magazine.AddQuantity((uint)Mathf.Min(a, (int)quantity));
         FireAmmoQuantityChangedEvent(magazine);
         return magazine;
     }
 
-    protected override bool RemoveFromMagazineInternal(Magazine mag, uint quantity, bool removeIfEmpty)
+    protected override bool RemoveFromMagazineInternal(Magazine mag, uint quantity, bool removeIfEmpty, bool updatePeak)
     {
         bool flag = false;
         if (mag != null)
@@ -155,12 +192,17 @@
 
         return flag;
     }
+    public override void ClearContents()
+    {
+
+        _missiles.Clear();
+    }
 
     public override void TrimMagazineTop()
     {
         if (_missiles.Count > 0)
         {
-            for (uint num = (uint)_missiles.Sum((Magazine x) => x.Quantity); num > MaxCapacity; num = (uint)_missiles.Sum((Magazine x) => x.Quantity))
+            for (uint num = (uint)_missiles.Sum((Magazine x) => x.Quantity); num > Capacity; num = (uint)_missiles.Sum((Magazine x) => x.Quantity))
             {
                 Magazine magazine = _missiles.LastOrDefault();
                 if (magazine == null)
@@ -168,7 +210,7 @@
                     break;
                 }
 
-                RemoveFromMagazineInternal(magazine, num - (uint)MaxCapacity, removeIfEmpty: true);
+                RemoveFromMagazineInternal(magazine, num - (uint)Capacity, removeIfEmpty: true, updatePeak: true);
                 if (_missiles.Count == 0)
                 {
                     break;
@@ -200,6 +242,9 @@
             enumerator.Current.SetContents(null);
         }
     }
+
+    
+
     public MagazineCellMissileMagazine(BaseCellLauncherComponent launcher, IReadOnlyList<MissileEjector> cells) : base(launcher) => _cells = cells;
 }
 

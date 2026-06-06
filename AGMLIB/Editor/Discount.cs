@@ -117,3 +117,15 @@ class HullComponentGetFormattedSubtitle
 
     }
 }
+
+[HarmonyPatch(typeof(Fleet))]
+[HarmonyPatch(nameof(Fleet.FleetValue), MethodType.Getter)]
+class FleetFleetValue
+{
+    public static void Postfix(ref int __result, Fleet __instance)
+    {
+        //Common.LogPatch();
+        //Debug.LogError("Fleet Value Pre " + __result);
+        //throw new System.ArgumentException("Age cannot be negative.");
+    }
+}

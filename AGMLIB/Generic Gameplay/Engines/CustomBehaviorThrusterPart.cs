@@ -29,7 +29,7 @@ namespace Ships
         private Sides _lastLateral = Sides.None;
         private AttitudeControl _lastAngular = AttitudeControl.None;
         private bool _effectPlaying = false;
-        private bool _warpEffectPlaying = false;
+        private bool _afterburnerEffectPlaying = false;
         private float _flankDamageAccumulator = 0.0f;
 
         private int _currentBehaviorIndex = 0;
@@ -77,27 +77,26 @@ namespace Ships
             Profiler.BeginSample("Update Thrusters");
             if (this._thrustController != null)
             {
-                if (this._mainEngine)
+                if (_mainEngine)
                 {
-                    if (this._thrustController.WarpMode)
+                    if (_thrustController.AfterburnerEffect)
                     {
-                        if (!this._warpEffectPlaying)
+                        if (!_afterburnerEffectPlaying)
                         {
-                            this._particles.SetBool("Afterburner", true);
-                            this._particles.SetFloat("Afterburner Power", this._thrustController.WarpPercent);
-                            this._warpEffectPlaying = true;
-                            this._currentThrottle = CustomBehaviorThrusterPart.Throttle.Full;
+                            _particles.SetBool("Afterburner", value: true);
+                            _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
+                            _afterburnerEffectPlaying = true;
                         }
-                        this._particles.SetFloat("Afterburner Power", this._thrustController.WarpPercent);
+                        _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
                     }
-                    else if (this._warpEffectPlaying)
+                    else if (_afterburnerEffectPlaying)
                     {
-                        this._particles.SetBool("Afterburner", false);
-                        this._particles.SetFloat("Afterburner Power", 0.0f);
-                        this._warpEffectPlaying = false;
+                        _particles.SetBool("Afterburner", value: false);
+                        _particles.SetFloat("Afterburner Power", 0f);
+                        _afterburnerEffectPlaying = false;
                     }
                 }
-                if (this._lastLateral != this._thrustController.LateralThrust || this._lastAngular != this._thrustController.AngularThrust || this._thrustController.WarpMode)
+                if (this._lastLateral != this._thrustController.LateralThrust || this._lastAngular != this._thrustController.AngularThrust || this._thrustController.AfterburnerEffect)
                 {
                     this._lastAngular = this._thrustController.AngularThrust;
                     this._lastLateral = this._thrustController.LateralThrust;
@@ -126,7 +125,7 @@ namespace Ships
                     bool flag2 = this._lastLateral.IsSet(((IThruster)this).LateralDirection.Flip());
                     bool flag3 = (this._lastAngular & ((IThruster)this).AttitudeDirections) != 0;
                     bool flag4 = (this._lastAngular & ((IThruster)this).AttitudeDirections.Invert()) != 0;
-                    if (!this._thrustController.WarpMode)
+                    if (!this._thrustController.AfterburnerEffect)
                         this._currentThrottle = !flag1 || flag3 ? (!flag3 ? CustomBehaviorThrusterPart.Throttle.Idle : (!flag2 ? CustomBehaviorThrusterPart.Throttle.Full : CustomBehaviorThrusterPart.Throttle.Idle)) : (!flag4 ? CustomBehaviorThrusterPart.Throttle.Full : CustomBehaviorThrusterPart.Throttle.Half);
                     if (!this._tweenParticlePower)
                     {
@@ -158,7 +157,7 @@ namespace Ships
 
         private float GetParticlePower()
         {
-            if (this._thrustController.WarpMode)
+            if (this._thrustController.AfterburnerEffect)
                 return 1f;
             switch (this._currentThrottle)
             {

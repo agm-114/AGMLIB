@@ -4,6 +4,7 @@ using Lib.Dynamic_Systems.Area;
 using Munitions.ModularMissiles;
 using Shapes;
 using SmallCraft;
+using Steamworks.Ugc;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 //using static UnityEditorInternal.ReorderableList;#dll
@@ -25,13 +26,13 @@ public interface ISimpleFilter
     public bool CheckIFF(IPlayer parent, IPlayer remote);
     public bool CheckShip(ShipController parent, ShipController remote);
     public bool CheckMissile(ShipController parent, ModularMissile remote);
-    public bool CheckComponent(HullComponent hullComponent);
+    public bool CheckComponent(HullPartResourceConnected hullComponent);
     public bool IsAmmoCompatible(IMunition ammo, bool debugmode = false);
 }
 
 public abstract class BaseFilter : MonoBehaviour, ISimpleFilter
 {
-    virtual public bool CheckComponent(HullComponent hullComponent) => throw new NotImplementedException();
+    virtual public bool CheckComponent(HullPartResourceConnected hullComponent) => throw new NotImplementedException();
     virtual public bool CheckIFF(IPlayer parent, IPlayer remote) => throw new NotImplementedException();
     virtual public bool CheckMissile(ShipController parent, ModularMissile remote) => throw new NotImplementedException();
     virtual public bool CheckShip(ShipController parent, ShipController remote) => throw new NotImplementedException();
@@ -103,7 +104,7 @@ public class SimpleOwnerFilter : BaseFilter, ISimpleFilter
     [SerializeField] protected bool Friendly = false;
     [SerializeField] protected bool Enemy = true;
     [SerializeField] protected bool None = true;
-
+        
 
     override public bool CheckMissile(ShipController parent, ModularMissile target) => ValidIFFTarget(parent.OwnedBy, target?.OwnedBy);
     public bool ValidIFFTarget(IPlayer owner, IPlayer toPlayer)
@@ -143,7 +144,7 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
         return this;
     }
 
-    override public bool CheckComponent(HullComponent hullComponent)
+    override public bool CheckComponent(HullPartResourceConnected hullComponent)
     {
         bool valid = Filters.CheckComponent(hullComponent, _whitelist, _blacklist, _defaultvalue);
         foreach (string whitelist in Whitelist)
@@ -214,22 +215,64 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
     }
 }
 
-#pragma warning disable CA1708 // Identifiers should differ by more than case
-public class SocketFilters : MonoBehaviour, IFilter
-#pragma warning restore CA1708 // Identifiers should differ by more than case
+public class BasicSocketEditorUISettings : MonoBehaviour
 {
     public string CustomType = "";
     public bool AllowNullComponent = true;
+    public bool AllowIllegal = true;
     public bool ShowPalette = true;
+}
+
+
+public class SocketEditorUISettings : BasicSocketEditorUISettings
+{
     public bool ShowInShipPane = true;
     public bool AllowHighlight = true;
-    public bool AllowIllegal = true;
     public Color DrawColor = Color.clear;
-
-    //public bool EditorOutline = false;
-    public RenderShape Shape = RenderShape.Default;
+    public RenderShape Shape= RenderShape.Default;
     public float Radius = 1f;
     public float Thickness = 1f;
+}
+
+public class KeyBasedFilterLookup: MonoBehaviour, ISocketLookup
+{
+    public SocketFilters DefaultChildFilter = null;
+    public Dictionary<string, SocketFilters> Filters = new Dictionary<string, SocketFilters>();
+
+    public SocketFilters GetFilter(string key)
+    {
+        if (Filters.ContainsKey(key)) return Filters[key];
+        return DefaultChildFilter;
+    }
+}
+
+public interface ISocketLookup
+{
+    public SocketFilters GetFilter(string key);
+}
+
+public class SocketEditorChildSettings
+{
+    public List<HullSocket> VisualChildren = new();
+    public bool ComponentBasedChildVisiblity = false;
+    public bool ComponentBasedChildStrip = false;
+    public ISocketLookup FilterLookup;
+
+}
+
+#pragma warning disable CA1708 // Identifiers should differ by more than case
+public class SocketFilters : BasicSocketEditorUISettings, IFilter
+#pragma warning restore CA1708 // Identifiers should differ by more than case
+{
+
+    public void Copy(SocketFilters filter)
+    {
+        whitelist = filter.whitelist;
+        whitelisteverything = filter.whitelisteverything;
+        blacklist = filter.blacklist;
+        blacklisteverything = filter .blacklisteverything;
+    }
+
     [SerializeField]
     protected List<string> whitelist = [];
     [SerializeField]
@@ -378,7 +421,7 @@ class SocketOutlineManagerDrawShapes
                 //End testing
 
 
-                SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
+                SocketEditorUISettings socketFilters = socket.GetComponent<SocketEditorUISettings>() ?? new SocketEditorUISettings();
                 Draw.Radius = socketFilters.Radius;
                 switch (socketFilters.Shape)
                 {
@@ -487,19 +530,67 @@ class ShipEditorPaneSetShip
     static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
     {
         Common.LogPatch();
+
+        
+
+        IReadOnlyCollection<HullSocket> allSockets = ____currentShip.Ship.Hull.AllSockets;
         //Debug.LogError("Setting Ship");
         foreach (SocketItem child in ____scrollPaneContent.GetComponentsInChildren<SocketItem>().Where(socketitem => socketitem.Socket != null))
         {
-
             HullSocket? socket = child?.Socket;
 
-            SocketFilters? filter = socket?.GetComponent<SocketFilters>();
-            if (filter == null)
+            BasicSocketEditorUISettings? settings = socket?.GetComponent<BasicSocketEditorUISettings>();
+            SocketEditorUISettings? socketEditorUISettings = socket?.GetComponent<SocketEditorUISettings>();
+
+            SocketEditorChildSettings childsettings = socket?.GetComponent<SocketEditorChildSettings>();
+
+
+
+            if (childsettings != null && childsettings.VisualChildren.Count > 0 && false)
+            {
+
+                GameObject socketgroupgo2 = UnityEngine.Object.Instantiate(____socketGroupingPrefab, child.gameObject.transform);
+                Accordion accordion2 = socketgroupgo2.GetComponent<Accordion>();
+                Image image = socketgroupgo2.GetComponentInChildren<Image>();
+                image.color = new Color(0.9f, 0.9f, 0.9f, 1f);
+                socketgroupgo2.active = socket.Component != null;
+                socket.OnInstalledComponentChanged += (HullComponent component) =>
+                {
+                    socketgroupgo2.active = component != null;
+                    if (component != null)
+                    {
+                        child.Socket.SetComponent(null);
+                        SocketFilters filter = null;
+                        if (childsettings.FilterLookup != null)
+                        {
+                            filter = childsettings.FilterLookup.GetFilter(component.SaveKey);
+                        }
+                        
+                        
+                        if (filter != null)
+                        {
+                            SocketFilters childfilter = child.Socket.gameObject.GetOrAddComponent<SocketFilters>();
+                            childfilter.Copy(filter);
+                        }
+                    }
+                };
+
+                foreach (HullSocket visualChild in childsettings.VisualChildren)
+                {
+                    GameObject socketitemgo2 = UnityEngine.Object.Instantiate(____socketItemPrefab, accordion2.Content);
+                    SocketItem item2 = socketitemgo2.GetComponent<SocketItem>();
+                    item2.SetSocket(____currentShip, __instance, visualChild);
+                }
+            }
+            if (settings == null)
                 continue;
+
             //Debug.LogError($"checking socket {socket?.ShortName}");
 
 
-            if (filter.ShowInShipPane && string.IsNullOrEmpty(filter.CustomType))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
+
+
+            if (string.IsNullOrEmpty(settings.CustomType) || (socketEditorUISettings?.ShowInShipPane ?? true))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
             {
                 continue;
 
@@ -512,12 +603,11 @@ class ShipEditorPaneSetShip
         }
         HashSet<string> types = [];
 
-        IReadOnlyCollection<HullSocket> allSockets = ____currentShip.Ship.Hull.AllSockets;
         foreach (HullSocket socket in allSockets)
         {
-            SocketFilters filter = socket.GetComponent<SocketFilters>() ?? new();
-            if (filter.CustomType.Length > 0)
-                types.Add(filter.CustomType);
+            BasicSocketEditorUISettings settings = socket.GetComponent<BasicSocketEditorUISettings>() ?? new();
+            if (settings.CustomType.Length > 0)
+                types.Add(settings.CustomType);
         }
         foreach (string value in types)
         {
@@ -528,16 +618,11 @@ class ShipEditorPaneSetShip
             componentInChildren.SetText(value);
             foreach (HullSocket item3 in allSockets)
             {
-                SocketFilters filter = item3.GetComponent<SocketFilters>() ?? new();
+                BasicSocketEditorUISettings filter = item3.GetComponent<BasicSocketEditorUISettings>() ?? new();
                 if (filter.CustomType == value)
                 {
                     GameObject socketitemgo = UnityEngine.Object.Instantiate(____socketItemPrefab, accordion.Content);
-                    //GameObject socketgroupgo2 = UnityEngine.Object.Instantiate(____socketGroupingPrefab, socketitemgo.transform);
-                    //Accordion accordion2 = socketgroupgo2.GetComponent<Accordion>();
 
-                    //GameObject socketitemgo2 = UnityEngine.Object.Instantiate(____socketItemPrefab, accordion2.Content);
-                    //SocketItem item2 = socketitemgo2.GetComponent<SocketItem>();
-                    //item2.SetSocket(____currentShip, __instance, item3);
 
                     SocketItem item = socketitemgo.GetComponent<SocketItem>();
                     item.SetSocket(____currentShip, __instance, item3);
@@ -560,7 +645,7 @@ class FleetCompositionSubmodeControllerSetHighlightedSocketPatch
     {
         //Common.LogPatch();
         //Debug.LogError("Highlight Postfix");
-        SocketFilters socketFilters = socket?.GetComponent<SocketFilters>() ?? new();
+        SocketEditorUISettings socketFilters = socket?.GetComponent<SocketEditorUISettings>() ?? new();
         return socket == null || socketFilters.AllowHighlight;
     }
 }

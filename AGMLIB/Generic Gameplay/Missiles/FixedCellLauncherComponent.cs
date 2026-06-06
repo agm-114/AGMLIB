@@ -6,7 +6,7 @@
 
     public bool NeedsTightPID => true;
 
-    public Direction FacingDirection => base.Socket.MyHull.MyShip.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients().ClosestSide();
+    public Direction FacingDirection => base.Socket.Hull.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients().ClosestSide();
 
     public override ComponentSaveData GetSaveData() => new CellLauncherData();
 

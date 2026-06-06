@@ -1,5 +1,6 @@
 ﻿namespace Lib.Generic_Gameplay.Discrete
 {
+    /*
     public class MVPMagazine : MonoBehaviour, IMagazineProvider
     {
         public int MagCapacity = 10;
@@ -17,14 +18,7 @@
             }
             return null;
         }
-        /*
-        public DiscreteMagazine()
-        { 
 
-            Debug.LogError("DM constructor");
-
-        }
-        */
         public void SetParent(DiscreteWeaponComponent parent)
         {
 
@@ -73,5 +67,5 @@
         public bool RemoveFromMagazine(IMunition ammoType, uint quantity) => throw new NotImplementedException();
         public bool RestrictionCheck(IMunition ammo) => throw new NotImplementedException();
     }
-
+    */
 }

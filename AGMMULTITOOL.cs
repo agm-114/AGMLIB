@@ -14,10 +14,10 @@ using System.Reflection;
 //using Ships;
 //using static Sound.AnnouncerVoiceSet;
 using UnityEngine.UI;
-using Game.Sensors;
-using Utility;
-using static System.Net.Mime.MediaTypeNames;
-using System.Diagnostics;
+//using Game.Sensors;
+//using Utility;
+//using static System.Net.Mime.MediaTypeNames;
+//using System.Diagnostics;
 //using static UnityEngine.Rendering.DebugUI;
 //using UnityEngine.InputSystem;
 //using UnityEngine.UIElements;
@@ -30,7 +30,7 @@ using System.Diagnostics;
 [InitializeOnLoad]
 public class Information : EditorWindow
 {
-    static string[] bundles = { "stock", "stock-f1", "stock-f2", "stock-maps" };
+    static string[] bundles = { "stock", "stock-f1", "stock-f2" };
     Dictionary<string, bool> foldouts = new Dictionary<string, bool>();
     string mods = " muzzle-accuracy, sensor-maxrange, sensor-power, sensor-gain, sensor-sensitivity, sensor-aperture, sensor-maxposerror, sensor-maxvelerror, sensor-lockmultiplier, sensor-minlocksnr, sensor-noisefiltering, sensor-burnthrupowermultiplier, sensor-burnthrudamageprob, component-maxhp, component-dr, component-workspeed, component-raredebuffchance, intel-effort, intel-accuracy, comms-power, comms-bandwidth, comms-gain, continuousweapon-burstduration, continuousweapon-cooldown, continuousweapon-overheatdamageprob, continuousweapon-directdamagemultiplier, damagecontrol-movespeed, damagecontrol-repairspeed, discreteweapon-recycle, discreteweapon-reload, powerplant-prodefficiency, hull-mass, hull-maxspeed, hull-turnrate, hull-linearmotor, hull-angularmotor, hull-sigmult-radar, hull-crewvuln, hull-armorthickness, hull-componentdr, hull-visiondistance, hull-flankdamageprob, hull-identificationwork, hull-missilechannels, hull-missileprogspeed, hull-structurehp, tubelauncher-reload, turret-traverse, turret-elevate, missile-health, missile-progtime, missile-sigmult-radar, missile-boostphaseduration, missile-earlystrafe, missile-earlyturn, missile-failrate";
     int tab;

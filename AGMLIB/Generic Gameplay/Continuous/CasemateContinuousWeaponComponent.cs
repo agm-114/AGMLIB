@@ -1,12 +1,29 @@
-﻿namespace AGMLIB.Generic_Gameplay.Continuous
+﻿using Ships.SaveGame;
+using System.Xml;
+using static Ships.BulkMagazineComponent;
+
+namespace AGMLIB.Generic_Gameplay.Continuous
 {
 
     public class CasemateContinuousWeaponComponent : FixedContinuousWeaponComponent, IFixedWeapon
     {
+
+
         [Serializable]
-        public class CasemateContinuousWeaponState : ContinuousWeaponState
+        public class CasemateContinuousWeaponState : SavedHullComponentStates.StateElement
         {
             public CasemateController.CasemateControllerState CasemateState;
+
+            protected override void WriteToDocumentInternal(XmlElement self)
+            {
+                CasemateState.AppendToDocument(self, "FiringAccum");
+    
+            }
+
+            protected override void ReadFromDocumentInternal(XmlElement self)
+            {
+                CasemateState = self.ReadFromDocumentParent("FiringAccum", CasemateState);
+            }
         }
 
         [Tooltip("Ships are hard to turn to exact targets.  If true, the shot fired will take its base vector from direct line to the target, and then inaccuracy is added on top.  If false, the shot will use the forward vector of the muzzle.")]
@@ -70,7 +87,7 @@
         protected override void SocketSet()
         {
             base.SocketSet();
-            Vector3 facingDirection = base.Socket.MyHull.MyShip.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients();
+            Vector3 facingDirection = base.Socket.Hull.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients();
             _facingDirection = facingDirection.ClosestSide();
             if (_turretController != null)
             {
@@ -122,24 +139,19 @@
 
 
 
-        protected override PersistentComponentState NewSaveStateInstance()
+        public override void WriteSaveState(SavedHullComponentStates state)
         {
-            return new CasemateContinuousWeaponState();
+            base.WriteSaveState(state);
+            state.Write(this, new CasemateContinuousWeaponState
+            {
+                CasemateState = _turretController.GetSaveState(),
+            });
         }
 
-        protected override void FillSaveState(PersistentComponentState state)
+        public override void RestoreFromSaveState(SavedHullComponentStates state)
         {
-            base.FillSaveState(state);
-            if (state is CasemateContinuousWeaponState wepState && _turretController != null)
-            {
-                wepState.CasemateState = _turretController.GetSaveState();
-            }
-        }
-        
-        public override void RestoreSavedState(PersistentComponentState state)
-        {
-            base.RestoreSavedState(state);
-            if (state is CasemateContinuousWeaponState wepState && _turretController != null)
+            base.RestoreFromSaveState(state);
+            if (state.Read<CasemateContinuousWeaponState>(this) is CasemateContinuousWeaponState wepState && _turretController != null)
             {
                 _turretController.RestoreFromSave(wepState.CasemateState);
             }

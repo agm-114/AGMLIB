@@ -163,7 +163,7 @@ public class EntryPoint : IModEntryPoint
             {
                 ModRecord dependencyrecord = ModDatabase.Instance.GetModByID(depedencyid);
                 if (dependencyrecord == null || dependencyrecord.Missing)
-                    dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
+                    dependencyrecord.SubscribeAndDownload(new MultiTaskProgress(1).Report, new CancellationTokenSource(1).Token);
                 if (record.LoadOrder < dependencyrecord.LoadOrder)
                 {
                     Debug.LogError("Fixing load order");
@@ -198,7 +198,7 @@ public class EntryPoint : IModEntryPoint
                 {
 
                     Debug.LogError("Grabbing Depedency");
-                    dependencyrecord.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
+                    dependencyrecord.SubscribeAndDownload(new MultiTaskProgress(1).Report, new CancellationTokenSource(1).Token);
                 }
             }
 
@@ -229,7 +229,7 @@ public class EntryPoint : IModEntryPoint
         Debug.LogError("FIXING LOAD ORDER");
         ModRecord modByID = modByID = ModDatabase.Instance.GetModByID(modid);
         if (modByID == null || modByID.Missing)
-            modByID.SubscribeAndDownload(new AsyncGroupProgress(1).Report, new CancellationTokenSource(1).Token);
+            modByID.SubscribeAndDownload(new MultiTaskProgress(1).Report, new CancellationTokenSource(1).Token);
         IEnumerable<ModRecord> mods = new List<ModRecord>();
         if (!ModDatabase.Instance.MarkedForLoad.Any(p => p.Info.ModName == "AGMLIB"))//First().Info.ModName != "AGMLIB"
             mods = mods.AddItem(modByID);
@@ -310,7 +310,7 @@ public class EntryPoint : IModEntryPoint
     }
 }
 
-[HarmonyPatch(typeof(HullComponent), "GetMissingResources")]
+[HarmonyPatch(typeof(HullPartResourceConnected), "GetMissingResources")]
 class HullComponentGetMissingResources : MonoBehaviour
 {
 

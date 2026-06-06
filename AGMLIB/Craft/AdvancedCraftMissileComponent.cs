@@ -23,7 +23,7 @@ namespace Lib.Craft
 
 
 
-        public override LoadoutMatrixRow[] GetLoadoutMatrixRows(CraftLoadoutMatrix matrix, SpacecraftSocket socket, AvailableMunitionsSet fleetMunitions, SerializedCraftLoadout.GeneralLoadoutElement existing, bool newLoadout)
+        public override LoadoutMatrixRow[] GetLoadoutMatrixRows(CraftLoadoutMatrix matrix, SpacecraftSocket socket, IMunitionCollection fleetMunitions, SerializedCraftLoadout.GeneralLoadoutElement existing, bool newLoadout)
         {
             SerializedCraftLoadout.MissileSelection existingMissile = existing as SerializedCraftLoadout.MissileSelection;
 

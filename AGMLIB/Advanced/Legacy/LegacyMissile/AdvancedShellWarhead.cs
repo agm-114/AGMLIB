@@ -33,7 +33,7 @@ public class AdvancedShellWarhead : MissileWarhead
 
     public override float TotalComponentDamagePotential => 0f;
 
-    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, out float damageDone, out bool destroyed)
+    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger, out float damageDone, out bool destroyed)
     {
         for (int i = 0; i < _spawnCount; i++)
         {

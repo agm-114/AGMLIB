@@ -19,7 +19,7 @@ public class SimpleShellWarhead : MissileWarhead
 
     public override string GetTooltipText() => $"Type: {_appliedTemplate.name}\nArmor Penetration: {_appliedTemplate.ArmorPenetration} cm\n"; //Component Damage: {_appliedTemplate.ComponentDamage} hp\nBlast Angle: {_appliedTemplate.r * 2f}";
 
-    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, out float damageDone, out bool destroyed)
+    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger, out float damageDone, out bool destroyed)
     {
         Debug.LogError("Submuntion Fired!");
         //container.transform.position = transform.position;

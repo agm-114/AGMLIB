@@ -1,9 +1,11 @@
-﻿public class FixedTubeLauncherComponent : TubeLauncherComponent, IFixedWeapon
+﻿using Utility.Localization;
+
+public class FixedTubeLauncherComponent : TubeLauncherComponent, IFixedWeapon
 {
 
     public bool NeedsTightPID => false;
 
-    public Direction FacingDirection => base.Socket.MyHull.MyShip.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients().ClosestSide();
+    public Direction FacingDirection => base.Socket.Hull.transform.InverseTransformDirection(base.transform.up).normalized.RemoveTransients().ClosestSide();
 
     protected override void Update()
     {
@@ -32,9 +34,17 @@
 
     public override void GetDesignWarnings(List<DesignWarning> warnings)
     {
-        if (_myHull.MyShip.AmmoFeed.GetAllCompatibleAmmoTypes(this).Count == 0)
+        List<IMagazine> mags = base.Socket.AmmoFeed.GetAllCompatibleAmmoSources(this);
+        if (mags.Count == 0)
         {
-            warnings.Add(ShipDesignWarning.Risk("No Ammunition", "No ammunition for weapon: " + base.ComponentName + " on " + base.Socket.name, MyHull.MyShip));
+            warnings.Add(ShipDesignWarning.Warning("$UI_FLTED_WARNINGS_NOAMMO_TITLE", "$UI_FLTED_WARNINGS_NOAMMO_BODY".Localize(("compName", base.ComponentName), ("socketName", base.Socket.Name)), null));
+        }
+        foreach (IMagazine mag in mags)
+        {
+            if (mag.QuantityAvailable == 1)
+            {
+                warnings.Add(ShipDesignWarning.Risk("$UI_FLTED_WARNINGS_ONEROUND_TITLE", "$UI_FLTED_WARNINGS_ONEROUND_BODY".Localize(("compName", base.ComponentName), ("socketName", base.Socket.Name), ("ammoName", mag.AmmoType.MunitionDisplayName)), null));
+            }
         }
     }
     //public bool CyclingShot => Time.fixedTime >= Common.GetVal<float>(this, "_nextShotTime");

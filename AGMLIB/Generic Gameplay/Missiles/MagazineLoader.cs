@@ -65,7 +65,7 @@ class SettingsMagazineLoadoutUpdateQuantities
         //else
         //    Debug.LogError("Postfix Good");
 
-        int maxCapacity = base_provider.MaxCapacity;
+        int maxCapacity = base_provider.Capacity;
         int usedCapacity = base_provider.UsedCapacity;
         float remainingCapacity = base_provider.RemainingCapacity;
         _gaugeImage.fillAmount = ((float)maxCapacity - remainingCapacity) / (float)maxCapacity;
@@ -77,7 +77,7 @@ class SettingsMagazineLoadoutUpdateQuantities
             magazine.UpdateRemainingSpace();
         }
 
-        _addMagazineButton.interactable = base_provider.UsedCapacity < base_provider.MaxCapacity;
+        _addMagazineButton.interactable = base_provider.UsedCapacity < base_provider.Capacity;
 
     }
 }
@@ -96,12 +96,12 @@ class BaseCellLauncherComponentGetDesignWarnings
         BaseHull _myHull = Common.GetVal<BaseHull>(__instance, "_myHull");
         if (_myHull.MyShip.AmmoFeed.GetAllCompatibleAmmoTypes(__instance).Count == 0)
         {
-            warnings.Add(ShipDesignWarning.Warning("No Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.name + " has no missiles loaded.", _myHull.MyShip));
+            warnings.Add(ShipDesignWarning.Warning("No Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.Name + " has no missiles loaded.", _myHull.MyShip));
         }
 
         if (Missiles.AnyMissileDesignsInvalid())
         {
-            warnings.Add(ShipDesignWarning.Warning("Invalid Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.name + " contains invalid munition designs.", _myHull.MyShip));
+            warnings.Add(ShipDesignWarning.Warning("Invalid Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.Name + " contains invalid munition designs.", _myHull.MyShip));
         }
 
 
@@ -109,8 +109,8 @@ class BaseCellLauncherComponentGetDesignWarnings
     }
 }
 
-[HarmonyPatch(typeof(BaseHull), nameof(BaseHull.EditorAmmoTypeInUse))]
-class EditorDoesAnyWeaponUseAmmoType
+[HarmonyPatch(typeof(BaseHull), nameof(BaseHull.AmmoTypeInUse))]
+class BaseHullAmmoTypeInUse
 {
     public static void Postfix(BaseHull __instance, IMunition ammoType, bool externalFeed, ref bool __result)
     {

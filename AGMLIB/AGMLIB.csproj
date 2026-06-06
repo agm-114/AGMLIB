@@ -13,12 +13,12 @@
     <RootNamespace>Lib</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 
-    <VersionPrefix>5.2.14.859</VersionPrefix>
+    <VersionPrefix>6.2.1.20</VersionPrefix>
 
     <Copyright>≽^•⩊•^≼</Copyright>
     <ModName>AGMLIB</ModName>
     <ModDescription>By: AGM</ModDescription>
-    <GameVer>0.5.3</GameVer>
+    <GameVer>0.6.2</GameVer>
   </PropertyGroup>
 
   <ItemGroup>

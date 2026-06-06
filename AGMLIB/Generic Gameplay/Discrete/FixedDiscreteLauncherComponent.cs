@@ -39,7 +39,7 @@ public class FixedDiscreteLauncherComponent : FixedDiscreteWeaponComponent
 
     protected override ComponentActivity GetFunctionalActivityStatus() => Blocked ? ComponentActivity.NotAuthorized : base.GetFunctionalActivityStatus();
 
-    protected override bool AimCheck(Vector3 aimPoint, bool ignoreRange)
+    protected bool CheckFire()
     {
 
         if (Blocked) // CurrentlyFiring tube.BlockingFire &&
@@ -47,7 +47,7 @@ public class FixedDiscreteLauncherComponent : FixedDiscreteWeaponComponent
             //Debug.LogError("Blocked" + tube.GetActivityStatus());
             return false;
         }
-        return base.AimCheck(aimPoint, ignoreRange);
+        return base.CheckFire();
     }
 
 }

@@ -9,8 +9,7 @@ public class DescribedWarhead : MissileWarhead
     protected int _size;
 
     public override float TotalComponentDamagePotential => _warhead.TotalComponentDamagePotential;
-
-    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, out float damageDone, out bool destroyed)
+    public override HitResult Detonate(IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger, out float damageDone, out bool destroyed)
     {
         damageDone = 0;
         destroyed = false;

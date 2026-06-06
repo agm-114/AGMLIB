@@ -28,7 +28,7 @@ namespace Lib.Generic_Gameplay.Engines
         {
             get
             {
-                if (_warpEffectPlaying)
+                if (_afterburnerEffectPlaying)
                     return 1;
                 if (_subthrusters.Count > 0)
                     return _subthrusters.ConvertAll(rt => rt.CurrentThottle).Sum();
@@ -42,7 +42,7 @@ namespace Lib.Generic_Gameplay.Engines
         private float _currentParticlePower = 0f;
         private bool _providingLateralThrust = false;
         private bool _effectPlaying = false;
-        private bool _warpEffectPlaying = false;
+        private bool _afterburnerEffectPlaying = false;
         private float _flankDamageAccumulator = 0f;
 
         private void OnValidate()
@@ -119,21 +119,24 @@ namespace Lib.Generic_Gameplay.Engines
         }
         private void HandleBurnIn()
         {
-            if (!_mainEngine)
-                return;
-            if (_thrustController.WarpMode)
+            if (_mainEngine)
             {
-                _particles.SetFloat("Afterburner Power", _thrustController.WarpPercent);
-                _particles.SetBool("Afterburner", value: true);
-                _warpEffectPlaying = true;
-
-
-            }
-            else if (_warpEffectPlaying)
-            {
-                _particles.SetBool("Afterburner", value: false);
-                _particles.SetFloat("Afterburner Power", 0f);
-                _warpEffectPlaying = false;
+                if (_thrustController.AfterburnerEffect)
+                {
+                    if (!_afterburnerEffectPlaying)
+                    {
+                        _particles.SetBool("Afterburner", value: true);
+                        _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
+                        _afterburnerEffectPlaying = true;
+                    }
+                    _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
+                }
+                else if (_afterburnerEffectPlaying)
+                {
+                    _particles.SetBool("Afterburner", value: false);
+                    _particles.SetFloat("Afterburner Power", 0f);
+                    _afterburnerEffectPlaying = false;
+                }
             }
         }
 
@@ -147,8 +150,7 @@ namespace Lib.Generic_Gameplay.Engines
                 return;
             }
             HandleBurnIn();
-            if (_thrustController.WarpMode)
-                return;
+
             //Debug.LogError("runtime update");
 
             foreach (RuntimeThruster runtimeThruster in _subthrusters)
