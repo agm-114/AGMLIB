@@ -1,7 +1,9 @@
 ﻿using FleetEditor.MissileEditor;
 using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors;
+using System.Net;
 
+/*
 [HarmonyPatch(typeof(ModularMissile), "InstallSocketModuleInternal")]
 class MissileComponentDescriptorInstallSocketModuleInternal
 {
@@ -18,24 +20,32 @@ class MissileComponentDescriptorInstallSocketModuleInternal
 
         IFilterIndexed socketfilter = Modular.FindIndexedFilter(__instance.GetComponentsInChildren<IFilterIndexed>(), index) ?? Modular.Default;
         IFilterIndexed componentfilters = Modular.FindIndexedFilter(filters, index) ?? Modular.Default;
-        if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(__instance.BaseMissileDesignation))
+        
+        if (socket.ComponentPermitted(component, ____fleetFaction))
+            return;
+        if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(__instance.BaseMissileDesignation) || socketfilter.Whitelisteverything || componentfilters.Whitelisteverything)
         {
-            //Debug.LogError("Whitelisted");
+            Debug.LogError("Whitelisted");
+            foreach(string whitelist in socket.RestrictToModules)
+            {
+                Debug.LogError($"Built in whitelist {whitelist}");
+            }
 
             if (!Component.UseableByFaction(____fleetFaction))
             {
+                Debug.LogError("Faction Issue");
                 if (socketfilter.BypassFactionRestrictions && socketfilter.Whitelist.Contains(Component.SaveKey))
                 {
                     FactionKey = Component.FactionKey;
                     Common.SetVal(component, "_factionKey", null);
-                    //Debug.LogError("Patching Faction");
+                    Debug.LogError("Patching Faction");
                 }
 
                 else if (componentfilters.BypassFactionRestrictions && componentfilters.Whitelist.Contains(Component.SaveKey))
                 {
                     FactionKey = Component.FactionKey;
                     Common.SetVal(component, "_factionKey", null);
-                    //Debug.LogError("Patching Faction");
+                    Debug.LogError("Patching Faction");
 
                 }
             }
@@ -43,19 +53,24 @@ class MissileComponentDescriptorInstallSocketModuleInternal
 
             if (!compatible)
             {
+                Debug.LogError("Compatiblity Issue");
                 if (socketfilter.AllowIllegal && socketfilter.Whitelist.Contains(Component.SaveKey))
                 {
                     SocketType = socket.SocketType;
                     socket.SocketType = Component.FitsSocketType;
-                    //Debug.LogError("Patching Type");
+                    Debug.LogError("Patching Type");
                 }
                 else if (componentfilters.AllowIllegal && componentfilters.Whitelist.Contains(Component.SaveKey))
                 {
                     SocketType = socket.SocketType;
                     socket.SocketType = Component.FitsSocketType;
-                    //Debug.LogError("Patching Type");
+                    Debug.LogError("Patching Type");
 
                 }
+            }
+            if (!socket.ComponentPermitted(component, ____fleetFaction))
+            {
+                Debug.LogError("Patching issue");
             }
         }
     }
@@ -63,6 +78,7 @@ class MissileComponentDescriptorInstallSocketModuleInternal
     static void Postfix(ModularMissile __instance, MissileSocket socket, MissileComponentDescriptor component)
     {
         Common.LogPatch();
+        Debug.LogError("Cleanup");
         if (SocketType.HasValue)
         {
             socket.SocketType = SocketType.Value;
@@ -77,6 +93,7 @@ class MissileComponentDescriptorInstallSocketModuleInternal
     }
 }
 
+
 [HarmonyPatch(typeof(MissileComponentPalette), nameof(MissileComponentPalette.SetEditingSocket))]
 class MissileComponentPaletteSetEditingSocket
 {
@@ -85,6 +102,7 @@ class MissileComponentPaletteSetEditingSocket
         Common.LogPatch();
         if (socket == null || ____editingMissile == null || ____editingMissile.Sockets.Count <= 0)
             return;
+        
         int index = ____editingMissile.Sockets.ToList().FindIndex(testsocket => testsocket == socket);
         IFilterIndexed socketfilter = Modular.FindIndexedFilter(____editingMissile.GetComponentsInChildren<IFilterIndexed>(), index) ?? Modular.Default;
         foreach (MissilePaletteItem item in ____allComponents.Where(item => item.Component != null))
@@ -94,27 +112,26 @@ class MissileComponentPaletteSetEditingSocket
             List<IFilterIndexed> filters = (Component as IModular)?.Modules?.Cast<IFilterIndexed>()?.ToList();
 
             IFilterIndexed componentfilters = Modular.FindIndexedFilter(filters, index) ?? Modular.Default;
-            //Debug.LogError("Comp Savekey: " + item.Component.SaveKey);
+            Debug.LogError("Comp Savekey: " + item.Component.SaveKey);
             if (socketfilter.Blacklist.Contains(Component.SaveKey) || componentfilters.Blacklist.Contains(____editingMissile.BaseMissileDesignation))
             {
-                //Debug.LogError("BlackListed");
+                Debug.LogError("BlackListed");
                 buttonGO.SetActive(value: false);
                 continue;
             }
-
-            if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(____editingMissile.BaseMissileDesignation))
+            else if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(____editingMissile.BaseMissileDesignation))
             {
                 bool compatible = !((socket.SocketType & Component.FitsSocketType) == 0);
 
                 if (Component.UseableByFaction(____fleetFaction) && compatible)
                 {
                     buttonGO.SetActive(value: true);
-                    //Debug.LogError("Generally Compatible");
+                    Debug.LogError("Generally Compatible");
                 }
 
                 if (!Component.UseableByFaction(____fleetFaction))
                 {
-                    //Debug.LogError("Faction Issue");
+                    Debug.LogError("Faction Issue");
 
                     if (socketfilter.BypassFactionRestrictions && socketfilter.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
@@ -123,7 +140,7 @@ class MissileComponentPaletteSetEditingSocket
                 }
                 if (!compatible)
                 {
-                    //Debug.LogError("compatible Issue");
+                    Debug.LogError("compatible Issue");
 
                     if (socketfilter.AllowIllegal && socketfilter.Whitelist.Contains(Component.SaveKey))
                         buttonGO.SetActive(value: true);
@@ -134,12 +151,99 @@ class MissileComponentPaletteSetEditingSocket
                 continue;
             }
             else if (socketfilter.Blacklisteverything || componentfilters.Blacklisteverything)
+            {
+                Debug.LogError("Never Active");
                 buttonGO.SetActive(value: false);
-            if (socketfilter.Whitelisteverything || componentfilters.Whitelisteverything)
+
+            }
+            else if (socketfilter.Whitelisteverything || componentfilters.Whitelisteverything)
+            {
+                Debug.LogError("Always Active");
                 buttonGO.SetActive(value: true);
+            }
         }
     }
 }
+*/
+[HarmonyPatch(typeof(MissileSocket), nameof(MissileSocket.ComponentPermitted))]
+class MissileSocketComponentPermittedPatch
+{
+    static void Postfix(MissileSocket __instance, MissileComponentDescriptor component, FactionDescription fleetFaction, ref bool __result)
+    {
+        if (component == null)
+            return;
+
+        ModularMissile missile = __instance.Missile;
+        if (missile == null)
+            return;
+
+        // Find the index of this socket within the missile
+        int index = missile.Sockets.ToList().IndexOf(__instance);
+        if (index == -1)
+            return;
+
+        // Resolve custom filters
+        List<IFilterIndexed> filters = (component as IModular)?.Modules?.Cast<IFilterIndexed>()?.ToList();
+        IFilterIndexed socketFilter = Modular.FindIndexedFilter(missile.GetComponentsInChildren<IFilterIndexed>(), index) ?? Modular.Default;
+        IFilterIndexed componentFilter = Modular.FindIndexedFilter(filters, index) ?? Modular.Default;
+
+        if (socketFilter.Blacklist.Contains(component.SaveKey) ||
+            componentFilter.Blacklist.Contains(missile.BaseMissileDesignation))
+        {
+            __result = false;
+            return;
+        }
+
+        bool CheckLegal()
+        {
+            if (fleetFaction != null && !component.UseableByFaction(fleetFaction))
+            {
+                bool bypassFaction = (socketFilter.BypassFactionRestrictions && socketFilter.Whitelist.Contains(component.SaveKey)) ||
+                                     (componentFilter.BypassFactionRestrictions && componentFilter.Whitelist.Contains(component.SaveKey));
+                if (!bypassFaction)
+                {
+                    return false;
+                }
+            }
+
+            // Evaluate Socket Type Compatibility Bypasses
+            if ((__instance.SocketType & component.FitsSocketType) == 0)
+            {
+                bool allowIllegal = (socketFilter.AllowIllegal && socketFilter.Whitelist.Contains(component.SaveKey)) ||
+                                    (componentFilter.AllowIllegal && componentFilter.Whitelist.Contains(component.SaveKey));
+                if (!allowIllegal)
+                {
+                    return false;
+
+                }
+            }
+            return true;
+        }
+        if (socketFilter.Whitelist.Contains(component.SaveKey) || componentFilter.Whitelist.Contains(missile.BaseMissileDesignation))
+        {
+            __result = true;
+            return;
+        }
+
+        if (socketFilter.Blacklisteverything || componentFilter.Blacklisteverything)
+        {
+            __result = false;
+            return;
+        }
+
+
+        if (socketFilter.Whitelisteverything || componentFilter.Whitelisteverything)
+        {
+            __result = CheckLegal();
+            return;
+        }
+
+
+        // If no custom rules matched, we don't alter __result.
+        // It stays whatever the base game method returned natively.
+    }
+}
+
 
 [HarmonyPatch(typeof(MissileSettingsPane), "OpenSettingsPanel")]
 class MissileSettingsPaneOpenSettingsPanel

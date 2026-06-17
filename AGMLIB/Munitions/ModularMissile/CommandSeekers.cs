@@ -4,6 +4,7 @@ using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles.Descriptors.Seekers;
 using Munitions.ModularMissiles.Runtime.Seekers;
 using Shapes;
+using System.Reflection;
 using UnityEngine.Rendering.HighDefinition;
 using static PositionSeekerDescriptor;
 using static Utility.GameColors;
@@ -32,11 +33,16 @@ public interface IDebugableMissileSeeker
 {
     List<DebugLine> GetDebugLines();
 }
+
+//    
+
 [CreateAssetMenu(fileName = "New Position Seeker", menuName = "Nebulous/Missiles/Seekers/Position")]
 public class PositionSeekerDescriptor : CommandSeekerDescriptor
 {
+    public bool CommunicatorSeeker = false;
+    public bool ForceAllowEmcomLaunch = false;
     public override bool SupportsPositionTargeting => true;
-    public override bool RequiresCommunicator => false;
+    public override bool RequiresCommunicator => CommunicatorSeeker;
     public ColorName Color => ColorName.Orange;
     public enum SensorUpdateMode
     {
@@ -400,6 +406,27 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
     public List<DebugLine> GetDebugLines()
     {
         return _currentDebugLines;
+    }
+}
+
+
+[HarmonyPatch(typeof(ActiveMissileSalvo), nameof(ActiveMissileSalvo.RegisterMissile))]
+public static class ActiveMissileSalvoRegisterPatch
+{
+    [HarmonyPostfix]
+    public static void Postfix(ActiveMissileSalvo __instance, IMissile missile)
+    {
+        if (missile == null || missile is not ModularMissile modularMissile) return;
+
+
+        foreach (BaseSeekerDescriptor seeker in modularMissile.GetSeekers())
+        {
+            if (seeker is PositionSeekerDescriptor posseeker && posseeker.ForceAllowEmcomLaunch)
+            {
+                Common.SetVal(__instance, "_requiresComms", false);
+                break;
+            }
+        }
     }
 }
 
