@@ -6,6 +6,7 @@
     [Header("Target FX")]
     [Space]
     public VisualEffect[] effects;
+    public List<DynamicVisibleParticles> dynamicVisibleParticles = new();
     public BookendedAudioPlayer[] audioeffects;
     [Space]
     [Header("Event Settings")]
@@ -14,8 +15,7 @@
     public bool risingedge;
     public bool continuoustrigger;
     public bool fallingedge;
-    bool laststate;
-    void Start() => laststate = active;
+    bool laststate = false;
 
     // Update is called once per frame
     protected override void FixedUpdate()
@@ -25,22 +25,34 @@
 
         if (active && continuoustrigger)
             SendTriggers();
-        else if (laststate != active)
+
+        if(laststate != active)
         {
-            if (active && risingedge)
-            {
-                SendTriggers();
-                foreach (BookendedAudioPlayer player in audioeffects)
-                    player?.Play();
-            }
-            else if (fallingedge)
-            {
-                SendTriggers();
-                foreach (BookendedAudioPlayer player in audioeffects)
-                    player?.Stop();
-            }
-            laststate = active;
+            risingedge = active && !laststate;
+            fallingedge = !active && laststate;
         }
+        else
+        {
+            risingedge = false;
+            fallingedge = false;
+        }
+        if (risingedge)
+        {
+            SendTriggers();
+            foreach (BookendedAudioPlayer player in audioeffects)
+                player?.Play();
+            foreach (DynamicVisibleParticles particle in dynamicVisibleParticles)
+                particle.Play();
+        }
+        else if (fallingedge)
+        {
+            SendTriggers();
+            foreach (BookendedAudioPlayer player in audioeffects)
+                player?.Stop();
+            foreach (DynamicVisibleParticles particle in dynamicVisibleParticles)
+                particle.Stop();
+        }
+        laststate = active;
     }
 
     void SendTriggers()
@@ -49,5 +61,18 @@
             foreach (string eventi in events)
                 effect.SendEvent(eventi);
 
+    }
+}
+
+public class StaticFX : MonoBehaviour
+{
+    public List<DynamicVisibleParticles> dynamicVisibleParticles = new();
+    public BookendedAudioPlayer[] audioeffects;
+    void Start()
+    {
+        foreach (BookendedAudioPlayer player in audioeffects)
+            player?.Play();
+        foreach (DynamicVisibleParticles particle in dynamicVisibleParticles)
+            particle.Play();
     }
 }
