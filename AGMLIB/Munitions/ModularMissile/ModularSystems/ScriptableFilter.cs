@@ -160,6 +160,22 @@ public class ModularFactionDescription : FactionDescription, IModular
     }
 }
 
+[HarmonyPatch(typeof(HullComponent), nameof(HullComponent.UseableByFaction))]
+class HullComponentUseableByFaction{
+    static void Postfix(HullComponent __instance, FactionDescription faction, ref bool __result)
+    {
+        Common.LogPatch();
+        if (faction is not ModularFactionDescription FactionDescription)
+            return;
+        string primaryFactionKey = Common.GetVal<string>(__instance, "_factionKey") ?? "";
+        string checkKey = __instance.SaveKey;
+        bool oldresult = __result;
+        __result = FactionDescription.FullCheckSharedEquipment(checkKey, primaryFactionKey, true);
+        bool delta = oldresult != __result;
+        //Debug.Log("delta: " + delta + " checkKey:" + checkKey + " old: " + oldresult + " new: " + __result + " factionkey: " + primaryFactionKey);
+    }
+}
+
 [HarmonyPatch(typeof(FactionDescription), nameof(FactionDescription.CheckSharedEquipment))]
 class FactionDescriptionCheckSharedEquipment
 {
