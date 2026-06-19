@@ -676,7 +676,7 @@ class ShipEditorPanePatch
     static void Postfix(ShipEditorPane __instance, HullSocket socket)
     {
         SimpleDiscount.UISocket = socket;
-        //Debug.LogError("Ship Editor Pane Postfix");
+        //Debug.Log("Ship Editor Pane Postfix: "  + socket.Key);
         SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new SocketFilters();
         //if(socketFilters == null)
         //ComponentPalette _palette = (ComponentPalette)GetPrivateField(__instance, "_palette"); ;
