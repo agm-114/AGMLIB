@@ -54,6 +54,8 @@ public class ModularFactionDescription : FactionDescription, IModular
 
     public string[] SharedEquipmentPatterns => Common.GetVal<string[]>(this, "_sharedEquipmentPatterns");
 
+    public bool AllowFactionLessComponents = true;
+
     private HashSet<string> _sharedFactionSet;
 
     private HashSet<string> _sharedEquipmentSet;
@@ -155,7 +157,12 @@ public class ModularFactionDescription : FactionDescription, IModular
         //foreach (string faction in _sharedFactionSet)
         //    Debug.Log("faction: " + faction);
 
-        //Debug.Log("null: " + !string.IsNullOrEmpty(primaryFactionKey) +  " faction null: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
+        Debug.Log("null: " + !string.IsNullOrEmpty(primaryFactionKey) +  " include faction all: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
+        if (AllowFactionLessComponents && string.IsNullOrEmpty(primaryFactionKey))
+        {
+            //Debug.Log("Faction less component not allowed");
+            return true;
+        }
         return (!string.IsNullOrEmpty(primaryFactionKey) && includeFactionAll && _sharedFactionSet.Contains(primaryFactionKey));
     }
 }

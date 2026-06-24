@@ -36,6 +36,7 @@
             risingedge = false;
             fallingedge = false;
         }
+        //Debug.LogError($"DynamicFX: {gameObject.name} - Active: {active}, LastState: {laststate}, RisingEdge: {risingedge}, FallingEdge: {fallingedge}");
         if (risingedge)
         {
             SendTriggers();
