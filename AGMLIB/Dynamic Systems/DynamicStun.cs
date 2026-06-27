@@ -1,4 +1,6 @@
-﻿public class DynamicStun : ActiveSettings
+﻿using System.Diagnostics;
+
+public class DynamicStun : ActiveSettings
 {
     public enum KnockbackMode
     {
@@ -20,6 +22,41 @@
     {
 
         base.FixedUpdate();
+        /*
+        if (!active)
+        {
+            if (DisableWeapons)
+                Common.SetVal(ShipController, "_weaponsControl", WeaponsControlStatus.Hold);
+        }
+
+        //Debug.LogError("DynamicStun FixedUpdate Active: " + active + " LastActive: " + lastactive + " DisableWeapons: " + DisableWeapons + " WeaponsControl: " + ShipController.WeaponsControl);
+
+        if (DisableWeapons)
+        {
+            //Debug.LogError("DisableWeapons: " + DisableWeapons + " WeaponsControl: " + ShipController.WeaponsControl);
+            if (ShipController == null)
+            {
+                Debug.LogError("Null ShipController");
+            }
+            lastactive = active;
+            if (Ship != null && !this.Active(Ship))
+            {
+                Debug.LogError("Inactive Ship");
+            }
+            else if (activateHullComponentstate != ConditionalState.Ignore && activateHullComponentstate != HullComponentState)
+                Debug.LogError("Inactive Component");
+            else if (activateFiringState != ConditionalState.Ignore && activateFiringState != FiringState)
+                Debug.LogError("Inactive Firing State");
+            else if (activateButtonState != ConditionalState.Ignore && activateButtonState != Buttonstate)
+                Debug.LogError("Inactive Button State");
+            else if (activateOnFireReportState != ConditionalState.Ignore && activateOnFireReportState != OnFireState)
+                Debug.LogError("Inactive OnFire State");
+            else if (activateVelocity != ConditionalState.Ignore && activateVelocity != VelocityState)
+                Debug.LogError("Inactive Velocity State");
+            else
+                Debug.LogError("Active");
+        }
+        */
         if (active != lastactive)
         {
             Common.RunFunc(ShipController, "HandlePowerplantsWorkingChanged", new object[] { null });
@@ -39,6 +76,7 @@
     }
     public bool DisableDrives = true;
     public bool DisableReactors = true;
+    public bool DisableWeapons = true;
     public ForceMode Mode = ForceMode.Impulse;
     public KnockbackMode Knockback = KnockbackMode.ComponentPostion;
     public Transform Postion;
@@ -58,6 +96,36 @@ public static class DynamicWorkingHelpers
     }
 }
 
+[HarmonyPatch(typeof(ShipController))]//, nameof(BaseCellLauncherComponent.)
+[HarmonyPatch("WeaponsControl", MethodType.Getter)]
+class ShipControllerWeaponsControl
+{
+    public static void Postfix(ref WeaponsControlStatus __result, ShipController __instance)
+    {
+        Common.LogPatch();
+         
+        //Debug.LogError("WeaponsControl Patch");
+        GameObject ship = __instance.gameObject;
+        if (ShipInfoBarMatchAllButtons.MatchingAllButtons)
+        {
+            //Debug.LogError("Buttons Not Patched");
+            return;
+        }
+        if(!__instance.GetActive().Any())  
+        {
+            //Debug.LogError("No DynamicStun components found");
+        }
+        if (__instance.GetActive().Count(a => a.DisableWeapons) <= 0)
+        {
+            //Debug.LogError("No DisableWeapons components found");
+            return;
+        }
+        __result = WeaponsControlStatus.Hold;
+
+    }
+}
+
+
 [HarmonyPatch(typeof(ShipController), "HandleDrivesWorkingChanged")]
 class ShipControllerHandleDrivesWorkingChanged
 {
@@ -66,7 +134,7 @@ class ShipControllerHandleDrivesWorkingChanged
         Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
-        if (__instance.GetActive().Where(a => a.DisableDrives).Count() <= 0)
+        if (__instance.GetActive().Count(a => a.DisableDrives) <= 0)
             return;
         //Debug.LogError("Drive Patch");
         cache._allDrives = Common.GetVal<List<DriveComponent>>(__instance, "_allDrives");
@@ -93,7 +161,7 @@ class ShipControllerHandlePowerplantsWorkingChanged
         Common.LogPatch();
         GameObject ship = __instance.gameObject;
         DynamicWorkingCache cache = ship.GetComponent<DynamicWorkingCache>() ?? ship.AddComponent<DynamicWorkingCache>();
-        if (__instance.GetActive().Where(a => a.DisableReactors).Count() <= 0)
+        if (__instance.GetActive().Count(a => a.DisableReactors) <= 0)
             return;
         //Debug.LogError("Reactor Patch");
         cache._allPowerplants = Common.GetVal<List<PowerplantComponent>>(__instance, "_allPowerplants");
