@@ -282,9 +282,12 @@ public class ButtonData
 class ShipInfoBarMatchAllButtons
 {
     static Dictionary<string, ButtonData> uibuttons = new();
+    public static bool MatchingAllButtons = false;
 
     static void Prefix(ShipInfoBar __instance, SequentialButton ____battleshort, IPlayerActionAvailable ____actionLimiter, HumanSkirmishPlayer ____localPlayer)
     {
+        MatchingAllButtons = true;
+        //Debug.LogError("MatchingAllButtons");
         PlayerActionLimiter? playerActionLimiter = (PlayerActionLimiter)____actionLimiter;
         PlayerAction action = 0;
         if (playerActionLimiter != null)
@@ -330,6 +333,12 @@ class ShipInfoBarMatchAllButtons
             uibuttons.Add(newbutton.ButtonName, newbutton);
         }
 
+    }
+
+    static void Postfix()
+    {
+        MatchingAllButtons = false;
+        //Debug.LogError("MatchingAllButtons PostFix");
     }
 }
 //Queueing Order: Game.Orders.PlayerOrder
