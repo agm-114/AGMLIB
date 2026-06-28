@@ -13,7 +13,7 @@
     <RootNamespace>Lib</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 
-    <VersionPrefix>6.2.1.119</VersionPrefix>
+    <VersionPrefix>6.2.1.176</VersionPrefix>
 
     <Copyright>≽^•⩊•^≼</Copyright>
     <ModName>AGMLIB</ModName>
@@ -154,6 +154,9 @@
     <Reference Include="UnityEngine">
       <HintPath>libs\UnityEngine.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>libs\UnityEngine.AnimationModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>libs\UnityEngine.AssetBundleModule.dll</HintPath>
