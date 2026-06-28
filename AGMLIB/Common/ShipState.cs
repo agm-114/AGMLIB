@@ -39,7 +39,7 @@ public class InternalShipState : NetworkBehaviour
         return button;
     }
 
-    public Ship? Ship;
+    public Ship? Ship => Hull.MyShip;
     public ShipController? ShipController = null;
     public ResourceComponent? ResourceComponent = null;
     public EditorShipController? EditorShipController = null;
@@ -73,27 +73,6 @@ public class InternalShipState : NetworkBehaviour
             ShipController = transform.gameObject.GetComponent<ShipController>();
         if (ShipController == null)
             ShipController = transform.gameObject.GetComponentInChildren<ShipController>();
-        if (Ship == null && ShipController != null && ShipController.Ship != null)
-            Ship = ShipController.Ship;
-        if (Ship == null)
-            Ship = transform.gameObject.GetComponentInParent<Ship>();
-        if (Ship == null)
-            Ship = transform.gameObject.GetComponent<Ship>();
-
-        if (ResourceComponent == null)
-            ResourceComponent = transform.gameObject.GetComponentInParent<ResourceComponent>();
-        if (ResourceComponent == null)
-            ResourceComponent = transform.gameObject.GetComponent<ResourceComponent>();
-        if (ResourceComponent == null)
-            ResourceComponent = transform.gameObject.GetComponentInChildren<ResourceComponent>();
-        if (ResourceComponent == null)
-            ResourceComponent = Ship.gameObject.GetComponentInChildren<ResourceComponent>();
-        if (ResourceComponent == null)
-            ResourceComponent = Ship.gameObject.GetComponent<ResourceComponent>();
-        if (ResourceComponent == null)
-            ResourceComponent = Ship.gameObject.GetComponentInParent<ResourceComponent>();
-
-
 
         if (Hull == null)
             Hull = transform.gameObject.GetComponentInParent<Hull>();
@@ -102,11 +81,27 @@ public class InternalShipState : NetworkBehaviour
         if (Hull == null)
             Hull = transform.gameObject.GetComponentInChildren<Hull>();
 
-        ShipState = Ship.GetComponent<ShipState>();
+        if (ResourceComponent == null)
+            ResourceComponent = transform.gameObject.GetComponentInParent<ResourceComponent>();
+        if (ResourceComponent == null)
+            ResourceComponent = transform.gameObject.GetComponent<ResourceComponent>();
+        if (ResourceComponent == null)
+            ResourceComponent = transform.gameObject.GetComponentInChildren<ResourceComponent>();
+        if (ResourceComponent == null)
+            ResourceComponent = Hull?.gameObject.GetComponentInChildren<ResourceComponent>();
+        if (ResourceComponent == null)
+            ResourceComponent = Hull?.gameObject.GetComponent<ResourceComponent>();
+        if (ResourceComponent == null)
+            ResourceComponent = Hull?.gameObject.GetComponentInParent<ResourceComponent>();
+
+
+
+
+        ShipState = Hull?.GetComponent<ShipState>();
         if (ShipState == null)
         {
-            ShipState = Ship.gameObject.AddComponent<ShipState>();
-            ShipState.Awake();
+            ShipState = Hull?.gameObject.AddComponent<ShipState>();
+            ShipState?.Awake();
         }
         //module = gameObject.GetComponent<HullComponent>();
     }
@@ -134,7 +129,7 @@ public class ShipState : NetworkBehaviour
     private InternalShipState InternalShipState;
     public float Velocity => InternalShipState.Velocity;
     public ShipInfoButton GetButton(string key) => InternalShipState.GetButton(key);
-    public Ship? Ship => InternalShipState.Ship;
+    public Ship? Ship => Hull.MyShip;
     public ShipController? ShipController => InternalShipState.ShipController;
     public Hull? Hull => InternalShipState.Hull;
     public ResourceComponent? ResourceComponent => InternalShipState.ResourceComponent;
