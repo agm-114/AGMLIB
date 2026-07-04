@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Game;
 using Game.EWar;
 using Game.Sensors;
@@ -34,7 +35,7 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
     private bool _jammableByCommsJammers = false;
 
     [SerializeField]
-    private bool _debugLogging = true;
+    private bool _debugLogging = false;
 
     private SensorContext _context;
     private bool _sensorEnabled = true;
@@ -413,6 +414,17 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         return true;
     }
 
+    public override void GetFormattedStats(List<(string, string)> rows, bool full, int groupSize = 1)
+    {
+        base.GetFormattedStats(rows, full, groupSize);
+        rows.Add(("Role", "SIGINT / Comms LOB"));
+        rows.Add(("$SHIPSTAT_SIGNATURETYPE", SignatureType.Comms.GetAbbrevWithColor()));
+        rows.Add(("Acquisition", "Passive bearing-only track"));
+        rows.Add(("Accuracy", $"{_accuracy:n2} $UNIT_DEGREES"));
+        rows.Add(("Detection", _requireTransmitEnabled ? "Transmitting communicators" : "Working comms antennas"));
+        rows.Add(("Coverage", _limitByCoverage ? _coverage.ToString() : "Omnidirectional"));
+        rows.Add(("Comms Jamming", _jammableByCommsJammers ? "Susceptible" : "Immune"));
+    }
     protected override ComponentActivity GetFunctionalActivityStatus()
     {
         if (base.IsFunctional && _sensorEnabled)
@@ -522,3 +534,138 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         return _jammableByCommsJammers ? JammingSources.GetPredominantJammingDirection() : Vector3.zero;
     }
 }
+
+static class PassiveCommsSensorTrackHelpers
+{
+    public static bool HasPassiveCommsSensor(SensorTrack track)
+    {
+        List<ISensor> passiveSensors = Common.GetVal<List<ISensor>>(track, "_passiveSensors");
+        return passiveSensors != null && passiveSensors.Any(sensor => sensor is PassiveCommsSensorComponent);
+    }
+
+    public static bool HasPassiveCommsSensor(IBoardPiece piece)
+    {
+        if (piece is SensorTrack track)
+        {
+            return HasPassiveCommsSensor(track);
+        }
+
+        IBoardPiece primaryPiece = Common.GetVal<IBoardPiece>(piece, "_primaryPiece");
+        if (primaryPiece != null && HasPassiveCommsSensor(primaryPiece))
+        {
+            return true;
+        }
+
+        IEnumerable<IBoardPiece> pieces = Common.GetVal<IEnumerable<IBoardPiece>>(piece, "_pieces");
+        return pieces != null && pieces.Any(HasPassiveCommsSensor);
+    }
+
+    public static bool HasPassiveCommsSensor(object handle)
+    {
+        NetworkedSensorTrack parent = Common.GetVal<NetworkedSensorTrack>(handle, "_parent");
+        List<ITrack> contributors = Common.GetVal<List<ITrack>>(parent, "_contributors");
+        return contributors != null && contributors.Any(HasPassiveCommsContributor);
+    }
+
+    private static bool HasPassiveCommsContributor(ITrack track)
+    {
+        if (track is SensorTrack sensorTrack)
+        {
+            return HasPassiveCommsSensor(sensorTrack);
+        }
+
+        return track is IBoardPiece piece && HasPassiveCommsSensor(piece);
+    }
+}
+
+[HarmonyPatch(typeof(SensorTrack), "Game.UI.IBoardPiece.get_ContactIntelPrefix")]
+class PassiveCommsSensorContactIntelPrefix
+{
+    static void Postfix(SensorTrack __instance, ref string __result)
+    {
+        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        {
+            __result = "UI_HUD_SIGINT";
+        }
+    }
+}
+
+[HarmonyPatch]
+class PassiveCommsSensorNetworkedContactIntelPrefix
+{
+    static MethodBase TargetMethod() => AccessTools.Method(AccessTools.Inner(typeof(NetworkedSensorTrack), "Handle"), "Game.UI.IBoardPiece.get_ContactIntelPrefix");
+
+    static void Postfix(object __instance, ref string __result)
+    {
+        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        {
+            __result = "UI_HUD_SIGINT";
+        }
+    }
+}
+[HarmonyPatch(typeof(Utility.Localization.LocalizationCore), nameof(Utility.Localization.LocalizationCore.LocalizeToken))]
+class PassiveCommsSensorSigintToken
+{
+    static void Postfix(string token, ref string __result)
+    {
+        if (token == "UI_HUD_SIGINT")
+        {
+            __result = "SIGINT";
+        }
+    }
+}
+
+
+[HarmonyPatch(typeof(SensorTrack), "Game.UI.IBoardPiece.get_ContactIntel")]
+class PassiveCommsSensorLobContactIntel
+{
+    static void Postfix(SensorTrack __instance, ref string __result)
+    {
+        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance) && string.IsNullOrEmpty(__result) && (__instance.Mode == TrackingMode.BearingOnly || __instance.Mode == TrackingMode.Ping))
+        {
+            __result = "DETECTED";
+        }
+    }
+}
+[HarmonyPatch]
+class PassiveCommsSensorNetworkedContactSymbol
+{
+    static MethodBase TargetMethod() => AccessTools.Method(AccessTools.Inner(typeof(NetworkedSensorTrack), "Handle"), "Game.UI.IBoardPiece.get_ContactSymbol");
+
+    static void Postfix(object __instance, ref string __result)
+    {
+        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        {
+            __result = SignatureType.Comms.GetLOBSymbol();
+        }
+    }
+}
+
+[HarmonyPatch(typeof(SensorTrack), "Game.UI.IBoardPiece.get_OverrideColor")]
+class PassiveCommsSensorOverrideColor
+{
+    static void Postfix(SensorTrack __instance, ref Color? __result)
+    {
+        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        {
+            __result = GameColors.Yellow;
+        }
+    }
+}
+
+[HarmonyPatch]
+class PassiveCommsSensorNetworkedOverrideColor
+{
+    static MethodBase TargetMethod() => AccessTools.Method(AccessTools.Inner(typeof(NetworkedSensorTrack), "Handle"), "Game.UI.IBoardPiece.get_OverrideColor");
+
+    static void Postfix(object __instance, ref Color? __result)
+    {
+        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        {
+            __result = GameColors.Yellow;
+        }
+    }
+}
+
+
+
