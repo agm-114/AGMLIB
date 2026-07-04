@@ -5,8 +5,11 @@ using Munitions.ModularMissiles;
 using Shapes;
 using SmallCraft;
 using Steamworks.Ugc;
+using System.ComponentModel;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using static Utility.GameColors;
+
 //using static UnityEditorInternal.ReorderableList;#dll
 using Random = System.Random;
 /*
@@ -215,48 +218,131 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
     }
 }
 
+public static class SocketHelpers
+{
+    public static string DisplayType(this HullSocket socket)
+    {
+        string displayName = socket.GetComponent<SocketEditorUISettings>()?.CustomType ?? "";
+        if (!string.IsNullOrEmpty(displayName))
+            return displayName;
+        displayName = socket.GetComponent<BasicSocketEditorUISettings>()?.CustomType ?? "";
+        if (!string.IsNullOrEmpty(displayName))
+            return displayName;
+
+        return "";
+    }
+}
+
 public class BasicSocketEditorUISettings : MonoBehaviour
 {
     public string CustomType = "";
-    public bool AllowNullComponent = true;
-    public bool AllowIllegal = true;
-    public bool ShowPalette = true;
+    //THIS needs to go into SocketEditorUISettings
+
 }
 
 
 public class SocketEditorUISettings : BasicSocketEditorUISettings
 {
-    public bool ShowInShipPane = true;
+    public bool ShowInShipPane = true;//THIS needs to go into SocketEditorUISettings
+    public bool ShowPalette = true;
     public bool AllowHighlight = true;
+    public ColorName InstalledColor = ColorName.Green;
     public Color DrawColor = Color.clear;
     public RenderShape Shape= RenderShape.Default;
     public float Radius = 1f;
     public float Thickness = 1f;
 }
 
-public class KeyBasedFilterLookup: MonoBehaviour, ISocketLookup
+
+
+public abstract class BaseSocketLookup : MonoBehaviour
+{
+    public abstract SocketFilters GetFilter(string key);
+    public abstract string GetGropupName(string key);
+    public abstract Color GetGroupBackgroundColor(string key);
+    public abstract Color GetGroupTextColor(string key);
+}
+
+public class KeyBasedFilterLookup : BaseSocketLookup
 {
     public SocketFilters DefaultChildFilter = null;
-    public Dictionary<string, SocketFilters> Filters = new Dictionary<string, SocketFilters>();
+    public string DefaultName = "Default";
+    public Color DefaultBackgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+    public Color DefaultTextColor = Color.white;
+    public List<string> Keys = [];
+    public List<SocketFilters> Filters = [];
+    public List<string> Names = [];
+    public List<Color> BackgroundColors = [];
+    public List<Color> TextColors = [];
+    public Dictionary<string, SocketFilters> FilterLookup => Keys.Zip(Filters, (k, v) => new { k, v }).ToDictionary(x => x.k, x => x.v);
+    public Dictionary<string, Color> BackgroundColorLookup => Keys.Zip(BackgroundColors, (k, v) => new { k, v }).ToDictionary(x => x.k, x => x.v);
+    public Dictionary<string, Color> TextColorLookup => Keys.Zip(TextColors, (k, v) => new { k, v }).ToDictionary(x => x.k, x => x.v);
 
-    public SocketFilters GetFilter(string key)
+    public override SocketFilters GetFilter(string key)
     {
-        if (Filters.ContainsKey(key)) return Filters[key];
+        if (FilterLookup.ContainsKey(key)) return FilterLookup[key];
         return DefaultChildFilter;
+    }
+
+
+    public override string GetGropupName(string key)
+    {
+        if (Keys.Contains(key))
+        {
+            int index = Keys.IndexOf(key);
+            if (index >= 0 && index >= Names.Count)
+                return Filters[index].gameObject.name;
+            return Names[index];
+        }
+        return DefaultName;
+    }
+
+    public override Color GetGroupBackgroundColor(string key)
+    {
+        if (Keys.Contains(key)) 
+        {
+            int index = Keys.IndexOf(key);
+            if (index >= 0 && index >= BackgroundColors.Count)
+                return DefaultBackgroundColor;
+            return BackgroundColors[index];
+        }
+        return DefaultBackgroundColor;
+    }
+    public override Color GetGroupTextColor(string key)
+    {
+        if (Keys.Contains(key))
+        {
+            int index = Keys.IndexOf(key);
+            if (index >= 0 && index >= TextColors.Count)
+                return DefaultTextColor;
+            return TextColors[index];
+        }
+        return DefaultTextColor;
     }
 }
 
-public interface ISocketLookup
+public class SocketEditorParentSettings : MonoBehaviour
 {
-    public SocketFilters GetFilter(string key);
+    public SocketEditorChildSettings Parent;
 }
 
-public class SocketEditorChildSettings
+public class SocketEditorChildSettings : MonoBehaviour
 {
     public List<HullSocket> VisualChildren = new();
     public bool ComponentBasedChildVisiblity = false;
     public bool ComponentBasedChildStrip = false;
-    public ISocketLookup FilterLookup;
+    public Color BackgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+    public Color TextColor = Color.white;
+    public BaseSocketLookup FilterLookup;
+
+    public void Setup()
+    {
+        foreach(HullSocket visualChild in VisualChildren)
+        {
+            //Debug.LogError("Adding parent basesettings to child: " + visualChild.name);
+            visualChild.gameObject.AddComponent<SocketEditorParentSettings>().Parent = this;
+        }
+    }
 
 }
 
@@ -264,9 +350,11 @@ public class SocketEditorChildSettings
 public class SocketFilters : BasicSocketEditorUISettings, IFilter
 #pragma warning restore CA1708 // Identifiers should differ by more than case
 {
-
+    public bool AllowNullComponent = true;
+    public bool AllowIllegalSize = false;
     public void Copy(SocketFilters filter)
     {
+        //Debug.LogError(filter.whitelist.Count);
         whitelist = filter.whitelist;
         whitelisteverything = filter.whitelisteverything;
         blacklist = filter.blacklist;
@@ -291,19 +379,63 @@ public class SocketFilters : BasicSocketEditorUISettings, IFilter
     [HideInInspector]
     public bool Resized = false;
 
+    
+    public static void EnsureChildSetup(HullSocket socket, HullComponent hullComponent)
+    {
+        SocketEditorChildSettings? childsettings = socket?.GetComponent<SocketEditorChildSettings>();
+        SocketEditorParentSettings? parentsettings = socket?.GetComponent<SocketEditorParentSettings>();
+        
+
+        if (childsettings != null && childsettings.VisualChildren.Count > 0)
+        {
+
+            string componentkey = hullComponent?.SaveKey ?? "";
+            SocketFilters? filter = childsettings.FilterLookup?.GetFilter(componentkey) ?? null;
+            foreach (HullSocket visualChild in childsettings.VisualChildren)
+            {
+
+                if (filter != null)
+                {
+                    SocketFilters childfilter = visualChild.gameObject.GetOrAddComponent<SocketFilters>();
+                    childfilter.Copy(filter);
+                }
+
+
+            }
+        }
+        if (parentsettings != null)
+        {
+            HullSocket parentSocket = parentsettings.Parent.gameObject.GetComponent<HullSocket>();
+            SocketFilters? filter = parentsettings.Parent.FilterLookup?.GetFilter(parentSocket.Component?.SaveKey ?? "") ?? null;
+            SocketFilters socketFilters2 = socket.gameObject.GetOrAddComponent<SocketFilters>();
+            socketFilters2.Copy(filter);
+        }
+
+    }
+
     public static bool CheckLegal(HullSocket socket, HullComponent hullComponent)
     {
+        //if (hullComponent?.name != null)
+        //    Debug.LogError("Socketfilter Checking legality of component " + hullComponent?.name + " on socket " + socket?.name);
+  
+
+
+
+
         SocketFilters socketFilters = socket?.GetComponent<SocketFilters>() ?? new SocketFilters();
 
         if (hullComponent == null)
             return socketFilters.AllowNullComponent;
         if (hullComponent.SaveKey == socket.DefaultComponent)
             return true;
-        //Debug.Log(hullComponent.SaveKey);
         SocketFilters componentFilters = hullComponent.GetComponent<SocketFilters>() ?? new SocketFilters();
+        //Debug.Log("Filtering: " +  hullComponent.SaveKey);
+        //bool legal = hullComponent.TestSocketFit(socket.Size) && socket.MyHull.CanMountEquipment(hullComponent);
+        //Debug.Log("Legal: " + legal + "Socket Allow Illegal: " + socketFilters.AllowIllegalSize + "Component Allow Illegal: " + componentFilters.AllowIllegalSize);
         if (!socketFilters.AllowNullComponent && hullComponent == null)
             return false;
-        else if ((!socketFilters.AllowIllegal || !componentFilters.AllowIllegal) && !hullComponent.TestSocketFit(socket.Size))
+        //else if (!socketFilters.AllowIllegalSize && !componentFilters.AllowIllegalSize && !(hullComponent.TestSocketFit(socket.Size) || socket.MyHull.CanMountEquipment(hullComponent)))
+        else if (!hullComponent.TestSocketFit(socket.Size) && (!socketFilters.AllowIllegalSize || !componentFilters.AllowIllegalSize) )
             return false;
         else if (socketFilters.Whitelist.Contains(hullComponent.SaveKey) || componentFilters.Whitelist.Contains(socket.Key))
             return true;
@@ -409,12 +541,12 @@ class SocketOutlineManagerDrawShapes
                 List<Color> numbers = new List<Color> { Color.green, Color.blue, Color.white, Color.black, Color.yellow, Color.cyan, Color.magenta };
 
 
-                //Draw.Color = numbers[random.Next(numbers.Count)];
+                //Draw.BackgroundColor = numbers[random.Next(numbers.Count)];
                 Draw.Color = socket == _selectedSocket
                         ? _selectedColor
                         : socket == _hoveredSocket ? _selectedColor : socket.Component != null ? _filledColor : _emptyColor;
 
-                //Draw.Color = numbers[random.Next(numbers.Count)];
+                //Draw.BackgroundColor = numbers[random.Next(numbers.Count)];
 
                 //Testing
 
@@ -527,6 +659,15 @@ class SocketOutlineManagerDrawShapes
 [HarmonyPatch(typeof(ShipEditorPane), nameof(ShipEditorPane.SetShip))]
 class ShipEditorPaneSetShip
 {
+    static void Prefix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
+    {
+        Common.LogPatch();
+        foreach (Accordion child2 in ____scrollPaneContent.GetComponentsInChildren<Accordion>())
+        {
+            UnityEngine.Object.Destroy(child2?.gameObject);
+        }
+    }
+
     static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
     {
         Common.LogPatch();
@@ -535,45 +676,58 @@ class ShipEditorPaneSetShip
 
         IReadOnlyCollection<HullSocket> allSockets = ____currentShip.Ship.Hull.AllSockets;
         //Debug.LogError("Setting Ship");
-        foreach (SocketItem child in ____scrollPaneContent.GetComponentsInChildren<SocketItem>().Where(socketitem => socketitem.Socket != null))
+        foreach (SocketItem socketitem in ____scrollPaneContent.GetComponentsInChildren<SocketItem>().Where(socketitem => socketitem.Socket != null))
         {
-            HullSocket? socket = child?.Socket;
-
-            BasicSocketEditorUISettings? settings = socket?.GetComponent<BasicSocketEditorUISettings>();
-            SocketEditorUISettings? socketEditorUISettings = socket?.GetComponent<SocketEditorUISettings>();
-
-            SocketEditorChildSettings childsettings = socket?.GetComponent<SocketEditorChildSettings>();
+            HullSocket socket = socketitem.Socket;
 
 
+            SocketEditorUISettings? socketEditorUISettings = socket.GetComponent<SocketEditorUISettings>();
 
-            if (childsettings != null && childsettings.VisualChildren.Count > 0 && false)
+            SocketEditorChildSettings childsettings = socket.GetComponent<SocketEditorChildSettings>();
+
+
+
+            if (childsettings != null && childsettings.VisualChildren.Count > 0)
             {
 
-                GameObject socketgroupgo2 = UnityEngine.Object.Instantiate(____socketGroupingPrefab, child.gameObject.transform);
+                GameObject socketgroupgo2 = UnityEngine.Object.Instantiate(____socketGroupingPrefab, socketitem.gameObject.transform);
                 Accordion accordion2 = socketgroupgo2.GetComponent<Accordion>();
+                HeaderItem accordionName = socketgroupgo2.GetComponentInChildren<HeaderItem>();
+
                 Image image = socketgroupgo2.GetComponentInChildren<Image>();
-                image.color = new Color(0.9f, 0.9f, 0.9f, 1f);
-                socketgroupgo2.active = socket.Component != null;
-                socket.OnInstalledComponentChanged += (HullComponent component) =>
+                image.color = childsettings.BackgroundColor;
+                //socketgroupgo2.active = socket.Component != null;
+                TextMeshProUGUI accordianText = Common.GetVal<TextMeshProUGUI>(accordionName, "_text");
+                accordianText.color = childsettings.TextColor;
+
+                void HandleComponentChange(HullComponent component)
                 {
-                    socketgroupgo2.active = component != null;
-                    if (component != null)
+                    socketgroupgo2.active = component != null || !childsettings.ComponentBasedChildVisiblity;
+                    string Name = childsettings.FilterLookup?.GetGropupName(component?.SaveKey ?? "") ?? component?.name ?? "Error";
+                    accordionName.SetText(Name);
+                    image.color = childsettings.FilterLookup?.GetGroupBackgroundColor (component?.SaveKey ?? "") ?? childsettings.BackgroundColor;
+                    accordianText.color = childsettings.FilterLookup?.GetGroupTextColor(component?.SaveKey ?? "") ?? childsettings.TextColor;
+                    foreach (HullSocket visualChild in childsettings.VisualChildren)
                     {
-                        child.Socket.SetComponent(null);
-                        SocketFilters filter = null;
-                        if (childsettings.FilterLookup != null)
+
+                        SocketFilters.EnsureChildSetup(visualChild, component);
+                        if (component != null && !SocketFilters.CheckLegal(visualChild, visualChild.Component))
                         {
-                            filter = childsettings.FilterLookup.GetFilter(component.SaveKey);
+                            //Debug.LogError("Childfilter: Illegal component installed on socket: " + visualChild.name);
+                            visualChild.SetComponent(null);
                         }
-                        
-                        
-                        if (filter != null)
+                        else
                         {
-                            SocketFilters childfilter = child.Socket.gameObject.GetOrAddComponent<SocketFilters>();
-                            childfilter.Copy(filter);
+                            //Debug.LogError("Childfilter: legal component installed on socket: " + visualChild.name);
+
                         }
+
+                        
                     }
-                };
+                }
+
+                socket.OnInstalledComponentChanged += (HullComponent component) => { HandleComponentChange(component); };
+                HandleComponentChange(socket.Component);
 
                 foreach (HullSocket visualChild in childsettings.VisualChildren)
                 {
@@ -582,50 +736,48 @@ class ShipEditorPaneSetShip
                     item2.SetSocket(____currentShip, __instance, visualChild);
                 }
             }
-            if (settings == null)
-                continue;
 
-            //Debug.LogError($"checking socket {socket?.ShortName}");
 
+            //Debug.LogError($"checking socket {socket?.ShortName} setts: {basesettings != null} type: {basesettings?.CustomType ?? "None"}  show: {basesettings?.ShowInShipPane ?? true}");
 
 
 
-            if (string.IsNullOrEmpty(settings.CustomType) || (socketEditorUISettings?.ShowInShipPane ?? true))//|| socket.Type == HullSocketType.Compartment  || socket.name.Contains("Electronics") || socket.name.Contains("Secondary")
+            //we should only be destroying the default socket ui elements for custom types if they indicate they should be hidden
+            if (string.IsNullOrEmpty(socket.DisplayType()) && (socketEditorUISettings?.ShowInShipPane ?? true) )
             {
                 continue;
 
             }
             //Debug.LogError("removing socket " + socket?.ShortName);
             List<SocketItem> _sockets = Common.GetVal<List<SocketItem>>(__instance, "_sockets");
-            _sockets.Remove(child);
-            UnityEngine.Object.Destroy(child?.gameObject);
+            _sockets.Remove(socketitem);
+            UnityEngine.Object.Destroy(socketitem?.gameObject);
 
         }
         HashSet<string> types = [];
 
         foreach (HullSocket socket in allSockets)
         {
-            BasicSocketEditorUISettings settings = socket.GetComponent<BasicSocketEditorUISettings>() ?? new();
-            if (settings.CustomType.Length > 0)
-                types.Add(settings.CustomType);
+            string DisplayType = socket.DisplayType();
+            if (DisplayType.Length > 0)
+                types.Add(DisplayType);
         }
-        foreach (string value in types)
+        foreach (string type in types)
         {
             GameObject socketgroupgo = UnityEngine.Object.Instantiate(____socketGroupingPrefab, ____scrollPaneContent);
             socketgroupgo.transform.SetAsFirstSibling();
             Accordion accordion = socketgroupgo.GetComponent<Accordion>();
             HeaderItem componentInChildren = socketgroupgo.GetComponentInChildren<HeaderItem>();
-            componentInChildren.SetText(value);
-            foreach (HullSocket item3 in allSockets)
+            componentInChildren.SetText(type);
+            foreach (HullSocket socket in allSockets)
             {
-                BasicSocketEditorUISettings filter = item3.GetComponent<BasicSocketEditorUISettings>() ?? new();
-                if (filter.CustomType == value)
+                if (socket.DisplayType() == type && (socket.GetComponent<SocketEditorUISettings>()?.ShowInShipPane ?? true))
                 {
                     GameObject socketitemgo = UnityEngine.Object.Instantiate(____socketItemPrefab, accordion.Content);
 
 
                     SocketItem item = socketitemgo.GetComponent<SocketItem>();
-                    item.SetSocket(____currentShip, __instance, item3);
+                    item.SetSocket(____currentShip, __instance, socket);
                     Button socketbutton = socketitemgo.GetComponent<Button>();
                     socketbutton?.onClick?.AddListener(delegate
                     {
@@ -669,8 +821,8 @@ class ShipEditorPanePatch
 
         //
         SimpleDiscount.UISocket = socket;
-        SocketFilters socketFilters = socket.GetComponent<SocketFilters>();
-        return socketFilters == null || socketFilters.ShowPalette;
+        SocketEditorUISettings editorsettings = socket.GetComponent<SocketEditorUISettings>();
+        return editorsettings == null || editorsettings.ShowPalette;
     }
 
     static void Postfix(ShipEditorPane __instance, HullSocket socket)
@@ -784,6 +936,55 @@ class LoadPatch
     }
 }
 
+[HarmonyPatch(typeof(Ship), nameof(Ship.RebuildAmmoFeeder))]
+class ShipRebuildAmmoFeeder
+{
+    static void Postfix(Ship __instance)
+    {
+        //Debug.LogError("Rebuilding Ammo Feeder");
+
+        foreach (HullSocket socket in __instance.Hull.AllSockets)
+        {
+            SocketFilters.EnsureChildSetup(socket, socket.Component);
+            //if (socket.Component != null)
+                //Debug.LogError("Socket Build" + socket.name + " has component " + socket.Component.name);
+
+        }
+        foreach (HullSocket socket in __instance.Hull.AllSockets)
+        {
+            if (socket.Component != null && !SocketFilters.CheckLegal(socket, socket.Component))
+            {
+                //Debug.LogError("Validator: Illegal component installed on socket: " + socket.name);
+                socket.SetComponent(null);
+            }
+            else if (socket.Component != null)
+            {
+                //Debug.LogError("Validator: legal component installed on socket: " + socket.name);
+            }
+        }
+
+    }
+}
+
+[HarmonyPatch(typeof(SocketItem), "SetComponent")]
+class SocketItemSetComponent
+{
+    static void Prefix(SocketItem __instance, HullComponent component)
+    {
+        SocketEditorUISettings? settings = component?.gameObject?.GetComponent<SocketEditorUISettings>();
+        settings = settings ?? __instance.Socket.gameObject.GetComponent<SocketEditorUISettings>();
+        if (settings == null)
+            return;
+        Common.SetVal(__instance, "_installedColor", settings.InstalledColor);
+    }
+
+    static void Postfix(SocketItem __instance, HullComponent component)
+    {
+        Common.SetVal(__instance, "_installedColor", ColorName.DarkBlue);
+    }
+
+}
+
 [HarmonyPatch(typeof(HullSocket), nameof(HullSocket.SetComponent))]
 class HullSocketPatch
 {
@@ -816,7 +1017,7 @@ class HullSocketPatch
         Common.LogPatch();
         HullSocket socket = __instance;
         SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
-
+        
         //Common.Trace($"Socket Filter Key: {socket.Key} Allow Null {socketFilters.AllowNullComponent} comp key {componentPrefab?.SaveKey}");
 
         if (socket.GetComponent<SocketFilters>() == null && componentPrefab?.GetComponent<SocketFilters>() == null)

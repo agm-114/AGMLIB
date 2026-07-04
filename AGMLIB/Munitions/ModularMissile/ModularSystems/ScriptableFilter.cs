@@ -1,4 +1,5 @@
 ﻿using SmallCraft;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 [CreateAssetMenu(fileName = "New Scriptable Filter", menuName = "Nebulous/New Filter")]
@@ -157,13 +158,22 @@ public class ModularFactionDescription : FactionDescription, IModular
         //foreach (string faction in _sharedFactionSet)
         //    Debug.Log("faction: " + faction);
 
-        Debug.Log("null: " + !string.IsNullOrEmpty(primaryFactionKey) +  " include faction all: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
-        if (AllowFactionLessComponents && string.IsNullOrEmpty(primaryFactionKey))
+        //Debug.Log("NO filters KEY " + checkKey + "faction?: " + string.IsNullOrEmpty(primaryFactionKey) +  " include faction all: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
+        
+        if(_sharedFactionSet.Contains(primaryFactionKey))
         {
-            //Debug.Log("Faction less component not allowed");
             return true;
         }
-        return (!string.IsNullOrEmpty(primaryFactionKey) && includeFactionAll && _sharedFactionSet.Contains(primaryFactionKey));
+        if (string.IsNullOrEmpty(primaryFactionKey))
+        {
+            if (AllowFactionLessComponents && includeFactionAll)
+            {
+                //Debug.Log("Faction less component not allowed");
+                //Debug.LogError("Factionless component allowed for checkKey: " + checkKey + " factionkey: " + primaryFactionKey);
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -183,7 +193,7 @@ class HullComponentUseableByFaction{
     }
 }
 
-[HarmonyPatch(typeof(FactionDescription), nameof(FactionDescription.CheckSharedEquipment))]
+//[HarmonyPatch(typeof(FactionDescription), nameof(FactionDescription.CheckSharedEquipment))]
 class FactionDescriptionCheckSharedEquipment
 {
     static bool oneoff = true;
@@ -193,6 +203,8 @@ class FactionDescriptionCheckSharedEquipment
         if (__instance is not ModularFactionDescription FactionDescription)
             return;
         bool oldresult = __result;
+
+        //Debug.Log("check: " + " checkKey:" + checkKey + " factionkey: " + primaryFactionKey);
         __result = FactionDescription.FullCheckSharedEquipment(checkKey, primaryFactionKey, includeFactionAll);
         bool delta = oldresult != __result;
         //Debug.Log("delta: " + delta + " checkKey:" + checkKey + " old: " + oldresult + " new: " + __result + " factionkey: " + primaryFactionKey);
@@ -211,9 +223,12 @@ class LookaheadMunitionUseableByFaction
 
 
         bool oldresult = __result;
-        __result = FactionDescription.FullCheckSharedEquipment(__instance.SaveKey, __instance.FactionKey, true);
+        string checkKey = __instance.SaveKey;
+        string primaryFactionKey = __instance.FactionKey;
+        //Debug.Log("LM check: " + " checkKey:" + checkKey + " factionkey: " + primaryFactionKey);
+        __result = FactionDescription.FullCheckSharedEquipment(checkKey, primaryFactionKey, false);
         bool delta = oldresult != __result;
-        //Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + __instance.FactionKey);
+        //Debug.Log("LM delta: " + " checkKey:" + checkKey + " factionkey: " + primaryFactionKey + delta  + " old: " + oldresult + " new: " + __result );
     }
 }
 
@@ -270,20 +285,35 @@ public class AvailableMunitionsSetConstructor
     }
 }
 
-//[HarmonyPatch(typeof(LightweightMunitionBase), "IFactionLocked.UseableByFaction")]
+[HarmonyPatch]
 class LightweightMunitionBaseUseableByFaction
 {
     static bool oneoff = true;
+
+    static MethodBase TargetMethod()
+    {
+        return typeof(LightweightMunitionBase)
+            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+            .First(m =>
+                m.Name.EndsWith(".UseableByFaction") &&
+                m.GetParameters().Length == 1 &&
+                m.GetParameters()[0].ParameterType == typeof(FactionDescription));
+    }
+
     static void Postfix(LightweightMunitionBase __instance, FactionDescription faction, ref bool __result)
     {
         Common.LogPatch();
         if (faction is not ModularFactionDescription FactionDescription)
             return;
-        //Debug.Log("primaryFactionKey");
+
+        IMunition munition = __instance as IMunition;
         bool oldresult = __result;
-        __result = FactionDescription.FullCheckSharedEquipment(__instance.SaveKey, ((IMunition)__instance).FactionKey, true);
+        string checkKey = __instance.SaveKey;
+        string primaryFactionKey = munition.FactionKey;
+        //Debug.Log("LM check: " + " checkKey:" + checkKey + " factionkey: " + primaryFactionKey);
+        __result = FactionDescription.FullCheckSharedEquipment(checkKey, primaryFactionKey, false);
         bool delta = oldresult != __result;
-        //Debug.Log("delta: " + delta + " checkKey:" + __instance.SaveKey + " old: " + oldresult + " new: " + __result + " factionkey: " + ((IMunition)__instance).FactionKey);
+        //Debug.Log("LM delta: " + " checkKey:" + checkKey + " factionkey: " + primaryFactionKey + delta  + " old: " + oldresult + " new: " + __result );
     }
 }
 
