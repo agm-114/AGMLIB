@@ -55,11 +55,19 @@ public class DynamicThrottleTimeModifer : ActiveSettings, IModifierSource
 
 
     public float PreviousModifer = float.NaN;
+
+    public virtual float CalculateModifier()
+    {
+        float startingModifier = CurrentModifier;
+        startingModifier = Mathf.MoveTowards(startingModifier, TargetModifier, FixedRate * Time.fixedDeltaTime);
+        startingModifier = Mathf.Lerp(startingModifier, TargetModifier, Time.fixedDeltaTime * LerpRate);
+        return startingModifier;
+    }
+
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
-        CurrentModifier = Mathf.MoveTowards(CurrentModifier, TargetModifier, FixedRate * Time.fixedDeltaTime);
-        CurrentModifier = Mathf.Lerp(CurrentModifier, TargetModifier, Time.fixedDeltaTime * LerpRate);
+        CurrentModifier = CalculateModifier();
        
         if (Instant)
         {
@@ -97,6 +105,29 @@ public class DynamicThrottleTimeModifer : ActiveSettings, IModifierSource
         }
         Ship.AddStatModifier(this, new StatModifier(StatName, 0, CurrentModifier));
         PreviousModifer = CurrentModifier;
+    }
+
+}
+
+public class AsymmetricDynamicThrottleTimeModifer : DynamicThrottleTimeModifer
+{
+    public float NegativeLerpRate = 0.5f; // Used for Lerp/Spring
+    public float NegativeFixedRate = 0.1f;    // Used for Fixed Rate (units per second)
+
+    public override float CalculateModifier()
+    {
+        float startingModifier = CurrentModifier;
+        if(TargetModifier > startingModifier)
+        {
+            startingModifier = Mathf.MoveTowards(startingModifier, TargetModifier, FixedRate * Time.fixedDeltaTime);
+            startingModifier = Mathf.Lerp(startingModifier, TargetModifier, Time.fixedDeltaTime * LerpRate);
+        }
+        else
+        {
+            startingModifier = Mathf.MoveTowards(startingModifier, TargetModifier, NegativeFixedRate * Time.fixedDeltaTime);
+            startingModifier = Mathf.Lerp(startingModifier, TargetModifier, Time.fixedDeltaTime * NegativeLerpRate);
+        }
+        return startingModifier;
     }
 
 }
