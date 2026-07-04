@@ -4,11 +4,18 @@ using System.Reflection;
 using Game;
 using Game.EWar;
 using Game.Sensors;
+using Game.Units;
 using Mirror;
 using Ships;
 using Ships.Controls;
 using UnityEngine;
 using Utility;
+
+public enum PassiveCommsDetectionMode
+{
+    CommsJammable,
+    ShipCurrentlyTransmitting,
+}
 
 public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDeltaSensor, ISensor, IJammable, IEWarTarget, IOwned, IHullComponent
 {
@@ -27,9 +34,8 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
 
     [SerializeField]
     private bool _collectsIntel = false;
-
     [SerializeField]
-    private bool _requireTransmitEnabled = true;
+    private PassiveCommsDetectionMode _detectionMode = PassiveCommsDetectionMode.ShipCurrentlyTransmitting;
 
     [SerializeField]
     private bool _jammableByCommsJammers = false;
@@ -340,23 +346,8 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
             return false;
         }
 
-        if (_requireTransmitEnabled)
+        if (!CommsTargetMatchesDetectionMode(comms))
         {
-            if (!comms.TransmitEnabled)
-            {
-                _rejectTransmitDisabled++;
-                return false;
-            }
-
-            if (!comms.EnabledAndFunctional)
-            {
-                _rejectNotFunctional++;
-                return false;
-            }
-        }
-        else if (!comms.HasWorkingAntenna)
-        {
-            _rejectNotFunctional++;
             return false;
         }
 
@@ -367,6 +358,43 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         }
 
         return true;
+    }
+
+    private bool CommsTargetMatchesDetectionMode(Communicator comms)
+    {
+        switch (_detectionMode)
+        {
+            case PassiveCommsDetectionMode.CommsJammable:
+                if (!comms.HasWorkingAntenna)
+                {
+                    _rejectNotFunctional++;
+                    return false;
+                }
+
+                return true;
+            case PassiveCommsDetectionMode.ShipCurrentlyTransmitting:
+                if (!comms.TransmitEnabled)
+                {
+                    _rejectTransmitDisabled++;
+                    return false;
+                }
+
+                if (!comms.EnabledAndFunctional)
+                {
+                    _rejectNotFunctional++;
+                    return false;
+                }
+
+                if (TryGetShipController(comms, out ShipController ship) && !ship.CommsEnabled)
+                {
+                    _rejectTransmitDisabled++;
+                    return false;
+                }
+
+                return true;
+            default:
+                return false;
+        }
     }
 
     private bool CanSeeCommsTarget(IEWarTarget target)
@@ -401,6 +429,12 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         return trackable != null;
     }
 
+    private static bool TryGetShipController(Component component, out ShipController ship)
+    {
+        ship = component.GetComponent<ShipController>() ?? component.GetComponentInParent<ShipController>() ?? component.transform.root.GetComponent<ShipController>();
+        return ship != null;
+    }
+
     public Collider[] SweepColliders(Vector3 shipPosition)
     {
         return new Collider[0];
@@ -421,10 +455,20 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         rows.Add(("$SHIPSTAT_SIGNATURETYPE", SignatureType.Comms.GetAbbrevWithColor()));
         rows.Add(("Acquisition", "Passive bearing-only track"));
         rows.Add(("Accuracy", $"{_accuracy:n2} $UNIT_DEGREES"));
-        rows.Add(("Detection", _requireTransmitEnabled ? "Transmitting communicators" : "Working comms antennas"));
+        rows.Add(("Detection", GetDetectionModeDescription()));
         rows.Add(("Coverage", _limitByCoverage ? _coverage.ToString() : "Omnidirectional"));
         rows.Add(("Comms Jamming", _jammableByCommsJammers ? "Susceptible" : "Immune"));
     }
+    private string GetDetectionModeDescription()
+    {
+        return _detectionMode switch
+        {
+            PassiveCommsDetectionMode.CommsJammable => "Comms with working antennas",
+            PassiveCommsDetectionMode.ShipCurrentlyTransmitting => "Ships currently transmitting",
+            _ => _detectionMode.ToString(),
+        };
+    }
+
     protected override ComponentActivity GetFunctionalActivityStatus()
     {
         if (base.IsFunctional && _sensorEnabled)
@@ -666,6 +710,10 @@ class PassiveCommsSensorNetworkedOverrideColor
         }
     }
 }
+
+
+
+
 
 
 
