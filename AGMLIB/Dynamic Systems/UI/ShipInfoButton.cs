@@ -34,8 +34,11 @@ public class ShipInfoButton : ShipState
     public List<GameColors.ColorName> Colors = new() { GameColors.ColorName.Red, GameColors.ColorName.Green };
     public int SelectedOption = 1;
     public bool Override = false;
+    public float DisableForSecondsAfterClick = 0f;
     public ButtonData? Data;
     public SequentialButton Button => Data?.Button;
+    private float _disabledUntil = 0f;
+    public bool ClickDisableActive => DisableForSecondsAfterClick > 0f && Time.time < _disabledUntil;
 
     public override void Awake()
     {
@@ -84,8 +87,7 @@ public class ShipInfoButton : ShipState
     HumanSkirmishPlayer? _player = null;
     public void HandleButtonChanged(int value)
     {
-        SelectedOption = value;
-        CmdSyncSelectedOption(value);
+        SetButtonValue(value, disableTemporarily: true);
         /*
         return;
         IOrderInput pathInput = ((OrderInput<WorldPositionInput.Output>)new ConstantInput<WorldPositionInput.Output>(new WorldPositionInput.Output
@@ -118,13 +120,30 @@ public class ShipInfoButton : ShipState
         //    return;
         if (value < 0)
             value = SelectedOption;
-        HandleButtonChanged(value);
+        SetButtonValue(value, disableTemporarily: false);
         Button?.SetOptionWithoutNotify(value, mixed);
         if (Override)
             Button?.SetOverride(value);
         else
             Button?.SetOverride(null);
-        Button?.SetEnabled(enabled: true);
+        Data?.RefreshButtonEnabled();
+    }
+
+    private void SetButtonValue(int value, bool disableTemporarily)
+    {
+        SelectedOption = value;
+        CmdSyncSelectedOption(value);
+        if (disableTemporarily && DisableForSecondsAfterClick > 0f)
+        {
+            _disabledUntil = Time.time + DisableForSecondsAfterClick;
+            Data?.RefreshButtonEnabled();
+        }
+    }
+
+    private void Update()
+    {
+        if (Data?.NeedsCooldownRefresh == true)
+            Data.RefreshButtonEnabled();
     }
     public SequenceOption[] Options => States.Zip(Colors, (name, color) => CreateOption(name, color)).ToArray();
     public SequenceOption CurrentOption => Options[SelectedOption];
@@ -206,6 +225,7 @@ public class ButtonData
     public List<ShipInfoButton> AuxButtonStates = new();
     public SequentialButton? Button => FindButton();
     public SequentialButtonEvent OnValueChanged => Button.OnValueChanged;
+    private bool _enabled = true;
     //RectTransform parentTransform => GameObject.transform.parent.GetComponent<RectTransform>();
     //LayoutElement Layout => GameObject.transform.parent.GetComponent<LayoutElement>();
     TextMeshProUGUI Text => GameObject.GetComponentInChildren<TextMeshProUGUI>();
@@ -254,7 +274,7 @@ public class ButtonData
 
         //Button.SetOptionWithoutNotify(ButtonState.SelectedOption);
         foreach (ShipInfoButton auxbutton in newAuxButtonStates)
-            AddInfoButton(PrimaryInfoButton);
+            AddInfoButton(auxbutton);
 
     }
     public void AddInfoButton(ShipInfoButton infobutton)
@@ -265,6 +285,23 @@ public class ButtonData
         infobutton.ForceButtonChange(infobutton.SelectedOption, mixed);
         OnValueChanged.AddListener(infobutton.HandleButtonChanged);
         AuxButtonStates.Add(infobutton);
+        RefreshButtonEnabled();
+    }
+
+    public void SetEnabled(bool enabled)
+    {
+        _enabled = enabled;
+        RefreshButtonEnabled();
+    }
+
+    private bool _lastClickDisableActive = false;
+
+    public bool NeedsCooldownRefresh => _lastClickDisableActive || AuxButtonStates.Any(button => button.ClickDisableActive);
+
+    public void RefreshButtonEnabled()
+    {
+        _lastClickDisableActive = AuxButtonStates.Any(button => button.ClickDisableActive);
+        Button?.SetEnabled(_enabled && !_lastClickDisableActive);
     }
 
     public static void Resize(SequentialButton template, int extrabuttons = 0)
@@ -329,7 +366,7 @@ class ShipInfoBarMatchAllButtons
             ButtonData newbutton = new();
             newbutton.Setup(____battleshort, infobut, _shipGroup);
             if (action == 0)
-                newbutton.Button?.SetEnabled(false);
+                newbutton.SetEnabled(false);
             uibuttons.Add(newbutton.ButtonName, newbutton);
         }
 
