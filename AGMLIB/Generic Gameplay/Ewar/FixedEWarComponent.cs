@@ -33,16 +33,26 @@ public class FixedEWarComponent : FixedContinuousWeaponComponent, IEWarWeapon, I
     [SerializeField]
     private bool _showLOB = true;
 
+    public override WeaponType WepType => WeaponType.EWar;
+
+    public override ComponentCostClass CostBreakdownClass => ComponentCostClass.EWar;
+
     public override float? MaxEffectiveRange => _maxRange;
 
     protected override void Awake()
     {
         base.Awake();
+        if (_ewType == EWarWeaponType.None)
+        {
+            _ewType = EWarWeaponType.Jammer;
+        }
+
         Muzzle[] muzzles = _muzzles;
         foreach (Muzzle muzzle in muzzles)
         {
             if (muzzle is FollowingInstanceMuzzle following)
             {
+                //Common.SetVal(following, "_matchRotation", true);
                 following.OnInstanceSpawned += HandleInstanceSpawned;
             }
         }
