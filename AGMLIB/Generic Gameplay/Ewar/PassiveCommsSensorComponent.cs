@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Game;
 using Game.EWar;
@@ -30,12 +31,21 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
     private float _accuracy = 1f;
 
     [SerializeField]
+    private float _maxRange = 100000f;
+
+    [ShipStat("passivecomms-maxrange", "Comms Detection Range", "$UNIT_KILOMETERS", InitializeFrom = "_maxRange", TextValueMultiplier = 0.01f)]
+    private StatValue _statMaxRange;
+
+    [SerializeField]
     private string _stackingSensorID;
 
     [SerializeField]
     private bool _collectsIntel = false;
     [SerializeField]
     private PassiveCommsDetectionMode _detectionMode = PassiveCommsDetectionMode.ShipCurrentlyTransmitting;
+
+    [SerializeField]
+    private bool _styleNonLobTracksAsComint = true;
 
     [SerializeField]
     private bool _jammableByCommsJammers = false;
@@ -54,8 +64,10 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
     private int _rejectTransmitDisabled;
     private int _rejectNotFunctional;
     private int _rejectOwnTrackable;
+    private int _rejectFriendly;
     private int _rejectNoTrackable;
     private int _rejectCoverage;
+    private int _rejectRange;
     private int _rejectLinecast;
     private int _rejectPassiveCommsSensor;
 
@@ -83,6 +95,8 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
 
     public bool CollectsIntel => _collectsIntel;
 
+    public bool StyleNonLobTracksAsComint => _styleNonLobTracksAsComint;
+
     Transform ISensorComponent.ShipTransform => _provider != null ? _provider.Trans : transform;
 
     bool IDeltaSensor.IsWorking => base.IsDoingWork;
@@ -93,7 +107,7 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
 
     public TeamIdentifier TeamID => OwnedBy?.TeamId ?? TeamIdentifier.None;
 
-    public float MaxRange => 0f;
+    public float MaxRange => _statMaxRange?.Value ?? _maxRange;
 
     public SignatureType SigType => SignatureType.Comms;
 
@@ -127,7 +141,7 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
     {
         base.Awake();
         _jammingSources = new ReceivedJamming(this);
-        DebugLog($"Awake coverage={_coverage} limitByCoverage={_limitByCoverage} socket={base.Socket?.Key ?? "<no socket>"} active={isActiveAndEnabled}");
+        DebugLog($"Awake coverage={_coverage} limitByCoverage={_limitByCoverage} maxRange={MaxRange} socket={base.Socket?.Key ?? "<no socket>"} active={isActiveAndEnabled}");
     }
 
     protected void OnEnable()
@@ -346,6 +360,12 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
             return false;
         }
 
+        if (IsFriendlyCommsTarget(comms))
+        {
+            _rejectFriendly++;
+            return false;
+        }
+
         if (!CommsTargetMatchesDetectionMode(comms))
         {
             return false;
@@ -358,6 +378,16 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         }
 
         return true;
+    }
+
+    private bool IsFriendlyCommsTarget(Communicator comms)
+    {
+        if (OwnedBy == null || comms is not IOwned owned)
+        {
+            return false;
+        }
+
+        return owned.GetIFF(OwnedBy).IsFriendly();
     }
 
     private bool CommsTargetMatchesDetectionMode(Communicator comms)
@@ -400,6 +430,15 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
     private bool CanSeeCommsTarget(IEWarTarget target)
     {
         Vector3 toTarget = _provider.ProviderPosition.To(target.Position);
+        float maxRange = MaxRange;
+        float effectiveDistance = GetEffectiveTargetDistance(target, toTarget.magnitude);
+        if (maxRange > 0f && effectiveDistance > maxRange)
+        {
+            _rejectRange++;
+            DebugLog($"Range rejected target={GetTargetDebugName(target)} distance={toTarget.magnitude:n0} effectiveDistance={effectiveDistance:n0} maxRange={maxRange:n0}");
+            return false;
+        }
+
         Vector3 localDirection = transform.InverseTransformDirection(toTarget).normalized;
         Sector targetSector = localDirection.ClassifySector();
         if (!IsSectorCovered(targetSector))
@@ -416,6 +455,16 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         }
 
         return true;
+    }
+
+    private static float GetEffectiveTargetDistance(IEWarTarget target, float centerDistance)
+    {
+        if (TryGetTrackable(target, out SensorTrackableObject trackable))
+        {
+            return Mathf.Max(0f, centerDistance - trackable.BoundingRadius);
+        }
+
+        return centerDistance;
     }
 
     private static bool TryGetTrackable(IEWarTarget target, out SensorTrackableObject trackable)
@@ -454,8 +503,10 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         rows.Add(("Role", "SIGINT / Comms LOB"));
         rows.Add(("$SHIPSTAT_SIGNATURETYPE", SignatureType.Comms.GetAbbrevWithColor()));
         rows.Add(("Acquisition", "Passive bearing-only track"));
+        rows.Add(_statMaxRange.FullTextWithLinkRow);
         rows.Add(("Accuracy", $"{_accuracy:n2} $UNIT_DEGREES"));
         rows.Add(("Detection", GetDetectionModeDescription()));
+        rows.Add(("Track Styling", _styleNonLobTracksAsComint ? "All COMINT tracks" : "LOB tracks only"));
         rows.Add(("Coverage", _limitByCoverage ? _coverage.ToString() : "Omnidirectional"));
         rows.Add(("Comms Jamming", _jammableByCommsJammers ? "Susceptible" : "Immune"));
     }
@@ -533,8 +584,10 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
         _rejectTransmitDisabled = 0;
         _rejectNotFunctional = 0;
         _rejectOwnTrackable = 0;
+        _rejectFriendly = 0;
         _rejectNoTrackable = 0;
         _rejectCoverage = 0;
+        _rejectRange = 0;
         _rejectLinecast = 0;
         _rejectPassiveCommsSensor = 0;
     }
@@ -552,7 +605,7 @@ public class PassiveCommsSensorComponent : HullComponent, ISensorComponent, IDel
             return;
         }
 
-        DebugLog($"Acquire summary sweptTargets={_sweptCommsTargets.Count} sweptTrackables={_sweptTrackables.Count} existingTracks={_tracks.Count} gains={_gainedTracks.Count} losses={_lostTracks.Count} rejects=[notComms={_rejectNotComms}, passiveCommsSensor={_rejectPassiveCommsSensor}, notCommunicator={_rejectNotCommunicator}, txDisabled={_rejectTransmitDisabled}, notFunctional={_rejectNotFunctional}, own={_rejectOwnTrackable}, noTrackable={_rejectNoTrackable}, coverage={_rejectCoverage}, linecast={_rejectLinecast}] coverage={_coverage} limitByCoverage={_limitByCoverage} team={TeamID}");
+        DebugLog($"Acquire summary sweptTargets={_sweptCommsTargets.Count} sweptTrackables={_sweptTrackables.Count} existingTracks={_tracks.Count} gains={_gainedTracks.Count} losses={_lostTracks.Count} rejects=[notComms={_rejectNotComms}, passiveCommsSensor={_rejectPassiveCommsSensor}, notCommunicator={_rejectNotCommunicator}, txDisabled={_rejectTransmitDisabled}, notFunctional={_rejectNotFunctional}, friendly={_rejectFriendly}, own={_rejectOwnTrackable}, noTrackable={_rejectNoTrackable}, coverage={_rejectCoverage}, range={_rejectRange}, linecast={_rejectLinecast}] coverage={_coverage} limitByCoverage={_limitByCoverage} maxRange={MaxRange} team={TeamID}");
     }
 
     private bool IsSectorCovered(Sector sector)
@@ -583,42 +636,158 @@ static class PassiveCommsSensorTrackHelpers
 {
     public static bool HasPassiveCommsSensor(SensorTrack track)
     {
-        List<ISensor> passiveSensors = Common.GetVal<List<ISensor>>(track, "_passiveSensors");
-        return passiveSensors != null && passiveSensors.Any(sensor => sensor is PassiveCommsSensorComponent);
+        return GetPassiveCommsSensors(track).Any();
+    }
+
+    public static bool ShouldApplyComintStyling(SensorTrack track)
+    {
+        List<PassiveCommsSensorComponent> sensors = GetPassiveCommsSensors(track);
+        return ShouldApplyComintStyling(track.Mode, sensors);
     }
 
     public static bool HasPassiveCommsSensor(IBoardPiece piece)
     {
-        if (piece is SensorTrack track)
+        return GetPassiveCommsSensors(piece).Any();
+    }
+
+    public static bool ShouldApplyComintStyling(IBoardPiece piece)
+    {
+        List<PassiveCommsSensorComponent> sensors = GetPassiveCommsSensors(piece);
+        return ShouldApplyComintStyling(TryGetBoardPieceMode(piece, out TrackingMode mode) ? mode : null, sensors);
+    }
+
+    public static bool ShouldApplyComintStylingForNetworkHandle(object networkHandle)
+    {
+        List<PassiveCommsSensorComponent> sensors = GetPassiveCommsSensorsForNetworkHandle(networkHandle);
+        return ShouldApplyComintStyling(TryGetNetworkHandleMode(networkHandle, out TrackingMode mode) ? mode : null, sensors);
+    }
+
+    private static bool ShouldApplyComintStyling(TrackingMode? mode, List<PassiveCommsSensorComponent> sensors)
+    {
+        if (sensors.Count == 0)
         {
-            return HasPassiveCommsSensor(track);
+            return false;
         }
 
-        IBoardPiece primaryPiece = Common.GetVal<IBoardPiece>(piece, "_primaryPiece");
-        if (primaryPiece != null && HasPassiveCommsSensor(primaryPiece))
+        if (mode.HasValue && IsLobMode(mode.Value))
         {
             return true;
         }
 
-        IEnumerable<IBoardPiece> pieces = Common.GetVal<IEnumerable<IBoardPiece>>(piece, "_pieces");
-        return pieces != null && pieces.Any(HasPassiveCommsSensor);
+        return sensors.Any(sensor => sensor.StyleNonLobTracksAsComint);
     }
 
-    public static bool HasPassiveCommsSensor(object handle)
+    private static List<PassiveCommsSensorComponent> GetPassiveCommsSensors(SensorTrack track)
     {
-        NetworkedSensorTrack parent = Common.GetVal<NetworkedSensorTrack>(handle, "_parent");
-        List<ITrack> contributors = Common.GetVal<List<ITrack>>(parent, "_contributors");
-        return contributors != null && contributors.Any(HasPassiveCommsContributor);
+        List<ISensor> passiveSensors = Common.GetVal<List<ISensor>>(track, "_passiveSensors");
+        return passiveSensors?.OfType<PassiveCommsSensorComponent>().ToList() ?? new List<PassiveCommsSensorComponent>();
     }
 
-    private static bool HasPassiveCommsContributor(ITrack track)
+    private static List<PassiveCommsSensorComponent> GetPassiveCommsSensors(IBoardPiece piece)
+    {
+        List<PassiveCommsSensorComponent> sensors = new List<PassiveCommsSensorComponent>();
+        AddPassiveCommsSensors(piece, sensors);
+        return sensors;
+    }
+
+    private static List<PassiveCommsSensorComponent> GetPassiveCommsSensorsForNetworkHandle(object networkHandle)
+    {
+        List<PassiveCommsSensorComponent> sensors = new List<PassiveCommsSensorComponent>();
+        NetworkedSensorTrack parent = Common.GetVal<NetworkedSensorTrack>(networkHandle, "_parent");
+        List<ITrack> contributors = Common.GetVal<List<ITrack>>(parent, "_contributors");
+        if (contributors != null)
+        {
+            foreach (ITrack contributor in contributors)
+            {
+                AddPassiveCommsSensors(contributor, sensors);
+            }
+        }
+
+        return sensors;
+    }
+
+    private static void AddPassiveCommsSensors(ITrack track, List<PassiveCommsSensorComponent> sensors)
     {
         if (track is SensorTrack sensorTrack)
         {
-            return HasPassiveCommsSensor(sensorTrack);
+            sensors.AddRange(GetPassiveCommsSensors(sensorTrack));
+        }
+        else if (track is IBoardPiece piece)
+        {
+            AddPassiveCommsSensors(piece, sensors);
+        }
+    }
+
+    private static void AddPassiveCommsSensors(IBoardPiece piece, List<PassiveCommsSensorComponent> sensors)
+    {
+        if (piece is SensorTrack track)
+        {
+            sensors.AddRange(GetPassiveCommsSensors(track));
+            return;
         }
 
-        return track is IBoardPiece piece && HasPassiveCommsSensor(piece);
+        IBoardPiece primaryPiece = Common.GetVal<IBoardPiece>(piece, "_primaryPiece");
+        if (primaryPiece != null)
+        {
+            AddPassiveCommsSensors(primaryPiece, sensors);
+        }
+
+        IEnumerable<IBoardPiece> pieces = Common.GetVal<IEnumerable<IBoardPiece>>(piece, "_pieces");
+        if (pieces == null)
+        {
+            return;
+        }
+
+        foreach (IBoardPiece childPiece in pieces)
+        {
+            AddPassiveCommsSensors(childPiece, sensors);
+        }
+    }
+
+    private static bool TryGetBoardPieceMode(IBoardPiece piece, out TrackingMode mode)
+    {
+        mode = default;
+        if (piece is ITrack track)
+        {
+            mode = track.Mode;
+            return true;
+        }
+
+        return piece != null && (TryGetModeMember(piece, piece.GetType(), "Mode", out mode) || TryGetModeMember(piece, piece.GetType(), "_mode", out mode));
+    }
+
+    private static bool TryGetNetworkHandleMode(object networkHandle, out TrackingMode mode)
+    {
+        mode = default;
+        return networkHandle != null && (TryGetModeMember(networkHandle, networkHandle.GetType(), "Mode", out mode) || TryGetModeMember(networkHandle, networkHandle.GetType(), "_mode", out mode));
+    }
+
+    private static bool TryGetModeMember(object source, Type type, string memberName, out TrackingMode mode)
+    {
+        mode = default;
+        if (type == null)
+        {
+            return false;
+        }
+
+        if (type.GetField(memberName, Common.ValFlags) is FieldInfo field && field.FieldType == typeof(TrackingMode))
+        {
+            mode = (TrackingMode)field.GetValue(source);
+            return true;
+        }
+
+        if (type.GetProperty(memberName, Common.ValFlags) is PropertyInfo property && property.PropertyType == typeof(TrackingMode))
+        {
+            mode = (TrackingMode)property.GetValue(source);
+            return true;
+        }
+
+        return TryGetModeMember(source, type.BaseType, memberName, out mode);
+    }
+
+    private static bool IsLobMode(TrackingMode mode)
+    {
+        return mode == TrackingMode.BearingOnly || mode == TrackingMode.Ping;
     }
 }
 
@@ -627,7 +796,7 @@ class PassiveCommsSensorContactIntelPrefix
 {
     static void Postfix(SensorTrack __instance, ref string __result)
     {
-        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        if (PassiveCommsSensorTrackHelpers.ShouldApplyComintStyling(__instance))
         {
             __result = "UI_HUD_SIGINT";
         }
@@ -641,7 +810,7 @@ class PassiveCommsSensorNetworkedContactIntelPrefix
 
     static void Postfix(object __instance, ref string __result)
     {
-        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        if (PassiveCommsSensorTrackHelpers.ShouldApplyComintStylingForNetworkHandle(__instance))
         {
             __result = "UI_HUD_SIGINT";
         }
@@ -678,7 +847,7 @@ class PassiveCommsSensorNetworkedContactSymbol
 
     static void Postfix(object __instance, ref string __result)
     {
-        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        if (PassiveCommsSensorTrackHelpers.ShouldApplyComintStylingForNetworkHandle(__instance))
         {
             __result = SignatureType.Comms.GetLOBSymbol();
         }
@@ -690,7 +859,7 @@ class PassiveCommsSensorOverrideColor
 {
     static void Postfix(SensorTrack __instance, ref Color? __result)
     {
-        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        if (PassiveCommsSensorTrackHelpers.ShouldApplyComintStyling(__instance))
         {
             __result = GameColors.Yellow;
         }
@@ -704,12 +873,13 @@ class PassiveCommsSensorNetworkedOverrideColor
 
     static void Postfix(object __instance, ref Color? __result)
     {
-        if (PassiveCommsSensorTrackHelpers.HasPassiveCommsSensor(__instance))
+        if (PassiveCommsSensorTrackHelpers.ShouldApplyComintStylingForNetworkHandle(__instance))
         {
             __result = GameColors.Yellow;
         }
     }
 }
+
 
 
 
