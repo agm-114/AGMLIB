@@ -1,36 +1,4 @@
-﻿
-public enum WeaponRole
-{
-    Unlocked = -1,
-    Offensive = 0,
-    Defensive = 1
-}
-public enum LaunchType
-{
-    Unlocked = -1,
-    Hot = 1,
-    Cold = 0
-}
-public enum TargetLost
-{
-    Unlocked = -1,
-    Resume = 0,
-    SelfDestruct = 1
-}
-public enum Terminal
-{
-    Unlocked = -1,
-    None = 0,
-    Weave = 1,
-    Corkscrew = 2
-}
-public enum Guidance
-{
-    Unlocked = -1,
-    MinimumAngle = 0,
-    FreeApproach = 1
-}
-public interface IModular
+﻿public interface IModular
 {
     public List<ScriptableObject> Modules { get; }
 }
@@ -38,21 +6,60 @@ public interface IModular
 public interface ILimited
 {
     public Dictionary<string, int> RestrictedOptions { get; }
-    //public Dictionary<string, bool> LockedOptions { get; }
 }
 
-public class Modular
+public interface IOnWeaponAmmoChanged
 {
+    void OnWeaponAmmoChanged(WeaponComponent weapon, bool wasReloading);
+}
+
+public interface IOnDiscreteWeaponCheckFire
+{
+    void OnDiscreteWeaponCheckFire(DiscreteWeaponComponent weapon);
+}
+
+public interface IOnDamageableImpact
+{
+    void OnDamageableImpact(LightweightKineticShell shell, LightweightKineticMunitionContainer attachedTo, IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger, HitResult hitRes, float damageDone, bool targetDestroyed);
+}
+
+public interface IOnGenericImpact
+{
+    void OnGenericImpact(LightweightKineticShell shell, LightweightKineticMunitionContainer attachedTo, MunitionHitInfo hitInfo, bool trigger, HitResult hitRes);
+}
+
+public static class Modular
+{
+    public static IEnumerable<T> SelectedAmmoModules<T>(WeaponComponent weapon)
+    {
+        if (weapon?.SelectedAmmoType is not IModular modular || modular.Modules == null)
+        {
+            return Enumerable.Empty<T>();
+        }
+
+        return modular.Modules.OfType<T>();
+    }
+
+    public static T SelectedAmmoModule<T>(WeaponComponent weapon) where T : class
+    {
+        return SelectedAmmoModules<T>(weapon).FirstOrDefault();
+    }
+
     public static IFilterIndexed FindIndexedFilter(List<IFilterIndexed> filters, int index = -1)
     {
         if (filters == null || filters.Count <= 0)
+        {
             return null;
-        List<IFilterIndexed> testlist = filters.FindAll(filter => filter.Index == index);
-        if (testlist.Count > 0)
-            return testlist.First();
-        testlist = filters.FindAll(filter => filter.AllIndexes);
-        return testlist.Count > 0 ? testlist.First() : null;
+        }
 
+        List<IFilterIndexed> indexedFilters = filters.FindAll(filter => filter.Index == index);
+        if (indexedFilters.Count > 0)
+        {
+            return indexedFilters.First();
+        }
+
+        List<IFilterIndexed> fallbackFilters = filters.FindAll(filter => filter.AllIndexes);
+        return fallbackFilters.Count > 0 ? fallbackFilters.First() : null;
     }
 
     public static IFilterIndexed FindIndexedFilter(IEnumerable<IFilterIndexed> filters, int index = -1) => FindIndexedFilter(filters.ToList(), index);
@@ -60,36 +67,75 @@ public class Modular
     public static IFilterIndexed Default => ScriptableObject.CreateInstance<ScriptableFilter>();
 }
 
-
-/*
-
-SequenceOption _disabledOption = new SequenceOption
+[HarmonyPatch(typeof(WeaponComponent), nameof(WeaponComponent.ChangeAmmoType))]
+public class WeaponComponentChangeAmmoTypeModuleCallbacks
 {
-    Text = "HOT",
-    TextColor = GameColors.ColorName.Red
-};
-Common.SetVal(avionicssettings2, "_disabledOption", _disabledOption);
-//_launchButton.SetDisabledText("HOT");
-_launchButton.SetEnabled(enabled: false);
-*/
-//, MissileComponentDescriptor component, SequentialButton ____launchButton
-//____launchButton.SetEnabled(enabled: false);
-//SequentialButton _launchButton = Common.GetVal<SequentialButton>(avionicssettings, "_launchButton");
-/*
-SequenceOption[] _options = Common.GetVal<SequenceOption[]>(avionicssettings, "_options");
-if (_options == null)
-{
-    //Debug.LogError("Null Option ");
+    static void Prefix(WeaponComponent __instance, out bool __state)
+    {
+        __state = __instance is DiscreteWeaponComponent discrete && Common.GetVal<bool>(discrete, "_reloading");
+    }
 
+    static void Postfix(WeaponComponent __instance, bool __result, bool __state)
+    {
+        if (!__result || __instance?.SelectedAmmoType is not IModular modular || modular.Modules == null)
+        {
+            return;
+        }
+
+        foreach (IOnWeaponAmmoChanged module in modular.Modules.OfType<IOnWeaponAmmoChanged>())
+        {
+            module.OnWeaponAmmoChanged(__instance, __state);
+        }
+    }
 }
-else
+
+[HarmonyPatch(typeof(DiscreteWeaponComponent), "CheckFire")]
+public class DiscreteWeaponComponentCheckFireModuleCallbacks
 {
-    SequenceOption _disabledOption = _options[1];
-    Common.SetVal(avionicssettings, "_disabledOption", _disabledOption);
-}*/
+    static void Prefix(DiscreteWeaponComponent __instance)
+    {
+        if (__instance?.SelectedAmmoType is not IModular modular || modular.Modules == null)
+        {
+            return;
+        }
 
-//_launchButton.SetOptionWithoutNotify(1, mixed: false);
-//_launchButton.SetEnabled(false);
-//_launchButton.SetDisabledText("HOT");
-//_launchButton.SetEnabled(enabled: false);
+        foreach (IOnDiscreteWeaponCheckFire module in modular.Modules.OfType<IOnDiscreteWeaponCheckFire>())
+        {
+            module.OnDiscreteWeaponCheckFire(__instance);
+        }
+    }
+}
 
+[HarmonyPatch(typeof(LightweightKineticShell), nameof(LightweightKineticShell.DamageableImpact))]
+public class LightweightKineticShellDamageableImpactModuleCallbacks
+{
+    static void Postfix(LightweightKineticShell __instance, LightweightKineticMunitionContainer attachedTo, IDamageable hitObject, MunitionHitInfo hitInfo, bool trigger, HitResult hitRes, float damageDone, bool targetDestroyed)
+    {
+        if (__instance is not IModular modular || modular.Modules == null)
+        {
+            return;
+        }
+
+        foreach (IOnDamageableImpact module in modular.Modules.OfType<IOnDamageableImpact>())
+        {
+            module.OnDamageableImpact(__instance, attachedTo, hitObject, hitInfo, trigger, hitRes, damageDone, targetDestroyed);
+        }
+    }
+}
+
+[HarmonyPatch(typeof(LightweightKineticShell), nameof(LightweightKineticShell.GenericImpact))]
+public class LightweightKineticShellGenericImpactModuleCallbacks
+{
+    static void Postfix(LightweightKineticShell __instance, LightweightKineticMunitionContainer attachedTo, MunitionHitInfo hitInfo, bool trigger, HitResult hitRes)
+    {
+        if (__instance is not IModular modular || modular.Modules == null)
+        {
+            return;
+        }
+
+        foreach (IOnGenericImpact module in modular.Modules.OfType<IOnGenericImpact>())
+        {
+            module.OnGenericImpact(__instance, attachedTo, hitInfo, trigger, hitRes);
+        }
+    }
+}
