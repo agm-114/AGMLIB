@@ -475,9 +475,11 @@ class MissileDetailOverlayDrawShapesPatch
 [CreateAssetMenu(fileName = "New Position Seeker", menuName = "Nebulous/Missiles/Seekers/Range Based Command")]
 public class RangedCommandSeekerDescriptor : CommandSeekerDescriptor
 {
-    public bool LimitedRange = false;
+    public bool Unjammable = true;
+    public bool LimitedRange = true;
     public float CommsRange = float.MaxValue;
-    public override bool RequiresCommunicator => false;
+    public override bool RequiresCommunicator => !Unjammable;
+    public override float MaxRange => LimitedRange ? CommsRange : float.MaxValue;
     public ColorName Color = ColorName.Orange;
 
     public override void FinalSetup(ModularMissile missile)
@@ -504,34 +506,45 @@ public class RangedCommandSeekerDescriptor : CommandSeekerDescriptor
 
     public override string GetFunctionalDescriptionSegment()
     {
-        return "unjammable command guidance from its launching ship";
+        return Unjammable ? "unjammable command guidance from its launching ship" : "command guidance from its launching ship";
     }
 
 }
 
 public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
 {
-    RangedCommandSeekerDescriptor _comdesc;
+    private RangedCommandSeekerDescriptor _comdesc;
 
     private ISensorProvider _sensorProvider => base.Missile?.LaunchedFrom?.Sensors;
     private ITrack _targetedTrack;
+    private Communicator _comms;
+    private ICommPath _commPath;
+    private bool _commandRangeExceeded;
 
-
-    public override bool CurrentlyJammed => false;
+    public override bool CurrentlyJammed => IsCommsJammed();
     public override void OnAdded(ModularMissile missile, MissileComponentDescriptor descriptor)
     {
         base.OnAdded(missile, descriptor);
         _comdesc = descriptor as RangedCommandSeekerDescriptor;
+        _comms = missile.GetComponent<Communicator>();
+    }
+
+    public override void OnLaunched(ILaunchingPlatform platform, bool forceHotLaunch, bool immediateSearching)
+    {
+        base.OnLaunched(platform, forceHotLaunch, immediateSearching);
+        RefreshProvider();
     }
 
     public override void SetTrackTarget(TrackIdentifier target, Vector3 initialPosition)
     {
         base.SetTrackTarget(target, initialPosition);
+        RefreshProvider();
         UpdateTrack();
     }
 
     public override Vector3? InitialTargetPosition()
     {
+        RefreshProvider();
         UpdateTrack();
         ITrack targetedTrack = _targetedTrack;
         return (targetedTrack != null) ? new Vector3?(targetedTrack.KnownPosition) : base._trackTargetInitialPos;
@@ -540,7 +553,7 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
 
     protected override SeekerSearchResult SearchForTargetInternal(IReadOnlyList<RuntimeMissileSeeker> validators, out Vector3 position, out Vector3 velocity, out Vector3 acceleration)
     {
-
+        RefreshProvider();
         UpdateTrack();
         if (_targetedTrack != null && _targetedTrack.IsValid)
         {
@@ -557,6 +570,13 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
             return SeekerSearchResult.Found;
         }
 
+        if (IsCommsJammed())
+        {
+            GetVeerOffTarget(out position, out velocity);
+            acceleration = Vector3.zero;
+            WasSoftkilled = true;
+            return SeekerSearchResult.Jammed;
+        }
 
 
         position = Vector3.zero;
@@ -567,9 +587,14 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
 
     public override SeekerValidationResult ValidateTargetInternal(ISensorTrackable target)
     {
+        if (target == null)
+        {
+            return SeekerValidationResult.NotEvaluated;
+        }
 
+        RefreshProvider();
         UpdateTrack();
-        if (_targetedTrack == null)
+        if (_targetedTrack == null || _commandRangeExceeded)
         {
             return SeekerValidationResult.NotEvaluated;
         }
@@ -584,14 +609,24 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
         return SeekerValidationResult.Fail;
     }
 
+    protected override void ResetSeeker()
+    {
+        ClearTargetedTrack();
+        _commPath?.Close();
+        _commPath = null;
+        _commandRangeExceeded = false;
+        base.ResetSeeker();
+    }
 
     private void UpdateTrack()
     {
-        if (_sensorProvider == null)
+        RefreshProvider();
+        _commandRangeExceeded = IsCommandRangeExceeded();
+        if (_sensorProvider == null || _commandRangeExceeded || IsCommsLinkUnavailable())
         {
+            ClearTargetedTrack();
             return;
         }
-
 
         if (_targetedTrack == null)
         {
@@ -603,23 +638,78 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
             if (base.isServer && _targetedTrack != null)
             {
                 Network_targetOffset = (_targetedTrack.Trackable.RandomPointInBounds() ?? Vector3.zero) * 0.8f;
+                _targetedTrack.Trackable.AddThreat(base.Missile);
             }
         }
         else if (_targetedTrack.Mode is TrackingMode.Visual or TrackingMode.BearingOnly)
         {
-            _targetedTrack = null;
+            ClearTargetedTrack();
         }
         else if (!_targetedTrack.IsValid)
         {
             if (_targetedTrack.IsSuperseded)
             {
+                _targetedTrack.Trackable.RemoveThreat(base.Missile);
                 _targetedTrack = _targetedTrack.NewTrack;
+                _targetedTrack.Trackable.AddThreat(base.Missile);
             }
             else
             {
-                _targetedTrack = null;
+                ClearTargetedTrack();
             }
         }
+    }
+
+    private void RefreshProvider()
+    {
+        if (IsUnjammable())
+        {
+            _commPath?.Close();
+            _commPath = null;
+            return;
+        }
+
+        if (_commPath == null)
+        {
+            _commPath = base.Missile?.LaunchedFrom?.GetCommsPath(_comms);
+        }
+    }
+
+    private bool IsCommandRangeExceeded()
+    {
+        if (_comdesc == null || !_comdesc.LimitedRange || _comdesc.CommsRange <= 0f || _comdesc.CommsRange >= float.MaxValue)
+        {
+            return false;
+        }
+
+        if (base.Missile == null || base.Missile.LaunchedFrom == null)
+        {
+            return false;
+        }
+
+        return Vector3.Distance(base.Missile.transform.position, base.Missile.LaunchedFrom.Position) > _comdesc.CommsRange;
+    }
+
+    private bool IsCommsJammed()
+    {
+        return !IsUnjammable() && (_commPath == null || _commPath.DirectConnectionJammed);
+    }
+
+    private bool IsCommsLinkUnavailable()
+    {
+        return !IsUnjammable() && (_commPath == null || _commPath.DirectConnectionJammed || !_commPath.ConnectionOpen);
+    }
+
+    private bool IsUnjammable()
+    {
+        return _comdesc == null || _comdesc.Unjammable;
+            }
+
+    private void ClearTargetedTrack()
+    {
+
+        _targetedTrack?.Trackable?.RemoveThreat(base.Missile);
+        _targetedTrack = null;
     }
 }
 
