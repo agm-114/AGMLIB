@@ -1,50 +1,84 @@
-﻿using System.Globalization;
+using System.Globalization;
 
-[DisallowMultipleComponent]
 public class ShipStatusPowerBar : MonoBehaviour
 {
-    public enum PowerStatusVisualMode
+    public enum DisplaySurface
     {
-        IconMask,
-        TriplePercentBars,
-        SharedScaleGenerationDemandBars,
+        StatusIcon,
+        StatusBoard,
     }
 
     public static bool DebugAutoAttachToAllShips = true;
+
+    [Header("Display")]
+    public DisplaySurface DisplayTarget = DisplaySurface.StatusBoard;
 
     [Header("Resource")]
     public string ResourceName = "Power";
 
     [Header("Status Icon")]
     public bool ShowIconWhenNormal = true;
-    public PowerStatusVisualMode VisualMode = PowerStatusVisualMode.SharedScaleGenerationDemandBars;
-    public bool DrawFillMask = true;
+    public bool IconPowerBarsEnabled = false;
+    public bool IconMaskEnabled = false;
     public Color MaskColor = new(0f, 0f, 0f, 0.85f);
     public Color GraphBackgroundColor = new(0f, 0f, 0f, 0.8f);
-    public Color NeedFillColor = new(0.2f, 1f, 0.35f, 1f);
-    public Color ProductionFillColor = new(0.3f, 0.8f, 1f, 1f);
+    public GameColors.ColorName GenerationColorName = GameColors.ColorName.Green;
     public Color DemandFillColor = new(1f, 0.15f, 0.1f, 1f);
     public float UpdateInterval = 0.1f;
+
+    [Header("Power Bars")]
+    public bool GenerationBarEnabled = true;
+    public bool DemandBarEnabled = true;
+    public bool IncludePeakPowerInScale = true;
+
+    [Header("Status Board")]
+    public bool StatusBoardPowerBarsEnabled = true;
+    public float BoardBarHeight = 5f;
+    public float BoardBarGap = 2f;
+    public float BoardBarPadding = 4f;
+    public Vector2 BoardBarMargin = new(3f, 3f);
+    public Vector2 BoardBarNudge = new(-8f, 6f);
+    public Vector2 BoardBarSize = new(0f, 18f);
+    public Vector2 StatusBoardMaxSize = new(700f, 350f);
+    public Color BoardGraphBackgroundColor = new(0.25f, 0.25f, 0.25f, 0.85f);
 
     [Header("Tooltip")]
     public bool ReplaceTooltip = true;
     public string TooltipTitle = "Power Status";
 
     private ShipController _shipController;
-    public static ShipStatusPowerBar EnsureAttachedTo(ShipController ship)
+    public static ShipStatusPowerBar EnsureAttachedTo(ShipController ship, DisplaySurface displayTarget)
     {
         if (ship == null)
-        {
             return null;
-        }
 
-        ShipStatusPowerBar powerBar = ship.GetComponentInChildren<ShipStatusPowerBar>(includeInactive: true);
+        ShipStatusPowerBar powerBar = ship.GetComponentsInChildren<ShipStatusPowerBar>(includeInactive: true)
+            .FirstOrDefault(bar => bar.DisplayTarget == displayTarget);
         if (powerBar == null && DebugAutoAttachToAllShips)
         {
             powerBar = ship.gameObject.AddComponent<ShipStatusPowerBar>();
+            powerBar.ApplyDisplayDefaults(displayTarget);
         }
 
         return powerBar;
+    }
+
+    public static void EnsureDebugAttachedTo(ShipController ship)
+    {
+        EnsureAttachedTo(ship, DisplaySurface.StatusIcon);
+        EnsureAttachedTo(ship, DisplaySurface.StatusBoard);
+    }
+
+    public bool TargetsStatusIcon => DisplayTarget == DisplaySurface.StatusIcon;
+
+    public bool TargetsStatusBoard => DisplayTarget == DisplaySurface.StatusBoard;
+
+    private void ApplyDisplayDefaults(DisplaySurface displayTarget)
+    {
+        DisplayTarget = displayTarget;
+        IconPowerBarsEnabled = displayTarget == DisplaySurface.StatusIcon && IconPowerBarsEnabled;
+        IconMaskEnabled = displayTarget == DisplaySurface.StatusIcon && IconMaskEnabled;
+        StatusBoardPowerBarsEnabled = displayTarget == DisplaySurface.StatusBoard;
     }
 
     private void Awake()
@@ -61,11 +95,17 @@ public class ShipStatusPowerBar : MonoBehaviour
         {
             binding.ClearSource(this);
         }
+
+        ShipStatusPowerStatusBoardBinding[] boardBindings = FindObjectsOfType<ShipStatusPowerStatusBoardBinding>();
+        foreach (ShipStatusPowerStatusBoardBinding binding in boardBindings)
+        {
+            binding.ClearSource(this);
+        }
     }
 
     public void LinkStatusIcons(ShipStatusIconGroup statusIcons)
     {
-        if (_shipController == null || statusIcons == null)
+        if (!TargetsStatusIcon || _shipController == null || statusIcons == null)
         {
             return;
         }
@@ -84,41 +124,24 @@ public class ShipStatusPowerBar : MonoBehaviour
     public IReadOnlyResourcePool GetResourcePool()
     {
         if (_shipController?.Ship?.Resources == null)
-        {
             return null;
-        }
-
         return _shipController.Ship.Resources.FirstOrDefault(pool => pool.ResourceName == ResourceName);
     }
 
-    public float GetDemandFill(IReadOnlyResourcePool pool)
-    {
-        return Mathf.Clamp01(GetDemandRatio(pool));
-    }
+    public float GetDemandFill(IReadOnlyResourcePool pool) => Mathf.Clamp01(GetDemandRatio(pool));
+    public float GetPeakProductionFill(IReadOnlyResourcePool pool) => GetPeakFill(pool.TotalAvailable, pool.PeakQuantity);
+    public float GetPeakDemandFill(IReadOnlyResourcePool pool) => GetPeakFill(pool.AmountConsumed, pool.PeakDemand);
 
-    public float GetPeakProductionFill(IReadOnlyResourcePool pool)
-    {
-        return GetPeakFill(pool.TotalAvailable, pool.PeakQuantity);
-    }
+    public float GetSharedScaleGenerationFill(IReadOnlyResourcePool pool) => GetSharedScaleFill(pool.TotalAvailable, GetSharedScaleMax(pool));
 
-    public float GetPeakDemandFill(IReadOnlyResourcePool pool)
-    {
-        return GetPeakFill(pool.AmountConsumed, pool.PeakDemand);
-    }
-
-    public float GetSharedScaleGenerationFill(IReadOnlyResourcePool pool)
-    {
-        return GetSharedScaleFill(pool.TotalAvailable, pool);
-    }
-
-    public float GetSharedScaleDemandFill(IReadOnlyResourcePool pool)
-    {
-        return GetSharedScaleFill(pool.AmountConsumed, pool);
-    }
-
+    public float GetSharedScaleDemandFill(IReadOnlyResourcePool pool) => GetSharedScaleFill(pool.AmountConsumed, GetSharedScaleMax(pool));
     public int GetSharedScaleMax(IReadOnlyResourcePool pool)
     {
-        return Mathf.Max(pool.TotalAvailable, pool.AmountConsumed, pool.PeakDemand);
+        int max = Mathf.Max(pool.TotalAvailable, pool.AmountConsumed);
+        if (IncludePeakPowerInScale)
+            max = Mathf.Max(max, pool.PeakQuantity, pool.PeakDemand);
+
+        return max;
     }
 
     public float GetDemandRatio(IReadOnlyResourcePool pool)
@@ -146,6 +169,11 @@ public class ShipStatusPowerBar : MonoBehaviour
         return GameColors.Green;
     }
 
+    public Color GetGenerationFillColor()
+    {
+        return GameColors.GetColor(GenerationColorName);
+    }
+
     public string BuildTooltipText()
     {
         IReadOnlyResourcePool pool = GetResourcePool();
@@ -166,7 +194,7 @@ public class ShipStatusPowerBar : MonoBehaviour
 
         return string.Format(
             CultureInfo.InvariantCulture,
-            "<b>{0}</b>: <color={1}>{2:P0}</color>\nNeed Filled: {2:P0}\nGeneration vs Peak: {3:P0}\nDemand vs Peak: {4:P0}\nGeneration Bar: {5:P0}\nDemand Bar: {6:P0}\nShared Scale Max: {7:N0} {13}\nAvailable: {8:N0} {13}\nDemand: {9:N0} {13}\nMargin: {10:+#,0;-#,0;0} {13}\nPeak Production: {11:N0} {13}\nPeak Demand: {12:N0} {13}",
+            "<b>{0}</b>: <color={1}>{2:P0}</color>\nNeed Filled: {2:P0}\nGeneration vs Peak: {3:P0}\nDemand vs Peak: {4:P0}\nGeneration Bar: {5:P0}\nDemand Bar: {6:P0}\nBar Scale Max: {7:N0} {14}\nPeak Included In Scale: {8}\nAvailable: {9:N0} {14}\nDemand: {10:N0} {14}\nMargin: {11:+#,0;-#,0;0} {14}\nPeak Production: {12:N0} {14}\nPeak Demand: {13:N0} {14}",
             TooltipTitle,
             color,
             demandRatio,
@@ -175,6 +203,7 @@ public class ShipStatusPowerBar : MonoBehaviour
             generationScaleFill,
             demandScaleFill,
             sharedScaleMax,
+            IncludePeakPowerInScale ? "Yes" : "No",
             pool.TotalAvailable,
             pool.AmountConsumed,
             margin,
@@ -209,9 +238,8 @@ public class ShipStatusPowerBar : MonoBehaviour
         return Mathf.Clamp01((float)current / denominator);
     }
 
-    private float GetSharedScaleFill(int amount, IReadOnlyResourcePool pool)
+    private float GetSharedScaleFill(int amount, int denominator)
     {
-        int denominator = GetSharedScaleMax(pool);
         if (denominator <= 0)
         {
             return 0f;
@@ -219,357 +247,258 @@ public class ShipStatusPowerBar : MonoBehaviour
 
         return Mathf.Clamp01((float)amount / denominator);
     }
-}
 
-public class ShipStatusPowerBarBinding : MonoBehaviour
-{
-    private ShipStatusPowerBar _source;
-    private QuantityStatusIcon _powerIcon;
-    private Image _iconImage;
-    private Image _maskImage;
-    private RectTransform _maskRect;
-    private RectTransform _graphRoot;
-    private Image[] _graphBackgrounds;
-    private RectTransform[] _graphFillRects;
-    private Image[] _graphFills;
-    private int _graphBarCount;
-    private TooltipTrigger _tooltip;
-    private float _nextUpdateTime;
-
-    public void SetSource(ShipStatusPowerBar source, QuantityStatusIcon powerIcon)
+    public int EnabledBarCount
     {
-        _source = source;
-        _powerIcon = powerIcon;
-        _iconImage = Common.GetVal<Image>(_powerIcon, "_iconImage");
-        _tooltip = Common.GetVal<TooltipTrigger>(_powerIcon, "_tooltip", typeof(StatusIcon));
-        EnsureTooltipCallback();
-        EnsureMask();
-        UpdateVisibleStatus();
-    }
-
-    public void ClearSource(ShipStatusPowerBar source)
-    {
-        if (_source != source)
+        get
         {
-            return;
-        }
-
-        _source = null;
-        SetGraphVisible(false);
-        SetIconImageVisible(true);
-        SetMaskFill(1f);
-    }
-
-    public void ClearAnySource()
-    {
-        _source = null;
-        SetGraphVisible(false);
-        SetIconImageVisible(true);
-        SetMaskFill(1f);
-    }
-
-    private void OnDisable()
-    {
-        SetGraphVisible(false);
-        SetIconImageVisible(true);
-        SetMaskFill(1f);
-    }
-
-    private void Update()
-    {
-        if (_source == null || Time.unscaledTime < _nextUpdateTime)
-        {
-            return;
-        }
-
-        _nextUpdateTime = Time.unscaledTime + Mathf.Max(0.02f, _source.UpdateInterval);
-        UpdateVisibleStatus();
-    }
-
-    private void UpdateVisibleStatus()
-    {
-        if (_source == null || _powerIcon == null)
-        {
-            return;
-        }
-
-        IReadOnlyResourcePool pool = _source.GetResourcePool();
-        if (pool == null)
-        {
-            SetMaskFill(1f);
-            return;
-        }
-
-        if (_source.ShowIconWhenNormal)
-        {
-            _powerIcon.Show();
-        }
-
-        if (_source.VisualMode == ShipStatusPowerBar.PowerStatusVisualMode.TriplePercentBars)
-        {
-            SetIconImageVisible(false);
-            EnsureBarGraph(3, "AGMLIB Power Triple Bar Graph");
-            UpdateTripleBarGraph(pool);
-        }
-        else if (_source.VisualMode == ShipStatusPowerBar.PowerStatusVisualMode.SharedScaleGenerationDemandBars)
-        {
-            SetIconImageVisible(false);
-            EnsureBarGraph(2, "AGMLIB Power Generation Demand Graph");
-            UpdateSharedScaleGenerationDemandGraph(pool);
-        }
-        else
-        {
-            SetGraphVisible(false);
-            SetIconImageVisible(true);
-        }
-
-        if (_iconImage != null && _source.VisualMode == ShipStatusPowerBar.PowerStatusVisualMode.IconMask)
-        {
-            _iconImage.color = _source.GetStatusColor(pool);
-        }
-
-        EnsureTooltipCallback();
-        if (_source.VisualMode != ShipStatusPowerBar.PowerStatusVisualMode.IconMask)
-        {
-            SetMaskFill(1f);
-        }
-        else
-        {
-            EnsureMask();
-            SetMaskFill(_source.GetDemandFill(pool));
-        }
-    }
-
-    private void EnsureTooltipCallback()
-    {
-        if (_source == null || !_source.ReplaceTooltip || _tooltip == null)
-        {
-            return;
-        }
-
-        _tooltip.SetGetTextCallback(_source.BuildTooltipText);
-        _tooltip.enabled = true;
-    }
-
-    private void EnsureMask()
-    {
-        if (_source == null || !_source.DrawFillMask || _powerIcon == null || _maskImage != null)
-        {
-            return;
-        }
-
-        RectTransform iconRect = _powerIcon.transform as RectTransform;
-        if (iconRect == null)
-        {
-            return;
-        }
-
-        GameObject maskObject = new("AGMLIB Power Status Mask", typeof(RectTransform), typeof(Image));
-        _maskRect = maskObject.transform as RectTransform;
-        _maskRect.SetParent(iconRect, false);
-        _maskRect.anchorMin = new Vector2(1f, 0f);
-        _maskRect.anchorMax = new Vector2(1f, 1f);
-        _maskRect.offsetMin = Vector2.zero;
-        _maskRect.offsetMax = Vector2.zero;
-        _maskRect.SetAsLastSibling();
-
-        _maskImage = maskObject.GetComponent<Image>();
-        _maskImage.color = _source.MaskColor;
-        _maskImage.raycastTarget = false;
-    }
-
-    private void SetMaskFill(float fill)
-    {
-        if (_maskRect == null)
-        {
-            return;
-        }
-
-        float clampedFill = Mathf.Clamp01(fill);
-        _maskRect.anchorMin = new Vector2(clampedFill, 0f);
-        _maskRect.anchorMax = new Vector2(1f, 1f);
-        _maskRect.offsetMin = Vector2.zero;
-        _maskRect.offsetMax = Vector2.zero;
-        _maskRect.gameObject.SetActive(_source != null && _source.DrawFillMask && clampedFill < 0.999f);
-    }
-
-    private void EnsureBarGraph(int barCount, string objectName)
-    {
-        if (_source == null || _powerIcon == null)
-        {
-            return;
-        }
-
-        if (_graphRoot != null && _graphBarCount != barCount)
-        {
-            Destroy(_graphRoot.gameObject);
-            _graphRoot = null;
-            _graphBackgrounds = null;
-            _graphFillRects = null;
-            _graphFills = null;
-            _graphBarCount = 0;
-        }
-
-        if (_graphRoot != null)
-        {
-            return;
-        }
-
-        RectTransform iconRect = _powerIcon.transform as RectTransform;
-        if (iconRect == null)
-        {
-            return;
-        }
-
-        GameObject rootObject = new(objectName, typeof(RectTransform));
-        _graphRoot = rootObject.transform as RectTransform;
-        _graphRoot.SetParent(iconRect, false);
-        _graphRoot.anchorMin = Vector2.zero;
-        _graphRoot.anchorMax = Vector2.one;
-        _graphRoot.offsetMin = Vector2.zero;
-        _graphRoot.offsetMax = Vector2.zero;
-        _graphRoot.SetAsLastSibling();
-
-        _graphBarCount = barCount;
-        _graphBackgrounds = new Image[barCount];
-        _graphFillRects = new RectTransform[barCount];
-        _graphFills = new Image[barCount];
-
-        for (int i = 0; i < barCount; i++)
-        {
-            CreateBar(i, barCount);
-        }
-    }
-
-    private void CreateBar(int index, int barCount)
-    {
-        float gap = 0.08f;
-        float totalGap = gap * (barCount + 1);
-        float barWidth = (1f - totalGap) / barCount;
-        float xMin = gap + index * (barWidth + gap);
-        float xMax = xMin + barWidth;
-
-        GameObject backgroundObject = new($"AGMLIB Power Bar {index + 1} Background", typeof(RectTransform), typeof(Image));
-        RectTransform backgroundRect = backgroundObject.transform as RectTransform;
-        backgroundRect.SetParent(_graphRoot, false);
-        backgroundRect.anchorMin = new Vector2(xMin, 0.08f);
-        backgroundRect.anchorMax = new Vector2(xMax, 0.92f);
-        backgroundRect.offsetMin = Vector2.zero;
-        backgroundRect.offsetMax = Vector2.zero;
-
-        _graphBackgrounds[index] = backgroundObject.GetComponent<Image>();
-        _graphBackgrounds[index].color = _source.GraphBackgroundColor;
-        _graphBackgrounds[index].raycastTarget = false;
-
-        GameObject fillObject = new($"AGMLIB Power Bar {index + 1} Fill", typeof(RectTransform), typeof(Image));
-        _graphFillRects[index] = fillObject.transform as RectTransform;
-        _graphFillRects[index].SetParent(backgroundRect, false);
-        _graphFillRects[index].anchorMin = Vector2.zero;
-        _graphFillRects[index].anchorMax = Vector2.one;
-        _graphFillRects[index].offsetMin = Vector2.zero;
-        _graphFillRects[index].offsetMax = Vector2.zero;
-
-        _graphFills[index] = fillObject.GetComponent<Image>();
-        _graphFills[index].raycastTarget = false;
-    }
-
-    private void UpdateTripleBarGraph(IReadOnlyResourcePool pool)
-    {
-        if (_source == null || _graphRoot == null || _graphFillRects == null)
-        {
-            return;
-        }
-
-        SetGraphVisible(true);
-        SetGraphFill(0, _source.GetDemandFill(pool), _source.NeedFillColor);
-        SetGraphFill(1, _source.GetPeakProductionFill(pool), _source.ProductionFillColor);
-        SetGraphFill(2, _source.GetPeakDemandFill(pool), _source.DemandFillColor);
-    }
-
-    private void UpdateSharedScaleGenerationDemandGraph(IReadOnlyResourcePool pool)
-    {
-        if (_source == null || _graphRoot == null || _graphFillRects == null)
-        {
-            return;
-        }
-
-        SetGraphVisible(true);
-        SetGraphFill(0, _source.GetSharedScaleGenerationFill(pool), _source.NeedFillColor);
-        SetGraphFill(1, _source.GetSharedScaleDemandFill(pool), _source.DemandFillColor);
-    }
-
-    private void SetGraphFill(int index, float fill, Color color)
-    {
-        if (_graphFillRects == null || index < 0 || index >= _graphFillRects.Length || _graphFillRects[index] == null)
-        {
-            return;
-        }
-
-        float clampedFill = Mathf.Clamp01(fill);
-        _graphFillRects[index].anchorMin = Vector2.zero;
-        _graphFillRects[index].anchorMax = new Vector2(1f, clampedFill);
-        _graphFillRects[index].offsetMin = Vector2.zero;
-        _graphFillRects[index].offsetMax = Vector2.zero;
-
-        if (_graphFills != null && _graphFills[index] != null)
-        {
-            _graphFills[index].color = color;
-        }
-    }
-
-    private void SetGraphVisible(bool visible)
-    {
-        if (_graphRoot != null)
-        {
-            _graphRoot.gameObject.SetActive(visible);
-        }
-    }
-
-    private void SetIconImageVisible(bool visible)
-    {
-        if (_iconImage != null)
-        {
-            _iconImage.enabled = true;
-            _iconImage.raycastTarget = true;
-
-            if (!visible)
+            int count = 0;
+            if (GenerationBarEnabled)
             {
-                Color color = _iconImage.color;
-                color.a = 0f;
-                _iconImage.color = color;
+                count++;
             }
-            else
+
+            if (DemandBarEnabled)
             {
-                Color color = _iconImage.color;
-                color.a = 1f;
-                _iconImage.color = color;
+                count++;
+            }
+
+            return count;
+        }
+    }
+
+    public void SetTooltipCallback(TooltipTrigger tooltip)
+    {
+        if (!ReplaceTooltip || tooltip == null)
+        {
+            return;
+        }
+
+        tooltip.SetGetTextCallback(BuildTooltipText);
+        tooltip.enabled = true;
+    }
+
+    public abstract class Binding : MonoBehaviour
+    {
+        protected ShipStatusPowerBar Source { get; private set; }
+        protected RectTransform Root { get; private set; }
+        protected TooltipTrigger Tooltip { get; set; }
+
+        private RectTransform[] _barBackgroundRects;
+        private RectTransform[] _fillRects;
+        private Image[] _fills;
+        private int _barCount;
+        private float _nextUpdateTime;
+
+        protected void SetPowerSource(ShipStatusPowerBar source)
+        {
+            Source = source;
+            EnsureTooltipCallback();
+            UpdateVisibleStatus();
+        }
+
+        public void ClearSource(ShipStatusPowerBar source)
+        {
+            if (Source != source)
+            {
+                return;
+            }
+
+            Source = null;
+            ClearVisualState();
+        }
+
+        public void ClearAnySource()
+        {
+            Source = null;
+            ClearVisualState();
+        }
+
+        protected virtual void OnDisable()
+        {
+            ClearVisualState();
+        }
+
+        private void Update()
+        {
+            if (Source == null || Time.unscaledTime < _nextUpdateTime)
+            {
+                return;
+            }
+
+            _nextUpdateTime = Time.unscaledTime + Mathf.Max(0.02f, Source.UpdateInterval);
+            UpdateVisibleStatus();
+        }
+
+        protected void UpdateVisibleStatus()
+        {
+            if (Source == null)
+            {
+                return;
+            }
+
+            IReadOnlyResourcePool pool = Source.GetResourcePool();
+            if (pool == null)
+            {
+                ClearVisualState();
+                return;
+            }
+
+            int barCount = Source.EnabledBarCount;
+            if (barCount <= 0 || !ShouldShowGraph())
+            {
+                BeforeVisualUpdate(pool);
+                EnsureTooltipCallback();
+                SetVisible(false);
+                return;
+            }
+
+            BeforeVisualUpdate(pool);
+            EnsureGraph(barCount);
+            if (Root == null || _fillRects == null)
+            {
+                return;
+            }
+
+            UpdateGraphLayout(barCount);
+            EnsureTooltipCallback();
+            SetVisible(true);
+            UpdatePowerBars(pool);
+        }
+
+        protected virtual void ClearVisualState()
+        {
+            SetVisible(false);
+        }
+
+        protected virtual bool ShouldShowGraph()
+        {
+            return true;
+        }
+
+        protected virtual void BeforeVisualUpdate(IReadOnlyResourcePool pool)
+        {
+        }
+
+        protected abstract RectTransform CreateRoot();
+
+        protected abstract void UpdateGraphLayout(int barCount);
+
+        protected abstract void LayoutBar(RectTransform backgroundRect, int index, int barCount);
+
+        protected abstract void ApplyFill(RectTransform fillRect, float fill);
+
+        protected virtual string BarNamePrefix => "AGMLIB Power Bar";
+
+        protected virtual Color BarBackgroundColor => Source.GraphBackgroundColor;
+
+        private void EnsureGraph(int barCount)
+        {
+            if (Root != null && _barCount != barCount)
+            {
+                Destroy(Root.gameObject);
+                Root = null;
+                _barBackgroundRects = null;
+                _fillRects = null;
+                _fills = null;
+                _barCount = 0;
+            }
+
+            if (Root != null)
+            {
+                return;
+            }
+
+            Root = CreateRoot();
+            if (Root == null)
+            {
+                return;
+            }
+
+            _barCount = barCount;
+            _barBackgroundRects = new RectTransform[barCount];
+            _fillRects = new RectTransform[barCount];
+            _fills = new Image[barCount];
+
+            for (int i = 0; i < barCount; i++)
+            {
+                CreateBar(i);
             }
         }
-    }
-}
 
-[HarmonyPatch(typeof(ShipStatusIconGroup), nameof(ShipStatusIconGroup.SetShip))]
-class ShipStatusIconGroupSetShipPowerStatusBar
-{
-    static void Postfix(ShipStatusIconGroup __instance, ShipController ship)
-    {
-        if (ship == null)
+        private void CreateBar(int index)
         {
-            QuantityStatusIcon powerIcon = Common.GetVal<QuantityStatusIcon>(__instance, "_powerQuantityIcon");
-            powerIcon?.GetComponent<ShipStatusPowerBarBinding>()?.ClearAnySource();
-            return;
+            GameObject backgroundObject = new($"{BarNamePrefix} {index + 1} Background", typeof(RectTransform), typeof(Image));
+            RectTransform backgroundRect = backgroundObject.transform as RectTransform;
+            backgroundRect.SetParent(Root, false);
+            _barBackgroundRects[index] = backgroundRect;
+
+            Image background = backgroundObject.GetComponent<Image>();
+            background.color = BarBackgroundColor;
+            background.raycastTarget = false;
+
+            GameObject fillObject = new($"{BarNamePrefix} {index + 1} Fill", typeof(RectTransform), typeof(Image));
+            RectTransform fillRect = fillObject.transform as RectTransform;
+            fillRect.SetParent(backgroundRect, false);
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            _fillRects[index] = fillRect;
+
+            _fills[index] = fillObject.GetComponent<Image>();
+            _fills[index].raycastTarget = false;
         }
 
-        ShipStatusPowerBar powerBar = ShipStatusPowerBar.EnsureAttachedTo(ship);
-        powerBar?.LinkStatusIcons(__instance);
+        private void UpdatePowerBars(IReadOnlyResourcePool pool)
+        {
+            int index = 0;
+            if (Source.GenerationBarEnabled)
+            {
+                SetBar(index, Source.GetSharedScaleGenerationFill(pool), Source.GetGenerationFillColor());
+                index++;
+            }
+
+            if (Source.DemandBarEnabled)
+            {
+                SetBar(index, Source.GetSharedScaleDemandFill(pool), Source.DemandFillColor);
+            }
+        }
+
+        private void SetBar(int index, float fill, Color color)
+        {
+            if (_fillRects == null || index < 0 || index >= _fillRects.Length || _fillRects[index] == null)
+            {
+                return;
+            }
+
+            ApplyFill(_fillRects[index], Mathf.Clamp01(fill));
+
+            if (_fills != null && _fills[index] != null)
+            {
+                _fills[index].color = color;
+            }
+        }
+
+        protected void LayoutBars(int barCount)
+        {
+            if (_barBackgroundRects == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < barCount; i++)
+            {
+                if (_barBackgroundRects[i] != null)
+                {
+                    LayoutBar(_barBackgroundRects[i], i, barCount);
+                }
+            }
+        }
+
+        protected void EnsureTooltipCallback() => Source?.SetTooltipCallback(Tooltip);
+
+        protected void SetVisible(bool visible) => Root?.gameObject?.SetActive(visible);
     }
 }
 
-[HarmonyPatch(typeof(ShipController), nameof(ShipController.Initialize))]
-class ShipControllerInitializePowerStatusBar
-{
-    static void Postfix(ShipController __instance)
-    {
-        ShipStatusPowerBar.EnsureAttachedTo(__instance);
-    }
-}
