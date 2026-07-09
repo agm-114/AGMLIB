@@ -42,6 +42,12 @@ namespace Lib.Generic_Gameplay.Muzzles
         private bool _fireRequested;
         private bool _isFiring;
         private float _fireAccum;
+        private BeamMuzzleEffects Effects => Common.GetVal<BeamMuzzleEffects>(this, "_effects");
+        private float BeamLength
+        {
+            get => Common.GetVal<float>(this, "_beamLength");
+            set => Common.SetVal(this, "_beamLength", value);
+        }
 
         float IDirectDamageMuzzle.ArmorPenetration => ((IDamageCharacteristic)this).ArmorPenetration * (1f / _damagePeriod);
 
@@ -86,7 +92,7 @@ namespace Lib.Generic_Gameplay.Muzzles
 
         public override void FireEffect()
         {
-            base.FireEffect();
+            //base.FireEffect(); disabled cause it plays the beam effect
             _flashImmediate?.Play();
             _glowerImmediate?.SetFiring(firing: true);
             _fireAnimationImmediate?.Play();
@@ -111,7 +117,6 @@ namespace Lib.Generic_Gameplay.Muzzles
                 StopCoroutine(_delayedFireEffectCoroutine);
                 _delayedFireEffectCoroutine = null;
             }
-
             _glowerImmediate?.SetFiring(firing: false);
             _glowerDelayed?.SetFiring(firing: false);
             base.StopFireEffect();
@@ -144,6 +149,8 @@ namespace Lib.Generic_Gameplay.Muzzles
                 yield break;
             }
 
+            BeamLength = 0f;
+            Effects?.StartEffect();
             _flashDelayed?.Play();
             _glowerDelayed?.FireInstant();
             _fireAnimationDelayed?.Play();
