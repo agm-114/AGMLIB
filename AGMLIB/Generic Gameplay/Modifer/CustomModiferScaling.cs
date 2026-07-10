@@ -84,7 +84,7 @@ class StatValueCalculateModifierCustomScaling
         totalLiteral = 0f;
 
         int modifierNumber = 0;
-        foreach (StatModifier modifier in modifierList.OrderByDescending(modifier => modifier.Modifier))
+        foreach (StatModifier modifier in modifierList.OrderByDescending(modifier => Mathf.Abs(modifier.Modifier)))
         {
             modifierNumber++;
             float scale = scaling.ScaleModifiers ? scaling.GetScale(modifierNumber, vanillaPenaltyFactor) : 1f;
@@ -92,7 +92,7 @@ class StatValueCalculateModifierCustomScaling
         }
 
         modifierNumber = 0;
-        foreach (StatModifier modifier in modifierList.OrderByDescending(modifier => modifier.Literal))
+        foreach (StatModifier modifier in modifierList.OrderByDescending(modifier => Mathf.Abs(modifier.Literal)))
         {
             modifierNumber++;
             float scale = scaling.ScaleLiterals ? scaling.GetScale(modifierNumber, vanillaPenaltyFactor) : 1f;
