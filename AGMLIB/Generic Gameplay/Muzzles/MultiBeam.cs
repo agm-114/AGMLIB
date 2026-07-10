@@ -46,7 +46,25 @@ public class MultiTarget : MonoComponent
     }
     List<Muzzle> Muzzles => [.. Common.GetVal<Muzzle[]>(Weapon, "_muzzles")];
 
+    List<Muzzle> ActiveMuzzles
+    {
+        get
+        {
+            List<Muzzle> activeMuzzles =SingleTargetMuzzles;
+            if (AssignedTrack.IsPointDefenseTarget)
+            {
+                Trace("SimBeam multitarget point defense");
+                activeMuzzles = MultiTargetMuzzles;
+            }
+            else
+            {
+                Trace("SimBeam multitarget antiship defense");
+            }
+            return activeMuzzles;
+        }
+    }
 
+    float CurrentMaxRange => (ActiveMuzzles[0] as IRangedMuzzle)?.MaxRange ?? Weapon.SelectedAmmoType?.MaxRange ?? float.MaxValue;
 
     public ITrack AssignedTrack => Weapon.CurrentlyTargetedTrack();
     [HideInInspector] public List<ITrack> AssignedTracks = [];
@@ -64,7 +82,7 @@ public class MultiTarget : MonoComponent
         .WhereNotNull()//NOTE: Not needed due to later null check
         .Where(track =>
         track?.IsValid ?? false && Weapon.CanTrainOnTarget(track.TruePosition) &&
-        Vector3.Distance(transform.position, track.TruePosition) <= Weapon.MaxEffectiveRange)
+        Vector3.Distance(transform.position, track.TruePosition) <= CurrentMaxRange)
         .ToList();
 
     IEnumerable<MultiTarget> Friends => gameObject.transform.parent.parent
@@ -167,7 +185,7 @@ public class MultiTarget : MonoComponent
         {
             Trace("SimBeam singletarget");
 
-            tracks = Enumerable.Repeat(Weapon.CurrentlyTargetedTrack(), Muzzles.Count).ToList();
+            tracks = Enumerable.Repeat(AssignedTrack, Muzzles.Count).ToList();
 
         }
         else if (tracks.Count <= Muzzles.Count)
@@ -182,17 +200,6 @@ public class MultiTarget : MonoComponent
         }
 
         int targetindex = 0;
-        List<Muzzle> ActiveMuzzles;
-        if(tracks[0].IsPointDefenseTarget)
-        {
-            Trace("SimBeam multitarget point defense");
-            ActiveMuzzles = MultiTargetMuzzles;
-        }
-        else
-        {
-            Trace("SimBeam multitarget antiship defense");
-            ActiveMuzzles = SingleTargetMuzzles;
-        }
         for (int i = 0; i < Muzzles.Count; i++)
         {
             
