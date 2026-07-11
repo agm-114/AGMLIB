@@ -1,19 +1,54 @@
 using SmallCraft;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-/*
+
+public sealed class CraftLaunchLimit : MonoBehaviour
+{
+    public static bool AutoAttachToAllShips = false;
+    public static int DefaultMaxActiveCraft = 2;
+
+    public int MaxActiveCraft = DefaultMaxActiveCraft;
+
+    public static CraftLaunchLimit EnsureAttachedTo(ShipController ship)
+    {
+        if (ship == null)
+        {
+            return null;
+        }
+
+        CraftLaunchLimit limit = ship.GetComponent<CraftLaunchLimit>();
+        if (limit == null && AutoAttachToAllShips)
+        {
+            limit = ship.gameObject.AddComponent<CraftLaunchLimit>();
+        }
+
+        return limit;
+    }
+}
+
 public static class CraftLaunchLimitExtensions
 {
-    public const int MaxActiveCraft = 2;
+    public static CraftLaunchLimit GetCraftLaunchLimit(this CraftCarrierController carrier)
+    {
+        ShipController ship = carrier != null
+            ? carrier.GetComponentInParent<ShipController>()
+            : null;
+        return CraftLaunchLimit.EnsureAttachedTo(ship);
+    }
 
     public static bool CanLaunchOrders(this CraftCarrierController carrier, int launchOrderCount)
     {
-        return carrier.GetUsedCraftSlots() + launchOrderCount <= MaxActiveCraft;
+        CraftLaunchLimit limit = carrier.GetCraftLaunchLimit();
+        return limit == null || carrier.GetUsedCraftSlots() + launchOrderCount <= limit.MaxActiveCraft;
     }
 
     public static int GetAvailableSelectionSlots(this CraftCarrierController carrier)
     {
-        return MaxActiveCraft - carrier.GetUsedCraftSlots();
+        CraftLaunchLimit limit = carrier.GetCraftLaunchLimit();
+        return limit == null
+            ? int.MaxValue
+            : Mathf.Max(0, limit.MaxActiveCraft - carrier.GetUsedCraftSlots());
     }
 
     public static int GetUsedCraftSlots(this CraftCarrierController carrier)
@@ -24,17 +59,25 @@ public static class CraftLaunchLimitExtensions
     public static int GetQueuedLaunches(this CraftCarrierController carrier)
     {
         if (carrier == null)
+        {
+            Debug.LogError("AGMLIB craft limit could not count queued launches because the carrier was null.");
             return 0;
+        }
 
-        var queue = Common.GetVal<IEnumerable>(carrier, "_trafficQueue");
+        IEnumerable queue = Common.GetVal<IEnumerable>(carrier, "_trafficQueue");
         if (queue == null)
+        {
+            Debug.LogError("AGMLIB craft limit could not count queued launches because the carrier traffic queue was unavailable.");
             return 0;
+        }
 
         int count = 0;
         foreach (object order in queue)
         {
             if (Common.GetVal<object>(order, "Type")?.ToString() == "Launch")
+            {
                 count++;
+            }
         }
 
         return count;
@@ -43,25 +86,39 @@ public static class CraftLaunchLimitExtensions
     public static int GetActiveCraft(this CraftCarrierController carrier)
     {
         if (carrier == null)
+        {
+            Debug.LogError("AGMLIB craft limit could not count active craft because the carrier was null.");
             return 0;
+        }
 
-        var owner = carrier.GetComponentInParent<ShipController>()?.OwnedBy;
-        var pooler = SpacecraftGroupPooler.Instance;
-        if (owner == null || pooler == null)
+        ShipController ship = carrier.GetComponentInParent<ShipController>();
+        if (ship?.OwnedBy == null)
+        {
+            Debug.LogError("AGMLIB craft limit could not count active craft because the carrier owner was unavailable.");
             return 0;
+        }
+
+        SpacecraftGroupPooler pooler = SpacecraftGroupPooler.Instance;
+        if (pooler == null)
+        {
+            Debug.LogError("AGMLIB craft limit could not count active craft because the spacecraft group pooler was unavailable.");
+            return 0;
+        }
 
         int count = 0;
-        foreach (SpacecraftGroup group in pooler.AllActiveGroupsForPlayer(owner))
+        foreach (SpacecraftGroup group in pooler.AllActiveGroupsForPlayer(ship.OwnedBy))
         {
             if (group == null)
+            {
                 continue;
+            }
 
             count += group.Members.Count(craft =>
-                craft != null &&
-                !craft.IsDead &&
-                craft.IsFlying &&
-                craft.LaunchedFromShip != null &&
-                craft.LaunchedFromShip.OwnedBy == owner);
+                craft != null
+                && !craft.IsDead
+                && craft.IsFlying
+                && craft.LaunchedFromShip != null
+                && craft.LaunchedFromShip.OwnedBy == ship.OwnedBy);
         }
 
         return count;
@@ -69,28 +126,34 @@ public static class CraftLaunchLimitExtensions
 
     public static bool IsLaunchCandidate(this Spacecraft craft)
     {
-        return craft != null &&
-               craft.HangarWorkStatus != Spacecraft.HangarStatus.PostFlight &&
-               craft.HangarWorkStatus != Spacecraft.HangarStatus.PreFlight;
+        return craft != null
+            && craft.HangarWorkStatus != Spacecraft.HangarStatus.PostFlight
+            && craft.HangarWorkStatus != Spacecraft.HangarStatus.PreFlight;
     }
 }
 
-
+[HarmonyPatch(typeof(ShipController), nameof(ShipController.Initialize))]
+internal static class ShipControllerInitializeCraftLaunchLimitPatch
+{
+    private static void Postfix(ShipController __instance)
+    {
+        CraftLaunchLimit.EnsureAttachedTo(__instance);
+    }
+}
 
 [HarmonyPatch(typeof(CraftCarrierController), nameof(CraftCarrierController.LaunchCraftFlight))]
-public static class CraftLaunchLimitPatch
+internal static class CraftCarrierControllerLaunchCraftLimitPatch
 {
-    public static bool Prefix(
+    private static bool Prefix(
         CraftCarrierController __instance,
         IEnumerable<CraftCarrierController.LaunchOrder> orders,
         ref SpacecraftGroup __result)
     {
-        var orderList = orders?.ToList();
-        if (orderList == null || orderList.Count == 0)
+        List<CraftCarrierController.LaunchOrder> orderList = orders?.ToList();
+        if (orderList == null || orderList.Count == 0 || __instance.CanLaunchOrders(orderList.Count))
+        {
             return true;
-
-        if (__instance.CanLaunchOrders(orderList.Count))
-            return true;
+        }
 
         __result = null;
         return false;
@@ -98,102 +161,34 @@ public static class CraftLaunchLimitPatch
 }
 
 [HarmonyPatch(typeof(ShipFlightControlMenu), nameof(ShipFlightControlMenu.AddCraftToSelection))]
-public static class CraftLaunchSelectionLimitPatch
+internal static class ShipFlightControlMenuCraftLaunchSelectionLimitPatch
 {
-    public static void Postfix(ShipFlightControlMenu __instance, StoredCraftItem item)
+    private static void Postfix(ShipFlightControlMenu __instance)
     {
-        var selectedSet = Common.GetVal<List<StoredCraftItem>>(__instance, "_selectedSet");
+        List<StoredCraftItem> selectedSet = Common.GetVal<List<StoredCraftItem>>(__instance, "_selectedSet");
         if (selectedSet == null || selectedSet.Count == 0)
+        {
             return;
+        }
 
-        var carrier = Common.GetVal<CraftCarrierController>(__instance, "_carrier");
+        CraftCarrierController carrier = Common.GetVal<CraftCarrierController>(__instance, "_carrier");
+        if (carrier.GetCraftLaunchLimit() == null)
+        {
+            return;
+        }
+
         int availableSelectionSlots = carrier.GetAvailableSelectionSlots();
         int selectedLaunchCount = selectedSet.Count(selected => selected.Craft.IsLaunchCandidate());
         while (selectedLaunchCount > availableSelectionSlots)
         {
             StoredCraftItem trim = selectedSet.FirstOrDefault(selected => selected.Craft.IsLaunchCandidate());
             if (trim == null)
+            {
                 break;
+            }
 
             __instance.RemoveCraftFromSelection(trim);
             selectedLaunchCount--;
         }
     }
 }
-*/
-/*
-[HarmonyPatch(typeof(ShipFlightControlMenu), nameof(ShipFlightControlMenu.SetShip))]
-public static class CraftLaunchUsageSetShipPatch
-{
-    public static void Postfix(ShipFlightControlMenu __instance)
-    {
-        CraftLimitUsageDisplay.Ensure(__instance);
-    }
-}
-
-public class CraftLimitUsageDisplay : MonoBehaviour
-{
-    private ShipFlightControlMenu _menu;
-    private TextMeshProUGUI _text;
-    private UI.TooltipTrigger _tooltip;
-    private CraftCarrierController _carrier;
-
-    public static CraftLimitUsageDisplay Ensure(ShipFlightControlMenu menu)
-    {
-        CraftLimitUsageDisplay display = menu.GetComponent<CraftLimitUsageDisplay>() ?? menu.gameObject.AddComponent<CraftLimitUsageDisplay>();
-        display._menu = menu;
-        display.EnsureText(menu);
-        return display;
-    }
-
-    private void EnsureText(ShipFlightControlMenu menu)
-    {
-        if (_text != null)
-            return;
-
-        TextMeshProUGUI template = Common.GetVal<TextMeshProUGUI>(menu, "_landCountText") ?? Common.GetVal<TextMeshProUGUI>(menu, "_launchCountText");
-        if (template == null)
-        {
-            Debug.LogError("AGMLIB craft limit could not create usage display because no flight count text template was found.");
-            return;
-        }
-
-        GameObject displayObject = Instantiate(template.gameObject, template.transform.parent);
-        displayObject.name = "AGMLIB Craft Limit Usage";
-        displayObject.transform.SetSiblingIndex(template.transform.GetSiblingIndex() + 1);
-        _text = displayObject.GetComponent<TextMeshProUGUI>();
-        _text.text = string.Empty;
-        _tooltip = displayObject.GetComponent<UI.TooltipTrigger>() ?? displayObject.GetComponentInChildren<UI.TooltipTrigger>();
-
-        RectTransform rect = displayObject.transform as RectTransform;
-        RectTransform templateRect = template.transform as RectTransform;
-        if (rect != null && templateRect != null && template.transform.parent.GetComponent<HorizontalOrVerticalLayoutGroup>() == null)
-        {
-            rect.anchoredPosition = templateRect.anchoredPosition + new Vector2(templateRect.rect.width + 8f, 0f);
-        }
-    }
-
-    private void Update()
-    {
-        if (!isActiveAndEnabled || _text == null || !_text.gameObject.activeInHierarchy)
-            return;
-
-        _carrier = Common.GetVal<CraftCarrierController>(_menu, "_carrier");
-        Refresh();
-    }
-
-    public void Refresh()
-    {
-        if (_text == null)
-            return;
-
-        int active = _carrier.GetActiveCraft();
-        int queued = _carrier.GetQueuedLaunches();
-        int used = active + queued;
-        _text.text = $"{used} / {CraftLaunchLimitExtensions.MaxActiveCraft}\n<size=16>DEPLOYED</size>";
-
-        if (_tooltip != null)
-            _tooltip.Text = $"Deployed Craft: {active}\nQueued Launches: {queued}\nLimit: {CraftLaunchLimitExtensions.MaxActiveCraft}";
-    }
-}
-*/
