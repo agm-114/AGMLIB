@@ -2,11 +2,16 @@ public sealed class ShipSignatureDisplayReduction : MonoBehaviour
 {
     private const float ChangeTolerance = 0.005f;
 
-    public static bool AutoAttachToAllShips = true;
-    public static float MinimalSignatureThreshold = 0.1f;
+    public static bool AutoAttachToAllShips = false;
+    public static float NegligibleSignatureThreshold = 0.1f;
+    public static float MinimalSignatureThreshold = 0.25f;
     public static float ReducedThreshold = 0.75f;
     public static string ReducedText = "REDUCED";
     public static string MinimalText = "MINIMAL";
+    public static string NegligibleText = "NEGLIGIBLE";
+    public static GameColors.ColorName ReducedColor = GameColors.ColorName.LightBlue;
+    public static GameColors.ColorName MinimalColor = GameColors.ColorName.DarkBlue;
+    public static GameColors.ColorName NegligibleColor = GameColors.ColorName.Purple;
 
     private ShipController? _shipController;
     private float _lastDisplayedMultiplier = float.NaN;
@@ -58,10 +63,21 @@ public sealed class ShipSignatureDisplayReduction : MonoBehaviour
         TextMeshProUGUI text = Common.GetVal<TextMeshProUGUI>(signatureText, "_text");
         if (text != null)
         {
-            text.text = displayedMultiplier <= MinimalSignatureThreshold
-                ? MinimalText
-                : ReducedText;
-            text.color = GameColors.Green;
+            if (displayedMultiplier <= NegligibleSignatureThreshold)
+            {
+                text.text = NegligibleText;
+                text.color = NegligibleColor.GetColor();
+            }
+            else if (displayedMultiplier <= MinimalSignatureThreshold)
+            {
+                text.text = MinimalText;
+                text.color = MinimalColor.GetColor();
+            }
+            else
+            {
+                text.text = ReducedText;
+                text.color = ReducedColor.GetColor();
+            }
         }
     }
 
@@ -85,7 +101,10 @@ public sealed class ShipSignatureDisplayReduction : MonoBehaviour
 
     private static bool ShouldContributeToDisplay(ISignature signature)
     {
-        if (signature == null || signature.HideInSigSummary || !signature.IsActive)
+        if (signature == null
+            || signature.SigType != SignatureType.Radar
+            || signature.HideInSigSummary
+            || !signature.IsActive)
         {
             return false;
         }
