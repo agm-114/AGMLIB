@@ -5,7 +5,9 @@ using System.Linq;
 
 public sealed class CraftLaunchLimit : MonoBehaviour
 {
-    public static bool AutoAttachToAllShips = false;
+    private static readonly HashSet<Spacecraft> PendingLaunches = new();
+
+    public static bool AutoAttachToAllShips = true;
     public static int DefaultMaxActiveCraft = 2;
 
     public int MaxActiveCraft = DefaultMaxActiveCraft;
@@ -25,6 +27,38 @@ public sealed class CraftLaunchLimit : MonoBehaviour
 
         return limit;
     }
+
+    public static void RegisterPendingLaunch(Spacecraft craft)
+    {
+        if (craft != null)
+        {
+            PendingLaunches.Add(craft);
+        }
+    }
+
+    public static void UnregisterPendingLaunch(Spacecraft craft)
+    {
+        if (craft != null)
+        {
+            PendingLaunches.Remove(craft);
+        }
+    }
+
+    public static int GetPendingLaunchCount(ShipController ship)
+    {
+        PendingLaunches.RemoveWhere(craft =>
+            craft == null
+            || craft.IsDead
+            || craft.IsFlying);
+        if (ship?.OwnedBy == null)
+        {
+            return 0;
+        }
+
+        return PendingLaunches.Count(craft =>
+            craft.LaunchedFromShip != null
+            && craft.LaunchedFromShip.OwnedBy == ship.OwnedBy);
+    }
 }
 
 public static class CraftLaunchLimitExtensions
@@ -37,23 +71,18 @@ public static class CraftLaunchLimitExtensions
         return CraftLaunchLimit.EnsureAttachedTo(ship);
     }
 
-    public static bool CanLaunchOrders(this CraftCarrierController carrier, int launchOrderCount)
+    public static bool HasLaunchCapacity(this CraftCarrierController carrier)
     {
         CraftLaunchLimit limit = carrier.GetCraftLaunchLimit();
-        return limit == null || carrier.GetUsedCraftSlots() + launchOrderCount <= limit.MaxActiveCraft;
-    }
-
-    public static int GetAvailableSelectionSlots(this CraftCarrierController carrier)
-    {
-        CraftLaunchLimit limit = carrier.GetCraftLaunchLimit();
-        return limit == null
-            ? int.MaxValue
-            : Mathf.Max(0, limit.MaxActiveCraft - carrier.GetUsedCraftSlots());
+        return limit == null || carrier.GetUsedCraftSlots() < limit.MaxActiveCraft;
     }
 
     public static int GetUsedCraftSlots(this CraftCarrierController carrier)
     {
-        return carrier.GetActiveCraft() + carrier.GetQueuedLaunches();
+        ShipController ship = carrier != null
+            ? carrier.GetComponentInParent<ShipController>()
+            : null;
+        return carrier.GetActiveCraft() + CraftLaunchLimit.GetPendingLaunchCount(ship);
     }
 
     public static int GetQueuedLaunches(this CraftCarrierController carrier)
@@ -141,54 +170,94 @@ internal static class ShipControllerInitializeCraftLaunchLimitPatch
     }
 }
 
-[HarmonyPatch(typeof(CraftCarrierController), nameof(CraftCarrierController.LaunchCraftFlight))]
-internal static class CraftCarrierControllerLaunchCraftLimitPatch
+[HarmonyPatch(typeof(CraftCarrierController), nameof(CraftCarrierController.Tick))]
+internal static class CraftCarrierControllerTickCraftLaunchLimitPatch
 {
-    private static bool Prefix(
-        CraftCarrierController __instance,
-        IEnumerable<CraftCarrierController.LaunchOrder> orders,
-        ref SpacecraftGroup __result)
+    private sealed class SuspendedLaunchOrder
     {
-        List<CraftCarrierController.LaunchOrder> orderList = orders?.ToList();
-        if (orderList == null || orderList.Count == 0 || __instance.CanLaunchOrders(orderList.Count))
+        public object Order;
+        public object OriginalType;
+    }
+
+    private static void Prefix(CraftCarrierController __instance, ref List<SuspendedLaunchOrder> __state)
+    {
+        if (__instance.HasLaunchCapacity())
         {
-            return true;
+            return;
         }
 
-        __result = null;
-        return false;
+        IEnumerable queue = Common.GetVal<IEnumerable>(__instance, "_trafficQueue");
+        if (queue == null)
+        {
+            Debug.LogError("AGMLIB craft limit could not suspend queued launches because the carrier traffic queue was unavailable.");
+            return;
+        }
+
+        __state = new List<SuspendedLaunchOrder>();
+        foreach (object order in queue)
+        {
+            object orderType = Common.GetVal<object>(order, "Type");
+            if (orderType?.ToString() != "Launch")
+            {
+                continue;
+            }
+
+            __state.Add(new SuspendedLaunchOrder
+            {
+                Order = order,
+                OriginalType = orderType,
+            });
+            Common.SetVal(order, "Type", System.Enum.ToObject(orderType.GetType(), -1));
+        }
+    }
+
+    private static void Postfix(List<SuspendedLaunchOrder> __state)
+    {
+        RestoreLaunchOrders(__state);
+    }
+
+    private static System.Exception Finalizer(System.Exception __exception, List<SuspendedLaunchOrder> __state)
+    {
+        RestoreLaunchOrders(__state);
+        return __exception;
+    }
+
+    private static void RestoreLaunchOrders(List<SuspendedLaunchOrder> suspendedOrders)
+    {
+        if (suspendedOrders == null)
+        {
+            return;
+        }
+
+        foreach (SuspendedLaunchOrder suspended in suspendedOrders)
+        {
+            Common.SetVal(suspended.Order, "Type", suspended.OriginalType);
+        }
+
+        suspendedOrders.Clear();
     }
 }
 
-[HarmonyPatch(typeof(ShipFlightControlMenu), nameof(ShipFlightControlMenu.AddCraftToSelection))]
-internal static class ShipFlightControlMenuCraftLaunchSelectionLimitPatch
+[HarmonyPatch(typeof(CraftLandingPad), nameof(CraftLandingPad.LaunchCraftFromPad))]
+internal static class CraftLandingPadLaunchCraftLimitPatch
 {
-    private static void Postfix(ShipFlightControlMenu __instance)
+    private static void Postfix(Spacecraft craftInstance, bool __result)
     {
-        List<StoredCraftItem> selectedSet = Common.GetVal<List<StoredCraftItem>>(__instance, "_selectedSet");
-        if (selectedSet == null || selectedSet.Count == 0)
+        if (__result)
         {
-            return;
+            CraftLaunchLimit.RegisterPendingLaunch(craftInstance);
         }
+    }
+}
 
-        CraftCarrierController carrier = Common.GetVal<CraftCarrierController>(__instance, "_carrier");
-        if (carrier.GetCraftLaunchLimit() == null)
+[HarmonyPatch(typeof(Spacecraft), nameof(Spacecraft.SetInStorage))]
+internal static class SpacecraftSetInStorageCraftLaunchLimitPatch
+{
+    private static void Postfix(Spacecraft __instance, Ships.Controls.ICraftHangar hangar)
+    {
+        if (hangar != null)
         {
-            return;
-        }
-
-        int availableSelectionSlots = carrier.GetAvailableSelectionSlots();
-        int selectedLaunchCount = selectedSet.Count(selected => selected.Craft.IsLaunchCandidate());
-        while (selectedLaunchCount > availableSelectionSlots)
-        {
-            StoredCraftItem trim = selectedSet.FirstOrDefault(selected => selected.Craft.IsLaunchCandidate());
-            if (trim == null)
-            {
-                break;
-            }
-
-            __instance.RemoveCraftFromSelection(trim);
-            selectedLaunchCount--;
+            CraftLaunchLimit.UnregisterPendingLaunch(__instance);
         }
     }
 }
