@@ -334,28 +334,35 @@ class RuntimeMissileWarhead_ShouldFuzeOnTargetPatch
 {
     static bool Prefix(RuntimeMissileWarhead __instance, MunitionHitInfo hitInfo, bool trigger, ref bool __result)
     {
-        //Debug.LogError("RuntimeMissileWarhead-ShouldFuzeOnTarget");
-        // Get the SensorTrack of the hit target so we can get the owner
-        ISensorTrackable component = hitInfo.HitObject.transform.root.GetComponent<ISensorTrackable>();
-        IPlayer owner = __instance.Missile.OwnedBy;
-        // Get the IFF relationship
-        IFF iffStatus = component.GetIFF(owner);
-        //Debug.LogError("IFF Status: " + iffStatus);
-        
-        // Get the Proxy Fuse of the missile
-        BoxCollider collider = Traverse.Create(__instance.Missile).Field("_proxFuze").GetValue<BoxCollider>();
-
-        // Make sure the proxy fuse exists before performing the bypass check
-        if (collider != null && collider.size.z > 0)
+        try
         {
-            // IFF returning IFF.NONE results in Fuse triggering.  IFF.NONE return only seems to happen for the first check between a submunition and it's launcher.
-            // Thus just skip this Fuze Target
-            if (iffStatus == IFF.None)
-            {
-                return false;
-            }
-        }
+            //Debug.LogError("RuntimeMissileWarhead-ShouldFuzeOnTarget");
+            // Get the SensorTrack of the hit target so we can get the owner
+            ISensorTrackable component = hitInfo.HitObject.transform.root.GetComponent<ISensorTrackable>();
+            IPlayer owner = __instance.Missile.OwnedBy;
+            // Get the IFF relationship
+            IFF iffStatus = component.GetIFF(owner);
+            //Debug.LogError("IFF Status: " + iffStatus);
 
-        return true;
+            // Get the Proxy Fuse of the missile
+            BoxCollider collider = Traverse.Create(__instance.Missile).Field("_proxFuze").GetValue<BoxCollider>();
+
+            // Make sure the proxy fuse exists before performing the bypass check
+            if (collider != null && collider.size.z > 0)
+            {
+                // IFF returning IFF.NONE results in Fuse triggering.  IFF.NONE return only seems to happen for the first check between a submunition and it's launcher.
+                // Thus just skip this Fuze Target
+                if (iffStatus == IFF.None)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            return true;
+        }
     }
 }
