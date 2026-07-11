@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 public class DynamicStun : ActiveSettings
 {
@@ -59,8 +59,7 @@ public class DynamicStun : ActiveSettings
         */
         if (active != lastactive)
         {
-            Common.RunFunc(ShipController, "HandlePowerplantsWorkingChanged", new object[] { null });
-            Common.RunFunc(ShipController, "HandleDrivesWorkingChanged", new object[] { null });
+            DynamicWorkingHelpers.RefreshWorkingState(ShipController);
 
             if (Knockback == KnockbackMode.COM)
                 Rigidbody?.AddRelativeForce(Force, Mode);
@@ -88,11 +87,70 @@ public class DynamicWorkingCache : MonoBehaviour
     public List<DriveComponent> _allDrives;
     public List<PowerplantComponent> _allPowerplants;
 }
+public class TimedDynamicStun : DynamicStun
+{
+    private ShipController _targetShip;
+    private float _endTime;
+
+    public void Apply(ShipController ship, float durationSeconds, bool disableDrives, bool disableReactors, bool disableWeapons)
+    {
+        _targetShip = ship;
+        DisableDrives = disableDrives;
+        DisableReactors = disableReactors;
+        DisableWeapons = disableWeapons;
+        active = true;
+        lastactive = false;
+        _endTime = Time.time + Mathf.Max(0f, durationSeconds);
+        DynamicWorkingHelpers.RefreshWorkingState(ship);
+    }
+
+    protected override void FixedUpdate()
+    {
+        if (_targetShip == null)
+        {
+            Destroy(this);
+            return;
+        }
+
+        if (Time.time >= _endTime)
+        {
+            active = false;
+            DynamicWorkingHelpers.RefreshWorkingState(_targetShip);
+            Destroy(this);
+            return;
+        }
+
+        active = true;
+    }
+}
+
 public static class DynamicWorkingHelpers
 {
     public static IEnumerable<DynamicStun> GetActive(this ShipController ship)
     {
-        return ship.gameObject.GetComponentsInChildren<DynamicStun>().ToList().Where(a => a.active);
+        return ship.gameObject.GetComponentsInChildren<DynamicStun>().Where(a => a.active);
+    }
+
+    public static void ApplyTimed(ShipController ship, float durationSeconds, bool disableDrives, bool disableReactors, bool disableWeapons)
+    {
+        if (ship == null || durationSeconds <= 0f || (!disableDrives && !disableReactors && !disableWeapons))
+        {
+            return;
+        }
+
+        ship.gameObject.AddComponent<TimedDynamicStun>()
+            .Apply(ship, durationSeconds, disableDrives, disableReactors, disableWeapons);
+    }
+
+    public static void RefreshWorkingState(ShipController ship)
+    {
+        if (ship == null)
+        {
+            return;
+        }
+
+        Common.RunFunc(ship, "HandlePowerplantsWorkingChanged", new object[] { null });
+        Common.RunFunc(ship, "HandleDrivesWorkingChanged", new object[] { null });
     }
 }
 

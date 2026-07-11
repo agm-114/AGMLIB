@@ -12,7 +12,7 @@ public class IndexedSocketFilter : MonoBehaviour, IFilterIndexed
     public IList<string> Whitelist => _whitelist;
     public bool Whitelisteverything => _whitelisteverything;
     public IList<string> Blacklist => _blacklist;
-    public bool Blacklisteverything => _blacklisteverything;
+    public bool Blacklisteverything => _blacklisteverything; 
     [SerializeField]
     protected bool _allowIllegal = false;
     public bool AllowIllegal => _allowIllegal;

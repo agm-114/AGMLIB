@@ -42,22 +42,39 @@
 
             //Common.Trace("Spawning Impacts");
 
-            foreach (IMuzzleEffect effect in muzzle.gameObject.GetComponentsInChildren<IMuzzleEffect>())
+            foreach (BaseMuzzleEffects effect in muzzle.gameObject.GetComponentsInChildren<BaseMuzzleEffects>())
             {
                 //Common.Trace("Spawning Impact");
 
-                effect.SpawnHit(hit);
+                effect.TrySpawnHit(hit);
             }
         }
     }
 
     public abstract class BaseMuzzleEffects : MonoBehaviour, IMuzzleEffect
     {
+        [SerializeField] private float _impactRefractoryTime = 0f;
+        private float _nextImpactEffectTime;
+
         public abstract void FireEffect();
         public virtual void CancelEffect()
         {
 
         }
+        public bool TrySpawnHit(MunitionHitInfo? rayHit)
+        {
+            if (_impactRefractoryTime > 0f)
+            {
+                if (Time.time < _nextImpactEffectTime)
+                    return false;
+
+                _nextImpactEffectTime = Time.time + _impactRefractoryTime;
+            }
+
+            SpawnHit(rayHit);
+            return true;
+        }
+
         public virtual void SpawnHit(MunitionHitInfo? rayHit)
         {
 

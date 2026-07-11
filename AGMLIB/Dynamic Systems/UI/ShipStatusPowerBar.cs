@@ -8,43 +8,43 @@ public class ShipStatusPowerBar : MonoBehaviour
         StatusBoard,
     }
 
-    public static bool DebugAutoAttachToAllShips = true;
+    public static bool DebugAutoAttachToAllShips = false;
 
-    [Header("Display")]
-    public DisplaySurface DisplayTarget = DisplaySurface.StatusBoard;
+    //[Header("Display")]
+    public virtual DisplaySurface DisplayTarget => DisplaySurface.StatusBoard;
 
-    [Header("Resource")]
-    public string ResourceName = "Power";
+    //[Header("Resource")]
+    public string ResourceName => "Power";
 
-    [Header("Status Icon")]
-    public bool ShowIconWhenNormal = true;
-    public bool IconPowerBarsEnabled = false;
-    public bool IconMaskEnabled = false;
-    public Color MaskColor = new(0f, 0f, 0f, 0.85f);
-    public Color GraphBackgroundColor = new(0f, 0f, 0f, 0.8f);
-    public GameColors.ColorName GenerationColorName = GameColors.ColorName.Green;
-    public Color DemandFillColor = new(1f, 0.15f, 0.1f, 1f);
-    public float UpdateInterval = 0.1f;
+    //[Header("Status Icon")]
+    public bool ShowIconWhenNormal => true;
+    public bool IconPowerBarsEnabled => false;
+    public bool IconMaskEnabled => false;
+    public Color MaskColor => new(0f, 0f, 0f, 0.85f);
+    public Color GraphBackgroundColor => new(0f, 0f, 0f, 0.8f);
+    public GameColors.ColorName GenerationColorName => GameColors.ColorName.Green;
+    public Color DemandFillColor => new(1f, 0.15f, 0.1f, 1f);
+    public float UpdateInterval => 0.1f;
 
-    [Header("Power Bars")]
-    public bool GenerationBarEnabled = true;
-    public bool DemandBarEnabled = true;
-    public bool IncludePeakPowerInScale = true;
+    //[Header("Power Bars")]
+    public bool GenerationBarEnabled => true;
+    public bool DemandBarEnabled => true;
+    public bool IncludePeakPowerInScale => true;
 
-    [Header("Status Board")]
-    public bool StatusBoardPowerBarsEnabled = true;
-    public float BoardBarHeight = 5f;
-    public float BoardBarGap = 2f;
-    public float BoardBarPadding = 4f;
-    public Vector2 BoardBarMargin = new(3f, 3f);
-    public Vector2 BoardBarNudge = new(-8f, 6f);
-    public Vector2 BoardBarSize = new(0f, 18f);
-    public Vector2 StatusBoardMaxSize = new(700f, 350f);
-    public Color BoardGraphBackgroundColor = new(0.25f, 0.25f, 0.25f, 0.85f);
+    //[Header("Status Board")]
+    public bool StatusBoardPowerBarsEnabled => true;
+    public float BoardBarHeight => 5f;
+    public float BoardBarGap => 2f;
+    public float BoardBarPadding => 4f;
+    public Vector2 BoardBarMargin => new(3f, 3f);
+    public Vector2 BoardBarNudge => new(-8f, 6f);
+    public Vector2 BoardBarSize => new(0f, 18f);
+    public Vector2 StatusBoardMaxSize => new(700f, 350f);
+    public Color BoardGraphBackgroundColor => new(0.25f, 0.25f, 0.25f, 0.85f);
 
-    [Header("Tooltip")]
-    public bool ReplaceTooltip = true;
-    public string TooltipTitle = "Power Status";
+    //[Header("Tooltip")]
+    public bool ReplaceTooltip => true;
+    public string TooltipTitle => "Power Status";
 
     private ShipController _shipController;
     public static ShipStatusPowerBar EnsureAttachedTo(ShipController ship, DisplaySurface displayTarget)
@@ -56,8 +56,10 @@ public class ShipStatusPowerBar : MonoBehaviour
             .FirstOrDefault(bar => bar.DisplayTarget == displayTarget);
         if (powerBar == null && DebugAutoAttachToAllShips)
         {
-            powerBar = ship.gameObject.AddComponent<ShipStatusPowerBar>();
-            powerBar.ApplyDisplayDefaults(displayTarget);
+            Type componentType = displayTarget == DisplaySurface.StatusIcon
+                ? typeof(DebugShipStatusPowerIconBar)
+                : typeof(ShipStatusPowerBar);
+            powerBar = ship.gameObject.AddComponent(componentType) as ShipStatusPowerBar;
         }
 
         return powerBar;
@@ -72,14 +74,6 @@ public class ShipStatusPowerBar : MonoBehaviour
     public bool TargetsStatusIcon => DisplayTarget == DisplaySurface.StatusIcon;
 
     public bool TargetsStatusBoard => DisplayTarget == DisplaySurface.StatusBoard;
-
-    private void ApplyDisplayDefaults(DisplaySurface displayTarget)
-    {
-        DisplayTarget = displayTarget;
-        IconPowerBarsEnabled = displayTarget == DisplaySurface.StatusIcon && IconPowerBarsEnabled;
-        IconMaskEnabled = displayTarget == DisplaySurface.StatusIcon && IconMaskEnabled;
-        StatusBoardPowerBarsEnabled = displayTarget == DisplaySurface.StatusBoard;
-    }
 
     private void Awake()
     {
@@ -500,5 +494,10 @@ public class ShipStatusPowerBar : MonoBehaviour
 
         protected void SetVisible(bool visible) => Root?.gameObject?.SetActive(visible);
     }
+}
+
+internal sealed class DebugShipStatusPowerIconBar : ShipStatusPowerBar
+{
+    public override DisplaySurface DisplayTarget => DisplaySurface.StatusIcon;
 }
 

@@ -12,33 +12,21 @@ namespace Lib.Generic_Gameplay.Muzzles
         private float _damagePeriod = 0.5f;
 
         [Header("Immediate Effects")]
-        [SerializeField]
-        private VisualEffect _flashImmediate;
-
-        [SerializeField]
-        private Animation _fireAnimationImmediate;
-
-        [SerializeField]
-        private VariedSoundEffect _fireSoundImmediate;
-
-        [SerializeField]
-        private BarrelGlow _glowerImmediate;
+        [SerializeField] private VisualEffect? _flashImmediate;
+        [SerializeField] private VariedSoundEffect? _fireSoundImmediate;
+        [SerializeField] protected AudioSource? _immediateSoundSource;
+        [SerializeField] private Animation? _fireAnimationImmediate;
+        [SerializeField] private BarrelGlow? _glowerImmediate;
 
         [Header("Delayed Effects")]
-        [SerializeField]
-        private VisualEffect _flashDelayed;
+        [SerializeField] private VisualEffect? _flashDelayed;
+        [SerializeField] private VariedSoundEffect? _fireSoundDelayed;
+        [SerializeField] private AudioSource? _delayedSoundSource;
+        [SerializeField] private Animation? _fireAnimationDelayed;
+        [SerializeField] private BarrelGlow? _glowerDelayed;
 
-        [SerializeField]
-        private Animation _fireAnimationDelayed;
-
-        [SerializeField]
-        private VariedSoundEffect _fireSoundDelayed;
-
-        [SerializeField]
-        private BarrelGlow _glowerDelayed;
-
-        private Coroutine _delayedFireCoroutine;
-        private Coroutine _delayedFireEffectCoroutine;
+        private Coroutine? _delayedFireCoroutine;
+        private Coroutine? _delayedFireEffectCoroutine;
         private bool _fireRequested;
         private bool _isFiring;
         private float _fireAccum;
@@ -61,6 +49,19 @@ namespace Lib.Generic_Gameplay.Muzzles
 
         void IDirectDamageMuzzle.GetExtraStatDetails(List<(string, string)> rows)
         {
+        }
+
+        protected override void Awake()
+        {
+            if(_immediateSoundSource != null)
+            {
+                _immediateSoundSource.outputAudioMixerGroup = AudioGroupBinding.Instance.VaccumEffectsGroup;
+            }
+            if(_delayedSoundSource != null) 
+            {
+                _delayedSoundSource.outputAudioMixerGroup = AudioGroupBinding.Instance.VaccumEffectsGroup;
+            }
+            base.Awake();
         }
 
         public override void Fire()
@@ -97,7 +98,11 @@ namespace Lib.Generic_Gameplay.Muzzles
             _glowerImmediate?.SetFiring(firing: true);
             _fireAnimationImmediate?.Play();
 
-            if (_fireSoundImmediate != null)
+            if(_immediateSoundSource != null)
+            {
+                _fireSoundImmediate?.PlayFromSource(_immediateSoundSource);
+            }
+            else if (_fireSoundImmediate != null)
             {
                 GlobalSFX.PlayOneShotSpatial(_fireSoundImmediate, base.transform);
             }
@@ -119,6 +124,12 @@ namespace Lib.Generic_Gameplay.Muzzles
             }
             _glowerImmediate?.SetFiring(firing: false);
             _glowerDelayed?.SetFiring(firing: false);
+            _flashImmediate?.Stop();
+            _flashDelayed?.Stop();
+            _fireAnimationImmediate?.Stop();
+            _fireAnimationDelayed?.Stop();
+            _immediateSoundSource?.Stop();
+            _delayedSoundSource?.Stop();
             base.StopFireEffect();
         }
 
@@ -155,7 +166,11 @@ namespace Lib.Generic_Gameplay.Muzzles
             _glowerDelayed?.FireInstant();
             _fireAnimationDelayed?.Play();
 
-            if (_fireSoundDelayed != null)
+            if (_delayedSoundSource != null)
+            {
+                _fireSoundDelayed?.PlayFromSource(_delayedSoundSource);
+            }
+            else if (_fireSoundDelayed != null)
             {
                 GlobalSFX.PlayOneShotSpatial(_fireSoundDelayed, base.transform);
             }

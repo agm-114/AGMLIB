@@ -1,4 +1,4 @@
-﻿using Game.UI.Chessboard;
+﻿﻿using Game.UI.Chessboard;
 using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors;
 using Munitions.ModularMissiles.Descriptors.Seekers;
@@ -36,9 +36,50 @@ public interface IDebugableMissileSeeker
 
 //    
 
+
 [CreateAssetMenu(fileName = "New Position Seeker", menuName = "Nebulous/Missiles/Seekers/Position")]
 public class PositionSeekerDescriptor : CommandSeekerDescriptor
 {
+
+
+
+    public readonly struct SeekerSettings
+    {
+        public readonly SeekerSourceSettings Primary;
+        public readonly SeekerSourceSettings Secondary;
+        public readonly SensorUpdateMode SourceSelection;
+        public readonly float RandomScale;
+
+        public SeekerSettings(
+            SeekerSourceSettings primary,
+            SeekerSourceSettings secondary,
+            SensorUpdateMode sourceSelection,
+            float randomScale)
+        {
+            Primary = primary;
+            Secondary = secondary;
+            SourceSelection = sourceSelection;
+            RandomScale = randomScale;
+        }
+    }
+
+    public readonly struct SeekerSourceSettings
+    {
+        public readonly SeekerMode Source;
+        public readonly bool UseBounds;
+        public readonly bool UseSphereNoise;
+
+        public SeekerSourceSettings(
+            SeekerMode source,
+            bool useBounds,
+            bool useSphereNoise)
+        {
+            Source = source;
+            UseBounds = useBounds;
+            UseSphereNoise = useSphereNoise;
+        }
+    }
+
     public bool CommunicatorSeeker = false;
     public bool ForceAllowEmcomLaunch = false;
     public override bool SupportsPositionTargeting => true;
@@ -70,8 +111,51 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
     public SensorUpdateMode SourceSelection = SensorUpdateMode.Average;
     public float RandomScale = 1f;
 
-    [Header("Inflight Settings")]
+
+    public SeekerSettings LaunchSettings => new (
+        new SeekerSourceSettings(
+            PrimarySource,
+            PrimaryUseBounds,
+            PrimaryUseSphereNoise
+        ),
+        new SeekerSourceSettings(
+            SecondarySource,
+            SecondaryUseBounds,
+            SecondaryUseSphereNoise
+        ),
+        SourceSelection,
+        RandomScale
+    );
+
+    [Header("Seeker Update Settings")]
+
     public SensorUpdateMode SeekerUpdateMode = SensorUpdateMode.BestSource;
+
+    [Header("Inflight Noise Settings")]
+    
+    public SeekerMode UpdatePrimarySource = SeekerMode.SensorCenter;
+    public bool UpdatePrimaryUseBounds = true;
+    public bool UpdatePrimaryUseSphereNoise = false;
+    public SeekerMode UpdateSecondarySource = SeekerMode.SensorCenter;
+    public bool UpdateSecondaryUseBounds = true;
+    public bool UpdateSecondaryUseSphereNoise = false;
+    public SensorUpdateMode UpdateSourceSelection = SensorUpdateMode.Average;
+    public float UpdateRandomScale = 1f;
+
+    public SeekerSettings InFlightSettings => new (
+        new SeekerSourceSettings(
+            UpdatePrimarySource,
+            UpdatePrimaryUseBounds,
+            UpdatePrimaryUseSphereNoise
+        ),
+        new SeekerSourceSettings(
+            UpdateSecondarySource,
+            UpdateSecondaryUseBounds,
+            UpdateSecondaryUseSphereNoise
+        ),
+        UpdateSourceSelection,
+        UpdateRandomScale
+    );
 
     public override string GetSummarySegment()
     {
@@ -124,6 +208,24 @@ public class TimedDestroyer : MonoBehaviour
 }
 public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeker
 {
+
+    public readonly struct SeekerPositionData
+    {
+        public readonly Vector3 InitialPosition;
+        public readonly Vector3 TruePosition;
+        public readonly Vector3 KnownPosition;
+
+        public SeekerPositionData(
+            Vector3 initialPosition,
+            Vector3 truePosition,
+            Vector3 knownPosition)
+        {
+            InitialPosition = initialPosition;
+            TruePosition = truePosition;
+            KnownPosition = knownPosition;
+        }
+    }
+
     private ISensorProvider SensorProvider => Missile?.LaunchedFrom?.Sensors;
     private ITrack? _cachedTrack;
     private ITrack? TargetedTrack
@@ -139,8 +241,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
         }
     }
     private Vector3? _startposition = null; //=> _trackTargetInitialPos ?? Vector3.zero;
-    private Vector3 _primarypos;
-    private Vector3 _secondarypos;
+
     private Vector3 _startvelocity = Vector3.zero;
     private Vector3 _startaccel = Vector3.zero;
     private Vector3 PredictedPosition => (_startposition ?? _trackTargetInitialPos ?? Vector3.zero) + _startvelocity * _age;
@@ -173,63 +274,44 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
 
     }
 
-    private void SetupTrack()
+    public Vector3 GetPostionWithNoise(SeekerPositionData posData, SeekerSourceSettings settings, float randomScale)
     {
-
-    }
-    public Vector3 GetPostionWithNoise(Vector3 initialPosition, PositionSeekerDescriptor.SeekerMode possource,  bool useBounds, bool useSphereNoise)
-    {
-        Vector3 vector3 = GetPostion(initialPosition, possource);
-        if (useBounds)
+        Vector3 vector3 = posData.InitialPosition;
+        switch (settings.Source)
+        {
+            case PositionSeekerDescriptor.SeekerMode.TrueCenter:
+                vector3 = posData.TruePosition;
+                break;
+            case PositionSeekerDescriptor.SeekerMode.SensorCenter:
+                vector3 = posData.KnownPosition;
+                break;
+            case PositionSeekerDescriptor.SeekerMode.LaunchPlatform:
+                break;
+            case PositionSeekerDescriptor.SeekerMode.None:
+                break;
+            default:
+                break;
+        }
+        if (settings.UseBounds)
         {
             vector3 += TargetedTrack.Trackable.Rotation * (TargetedTrack?.Trackable.RandomPointInBounds() ?? Vector3.zero);
         }
-        if (useSphereNoise)
+        if (settings.UseSphereNoise)
         {
-            vector3 += UnityEngine.Random.insideUnitSphere * 10f * _comdesc.RandomScale;
+            vector3 += UnityEngine.Random.insideUnitSphere * 10f * randomScale;
         }
         return vector3;
     }
 
-    public Vector3 GetPostion(Vector3 initialPosition, PositionSeekerDescriptor.SeekerMode possource)
+
+    public Vector3 MixGetPostionWithNoise(SeekerPositionData posData, SeekerSettings settings)   
     {
-        switch (possource)
-        {
-            case PositionSeekerDescriptor.SeekerMode.TrueCenter:
-                return TruePosition;
-            case PositionSeekerDescriptor.SeekerMode.SensorCenter:
-                return KnownPosition;
-            case PositionSeekerDescriptor.SeekerMode.LaunchPlatform:
-                return initialPosition;
-            case PositionSeekerDescriptor.SeekerMode.None:
-                return initialPosition;
-                break;
-            default:
-                return initialPosition;
-        }
-    }
-
-    public override void SetTrackTarget(TrackIdentifier target, Vector3 initialPosition)
-    {
-        _cachedTrack = null;
-
-
-        if (base.Missile == null || base.Missile.LaunchedFrom == null || _trackTargetID == null)
-        {
-            base.SetTrackTarget(target, initialPosition);
-        }
-        _startvelocity = (TargetedTrack?.AbsoluteVelocity ?? Vector3.zero);// + Vector3.up * 3;
-        
-        _startaccel = TargetedTrack?.Acceleration ?? Vector3.zero;
-
-        Vector3 primaryPostion = GetPostionWithNoise(initialPosition, _comdesc.PrimarySource, _comdesc.PrimaryUseBounds, _comdesc.PrimaryUseSphereNoise);
+        Vector3 primaryPostion = GetPostionWithNoise(posData, settings.Primary, settings.RandomScale);
 
 
         if (_comdesc.SecondarySource != PositionSeekerDescriptor.SeekerMode.None && _comdesc.SourceSelection != SensorUpdateMode.None)
         {
-            Vector3 secondaryPosition = GetPostionWithNoise(initialPosition, _comdesc.SecondarySource, _comdesc.SecondaryUseBounds, _comdesc.SecondaryUseSphereNoise);
-            _primarypos = primaryPostion;
-            _secondarypos = secondaryPosition;
+            Vector3 secondaryPosition = GetPostionWithNoise(posData, settings.Secondary, settings.RandomScale);
             switch (_comdesc.SourceSelection)
             {
                 case SensorUpdateMode.FirstSource:
@@ -250,10 +332,32 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
             }
         }
 
+        return primaryPostion;
 
+
+    }
+
+    public override void SetTrackTarget(TrackIdentifier target, Vector3 initialPosition)
+    {
+        _cachedTrack = null;
+
+
+        if (base.Missile == null || base.Missile.LaunchedFrom == null || _trackTargetID == null)
+        {
+            base.SetTrackTarget(target, initialPosition);
+        }
+        _startvelocity = (TargetedTrack?.AbsoluteVelocity ?? Vector3.zero);// + Vector3.up * 3;
+        
+        _startaccel = TargetedTrack?.Acceleration ?? Vector3.zero;
+        SeekerPositionData startpos = new(
+            initialPosition,
+            TruePosition,
+            KnownPosition
+        );
+
+        Vector3 primaryPostion = MixGetPostionWithNoise(startpos, _comdesc.LaunchSettings);
         _startposition = primaryPostion;
         base.SetTrackTarget(target, primaryPostion);
-        SetupTrack();
     }
 
     public override void OnLaunched(ILaunchingPlatform platform, bool forceHotLaunch, bool immediateSearching)
@@ -276,6 +380,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
         List<Vector3> _velocities = new List<Vector3>();
         List<Vector3> _accelerations = new List<Vector3>();
         List<Vector3> _positions = new List<Vector3>();
+        Vector3 intialPostion = _startposition ?? Vector3.zero;
 
         foreach (RuntimeMissileSeeker targetingSeeker in _targetingSeekers)
         {
@@ -288,7 +393,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
                 continue;
 
             }
-
+           
 
 
             if (_comdesc.SeekerUpdateMode == SensorUpdateMode.FirstSource)
@@ -348,6 +453,12 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
             _startposition /= _positions.Count;
             _age = 0;
         }
+
+        if(intialPostion != _startposition)
+        {
+            _startposition = MixGetPostionWithNoise(new SeekerPositionData(intialPostion, TruePosition, _startposition ?? Vector3.zero), _comdesc.InFlightSettings);
+        }
+        
         /*
         foreach (RuntimeMissileSeeker seeker in .gameObject.GetComponents<RuntimeMissileSeeker>())
         {
@@ -703,7 +814,7 @@ public class RuntimeRangedCommandSeeker : RuntimeCommandSeeker
     private bool IsUnjammable()
     {
         return _comdesc == null || _comdesc.Unjammable;
-            }
+    }
 
     private void ClearTargetedTrack()
     {

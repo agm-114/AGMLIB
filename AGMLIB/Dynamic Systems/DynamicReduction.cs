@@ -58,7 +58,8 @@ public class DynamicReduction : ActiveSettings
     }
     public static IEnumerable<DynamicReduction> GetReductions(HullPartResourceConnected hullComponent)
     {
-        return hullComponent?.transform?.root?.GetComponent<DynamicReductionCache>().dynamicReductions.Where(reduction => reduction.TargetedComponent(hullComponent)) ?? new List<DynamicReduction>();
+        DynamicReductionCache cache = hullComponent?.transform?.root?.GetComponent<DynamicReductionCache>();
+        return cache?.dynamicReductions?.Where(reduction => reduction.TargetedComponent(hullComponent)) ?? new List<DynamicReduction>();
 
     }
 
@@ -91,6 +92,7 @@ public class DynamicReduction : ActiveSettings
 
         if (_reduced == null || _reduced.Count() <= 0)
         {
+            AmmoModeResourceProfileRuntime.Apply(hullComponent);
             return;
         }
 
@@ -98,6 +100,7 @@ public class DynamicReduction : ActiveSettings
         ResourceValue[] ModifiedRequiredResources = vals.Base.ConvertAll(element => DynamicReduction.Reduce(element, hullComponent)).ToArray();
         //reduction.Setup(__instance, ____requiredResources);
         vals.SetRequireResoures(ModifiedRequiredResources);
+        AmmoModeResourceProfileRuntime.Apply(hullComponent);
     }
 }
 public class RequiredResources : MonoBehaviour
