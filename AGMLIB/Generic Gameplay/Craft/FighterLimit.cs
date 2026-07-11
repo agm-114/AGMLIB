@@ -7,7 +7,7 @@ public sealed class CraftLaunchLimit : MonoBehaviour
 {
     private static readonly HashSet<Spacecraft> PendingLaunches = new();
 
-    public static bool AutoAttachToAllShips = true;
+    public static bool AutoAttachToAllShips = false;
     public static int DefaultMaxActiveCraft = 2;
 
     public int MaxActiveCraft = DefaultMaxActiveCraft;

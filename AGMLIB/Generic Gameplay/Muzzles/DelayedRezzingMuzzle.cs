@@ -98,7 +98,7 @@ public class DelayedRezzingMuzzle : RezzingMuzzle
         }
         if (_inRefractoryPeriod && Time.time >= _nextFireEffectTime)
         {
-            Debug.LogError("ENDING REFRACTORY PERIOD");
+            //Debug.LogError("ENDING REFRACTORY PERIOD");
             _inRefractoryPeriod = false;
             if (_killBeamOnRefactoryPeriodEnd)
             {
