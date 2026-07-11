@@ -346,6 +346,20 @@ public class SocketEditorChildSettings : MonoBehaviour
 
 }
 
+public class SocketGroupComponentChangeBinding : MonoBehaviour
+{
+    public HullSocket Socket;
+    public HullSocket.InstalledComponentChanged Handler;
+
+    void OnDestroy()
+    {
+        if (Socket != null && Handler != null)
+        {
+            Socket.OnInstalledComponentChanged -= Handler;
+        }
+    }
+}
+
 #pragma warning disable CA1708 // Identifiers should differ by more than case
 public class SocketFilters : BasicSocketEditorUISettings, IFilter
 #pragma warning restore CA1708 // Identifiers should differ by more than case
@@ -702,7 +716,12 @@ class ShipEditorPaneSetShip
 
                 void HandleComponentChange(HullComponent component)
                 {
-                    socketgroupgo2.active = component != null || !childsettings.ComponentBasedChildVisiblity;
+                    if (socketgroupgo2 == null)
+                    {
+                        return;
+                    }
+
+                    socketgroupgo2.SetActive(component != null || !childsettings.ComponentBasedChildVisiblity);
                     string Name = childsettings.FilterLookup?.GetGropupName(component?.SaveKey ?? "") ?? component?.name ?? "Error";
                     accordionName.SetText(Name);
                     image.color = childsettings.FilterLookup?.GetGroupBackgroundColor (component?.SaveKey ?? "") ?? childsettings.BackgroundColor;
@@ -726,7 +745,11 @@ class ShipEditorPaneSetShip
                     }
                 }
 
-                socket.OnInstalledComponentChanged += (HullComponent component) => { HandleComponentChange(component); };
+                HullSocket.InstalledComponentChanged componentChangeHandler = HandleComponentChange;
+                SocketGroupComponentChangeBinding binding = socketgroupgo2.AddComponent<SocketGroupComponentChangeBinding>();
+                binding.Socket = socket;
+                binding.Handler = componentChangeHandler;
+                socket.OnInstalledComponentChanged += componentChangeHandler;
                 HandleComponentChange(socket.Component);
 
                 foreach (HullSocket visualChild in childsettings.VisualChildren)
