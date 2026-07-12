@@ -365,15 +365,19 @@ public class SocketGroupDropdown : MonoBehaviour, IPointerEnterHandler, IPointer
 {
     public SocketOutlineManager OutlineManager;
     public IReadOnlyCollection<HullSocket> Sockets;
+    public ShipEditorPane Editor;
+    public HullSocket ParentSocket;
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        Editor.SetSocketHovered(null, true);
         SocketOutlineManagerDrawShapes.SetHoveredGroup(this, OutlineManager, Sockets);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         SocketOutlineManagerDrawShapes.ClearHoveredGroup(this);
+        Editor.SetSocketHovered(ParentSocket, true);
     }
 
     void OnDestroy()
@@ -756,6 +760,8 @@ class ShipEditorPaneSetShip
                 SocketGroupDropdown dropdown = accordionName.gameObject.AddComponent<SocketGroupDropdown>();
                 dropdown.OutlineManager = ____socketOutliner;
                 dropdown.Sockets = childsettings.VisualChildren;
+                dropdown.Editor = __instance;
+                dropdown.ParentSocket = socket;
 
                 Image image = socketgroupgo2.GetComponentInChildren<Image>();
                 image.color = childsettings.BackgroundColor;
