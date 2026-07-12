@@ -8,6 +8,7 @@ using Steamworks.Ugc;
 using System.ComponentModel;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.EventSystems;
 using static Utility.GameColors;
 
 //using static UnityEditorInternal.ReorderableList;#dll
@@ -360,6 +361,27 @@ public class SocketGroupComponentChangeBinding : MonoBehaviour
     }
 }
 
+public class SocketGroupDropdown : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    public SocketOutlineManager OutlineManager;
+    public IReadOnlyCollection<HullSocket> Sockets;
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        SocketOutlineManagerDrawShapes.SetHoveredGroup(this, OutlineManager, Sockets);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        SocketOutlineManagerDrawShapes.ClearHoveredGroup(this);
+    }
+
+    void OnDestroy()
+    {
+        SocketOutlineManagerDrawShapes.ClearHoveredGroup(this);
+    }
+}
+
 #pragma warning disable CA1708 // Identifiers should differ by more than case
 public class SocketFilters : BasicSocketEditorUISettings, IFilter
 #pragma warning restore CA1708 // Identifiers should differ by more than case
@@ -501,6 +523,28 @@ class SocketOutlineManagerSetSockets
 class SocketOutlineManagerDrawShapes
 {
     static Random random = new Random();
+    static SocketGroupDropdown hoveredGroupOwner;
+    static SocketOutlineManager hoveredGroupManager;
+    static IReadOnlyCollection<HullSocket> hoveredGroupSockets;
+
+    public static void SetHoveredGroup(SocketGroupDropdown owner, SocketOutlineManager manager, IReadOnlyCollection<HullSocket> sockets)
+    {
+        hoveredGroupOwner = owner;
+        hoveredGroupManager = manager;
+        hoveredGroupSockets = sockets;
+    }
+
+    public static void ClearHoveredGroup(SocketGroupDropdown owner)
+    {
+        if (!ReferenceEquals(hoveredGroupOwner, owner))
+        {
+            return;
+        }
+
+        hoveredGroupOwner = null;
+        hoveredGroupManager = null;
+        hoveredGroupSockets = null;
+    }
 
     static bool Prefix(SocketOutlineManager __instance, Camera cam,
         Camera ____camera,
@@ -510,7 +554,6 @@ class SocketOutlineManagerDrawShapes
 
     )
     {
-        return Common.RunFunction;
         //Common.LogPatch();
 
         //Debug.LogError("Help me I am trapped in a scripting factory ");
@@ -556,9 +599,12 @@ class SocketOutlineManagerDrawShapes
 
 
                 //Draw.BackgroundColor = numbers[random.Next(numbers.Count)];
-                Draw.Color = socket == _selectedSocket
+                bool groupHoverActive = __instance == hoveredGroupManager && hoveredGroupSockets != null;
+                bool groupHovered = groupHoverActive && hoveredGroupSockets.Contains(socket);
+                bool singleSocketHovered = !groupHoverActive && socket == _hoveredSocket;
+                Draw.Color = socket == _selectedSocket || groupHovered || singleSocketHovered
                         ? _selectedColor
-                        : socket == _hoveredSocket ? _selectedColor : socket.Component != null ? _filledColor : _emptyColor;
+                        : socket.Component != null ? _filledColor : _emptyColor;
 
                 //Draw.BackgroundColor = numbers[random.Next(numbers.Count)];
 
@@ -682,7 +728,7 @@ class ShipEditorPaneSetShip
         }
     }
 
-    static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab)
+    static void Postfix(ShipEditorPane __instance, EditorShipController ship, RectTransform ____scrollPaneContent, EditorShipController ____currentShip, GameObject ____socketGroupingPrefab, GameObject ____socketItemPrefab, SocketOutlineManager ____socketOutliner)
     {
         Common.LogPatch();
 
@@ -707,6 +753,9 @@ class ShipEditorPaneSetShip
                 GameObject socketgroupgo2 = UnityEngine.Object.Instantiate(____socketGroupingPrefab, socketitem.gameObject.transform);
                 Accordion accordion2 = socketgroupgo2.GetComponent<Accordion>();
                 HeaderItem accordionName = socketgroupgo2.GetComponentInChildren<HeaderItem>();
+                SocketGroupDropdown dropdown = accordionName.gameObject.AddComponent<SocketGroupDropdown>();
+                dropdown.OutlineManager = ____socketOutliner;
+                dropdown.Sockets = childsettings.VisualChildren;
 
                 Image image = socketgroupgo2.GetComponentInChildren<Image>();
                 image.color = childsettings.BackgroundColor;
