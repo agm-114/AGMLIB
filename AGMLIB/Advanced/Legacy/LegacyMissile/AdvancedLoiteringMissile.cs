@@ -46,9 +46,14 @@ public class AdvancedLoiteringMissile : LoiteringMissile
 
     protected override void Awake()
     {
+        EnsureActivationTrigger();
         base.Awake();
-        _stockActivationTrigger = ActivationTriggerField?.GetValue(this) as SphereCollider;
-        ConfigureActivationTrigger();
+    }
+
+    protected override string GetDetailTextInternal()
+    {
+        EnsureActivationTrigger();
+        return base.GetDetailTextInternal();
     }
 
     protected override void FixedUpdate()
@@ -189,9 +194,23 @@ public class AdvancedLoiteringMissile : LoiteringMissile
         if (_stockActivationTrigger != null)
         {
             _stockActivationTrigger.isTrigger = true;
-            _stockActivationTrigger.radius = _magneticFuseRange;
+            if (_magneticFuseRange > 0f)
+            {
+                _stockActivationTrigger.radius = _magneticFuseRange;
+            }
             _stockActivationTrigger.enabled = false;
         }
+    }
+
+    private void EnsureActivationTrigger()
+    {
+        _stockActivationTrigger ??= ActivationTriggerField?.GetValue(this) as SphereCollider;
+        if (_stockActivationTrigger == null)
+        {
+            _stockActivationTrigger = gameObject.AddComponent<SphereCollider>();
+            ActivationTriggerField?.SetValue(this, _stockActivationTrigger);
+        }
+        ConfigureActivationTrigger();
     }
 
     private void TriggerAttack(Vector3 targetPosition)
