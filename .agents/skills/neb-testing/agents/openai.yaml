@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nebulous Testing"
+  short_description: "Build, launch, reproduce, and inspect Nebulous"
+  default_prompt: "Use $neb-testing to build AGMLIB and reproduce a Nebulous editor issue."
