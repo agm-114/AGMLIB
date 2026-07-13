@@ -64,17 +64,32 @@ public class DelayedRezzingMuzzle : RezzingMuzzle
     private Coroutine _debugSlowGameCoroutine;
     private float _debugRestoreGameSpeedAt;
     private float _debugPreviousTimeScale = 1f;
+    private bool _delayedShotReady;
 
     public Transform beamBase => _effects.gameObject.transform;
     public override void Fire()
     {
-        StartCoroutine(FireAfterDelay());
+        Fire(transform.forward);
     }
 
-    private IEnumerator FireAfterDelay()
+    //Return value indicates if the patch should let the call go through or not
+    public bool HandleFire(Vector3 shotDirection)
+    {
+        if (_delayedShotReady)
+        {
+            _delayedShotReady = false;
+            return true;//Let the original Fire() call go through
+        }
+
+        StartCoroutine(FireAfterDelay(shotDirection));
+        return false;//Don't let the original Fire() call go through, we will call it after the delay
+    }
+
+    private IEnumerator FireAfterDelay(Vector3 shotDirection)
     {
         yield return new WaitForSeconds(FireDelay);
-        Fire(transform.forward);
+        _delayedShotReady = true;// Set this flag so that the next call to Fire() will go through
+        Fire(shotDirection);
     }
 
     protected virtual void Awake()

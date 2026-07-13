@@ -222,7 +222,7 @@ class MissileSocketComponentPermittedPatch
         }
         if (socketFilter.Whitelist.Contains(component.SaveKey) || componentFilter.Whitelist.Contains(missile.BaseMissileDesignation))
         {
-            __result = true;
+            __result = CheckLegal();
             return;
         }
 

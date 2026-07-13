@@ -64,6 +64,15 @@ class RezzingMuzzleFireEffect
         MuzzleEffects.FireEffects(__instance);
     }
 }
+[HarmonyPatch(typeof(RezzingMuzzle), nameof(RezzingMuzzle.Fire), typeof(Vector3))]
+class DelayedRezzingMuzzleFire
+{
+    static bool Prefix(RezzingMuzzle __instance, Vector3 shotDirection)
+    {
+        Common.LogPatch();
+        return __instance is not DelayedRezzingMuzzle delayedMuzzle || delayedMuzzle.HandleFire(shotDirection);
+    }
+}
 [HarmonyPatch(typeof(SinglePulseRaycastMuzzle), nameof(SinglePulseRaycastMuzzle.FireEffect))]
 class SinglePulseRaycastMuzzleFireEffect
 {

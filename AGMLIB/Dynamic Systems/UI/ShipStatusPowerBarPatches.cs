@@ -3,6 +3,8 @@ class ShipStatusIconGroupSetShipPowerStatusBar
 {
     static void Postfix(ShipStatusIconGroup __instance, ShipController ship)
     {
+        ShipStatusPowerBar.RelinkStatusBoards(__instance, ship);
+
         if (ship == null)
         {
             QuantityStatusIcon powerIcon = Common.GetVal<QuantityStatusIcon>(__instance, "_powerQuantityIcon");
@@ -20,20 +22,7 @@ class ShipStatusDisplayLinkShipPowerStatusBoard
 {
     static void Postfix(ShipStatusDisplay __instance, ShipController ship)
     {
-        if (ship == null || __instance == null)
-        {
-            return;
-        }
-
-        ShipStatusPowerBar powerBar = ShipStatusPowerBar.EnsureAttachedTo(ship, ShipStatusPowerBar.DisplaySurface.StatusBoard);
-        if (powerBar == null)
-        {
-            return;
-        }
-
-        ShipStatusPowerStatusBoardBinding binding = __instance.GetComponent<ShipStatusPowerStatusBoardBinding>()
-            ?? __instance.gameObject.AddComponent<ShipStatusPowerStatusBoardBinding>();
-        binding.SetSource(powerBar);
+        ShipStatusPowerBar.LinkStatusBoard(__instance, ship);
     }
 }
 

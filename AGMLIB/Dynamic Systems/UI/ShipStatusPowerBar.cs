@@ -47,6 +47,8 @@ public class ShipStatusPowerBar : MonoBehaviour
     public string TooltipTitle => "Power Status";
 
     private ShipController _shipController;
+    internal ShipController ShipController => _shipController;
+
     public static ShipStatusPowerBar EnsureAttachedTo(ShipController ship, DisplaySurface displayTarget)
     {
         if (ship == null)
@@ -60,6 +62,11 @@ public class ShipStatusPowerBar : MonoBehaviour
                 ? typeof(DebugShipStatusPowerIconBar)
                 : typeof(ShipStatusPowerBar);
             powerBar = ship.gameObject.AddComponent(componentType) as ShipStatusPowerBar;
+        }
+
+        if (powerBar != null)
+        {
+            powerBar._shipController = ship;
         }
 
         return powerBar;
@@ -113,6 +120,56 @@ public class ShipStatusPowerBar : MonoBehaviour
         ShipStatusPowerBarBinding binding = powerIcon.GetComponent<ShipStatusPowerBarBinding>()
             ?? powerIcon.gameObject.AddComponent<ShipStatusPowerBarBinding>();
         binding.SetSource(this, powerIcon);
+    }
+
+    public static void LinkStatusBoard(ShipStatusDisplay statusDisplay, ShipController ship)
+    {
+        if (statusDisplay == null)
+        {
+            return;
+        }
+
+        ShipStatusPowerStatusBoardBinding binding = statusDisplay.GetComponent<ShipStatusPowerStatusBoardBinding>();
+        if (ship == null)
+        {
+            binding?.ClearAnySource();
+            return;
+        }
+
+        ShipStatusPowerBar powerBar = EnsureAttachedTo(ship, DisplaySurface.StatusBoard);
+        if (powerBar == null)
+        {
+            binding?.ClearAnySource();
+            return;
+        }
+
+        binding ??= statusDisplay.gameObject.AddComponent<ShipStatusPowerStatusBoardBinding>();
+        binding.SetSource(powerBar);
+    }
+
+    public static void RelinkStatusBoards(ShipStatusIconGroup statusIcons, ShipController ship)
+    {
+        if (statusIcons == null)
+        {
+            return;
+        }
+
+        Transform uiRoot = statusIcons.transform.root;
+        ShipStatusPowerStatusBoardBinding[] bindings = uiRoot.GetComponentsInChildren<ShipStatusPowerStatusBoardBinding>(includeInactive: true);
+        foreach (ShipStatusPowerStatusBoardBinding binding in bindings)
+        {
+            if (ship == null)
+            {
+                binding.ClearAnySource();
+                continue;
+            }
+
+            ShipStatusPowerBar powerBar = EnsureAttachedTo(ship, DisplaySurface.StatusBoard);
+            if (powerBar != null)
+            {
+                binding.SetSource(powerBar);
+            }
+        }
     }
 
     public IReadOnlyResourcePool GetResourcePool()
@@ -283,9 +340,11 @@ public class ShipStatusPowerBar : MonoBehaviour
         private Image[] _fills;
         private int _barCount;
         private float _nextUpdateTime;
+        private ShipController _subscribedShip;
 
         protected void SetPowerSource(ShipStatusPowerBar source)
         {
+            SetSubscribedShip(source?.ShipController);
             Source = source;
             EnsureTooltipCallback();
             UpdateVisibleStatus();
@@ -299,12 +358,14 @@ public class ShipStatusPowerBar : MonoBehaviour
             }
 
             Source = null;
+            SetSubscribedShip(null);
             ClearVisualState();
         }
 
         public void ClearAnySource()
         {
             Source = null;
+            SetSubscribedShip(null);
             ClearVisualState();
         }
 
@@ -313,7 +374,7 @@ public class ShipStatusPowerBar : MonoBehaviour
             ClearVisualState();
         }
 
-        private void Update()
+        protected virtual void Update()
         {
             if (Source == null || Time.unscaledTime < _nextUpdateTime)
             {
@@ -322,6 +383,11 @@ public class ShipStatusPowerBar : MonoBehaviour
 
             _nextUpdateTime = Time.unscaledTime + Mathf.Max(0.02f, Source.UpdateInterval);
             UpdateVisibleStatus();
+        }
+
+        protected virtual void OnDestroy()
+        {
+            SetSubscribedShip(null);
         }
 
         protected void UpdateVisibleStatus()
@@ -493,6 +559,33 @@ public class ShipStatusPowerBar : MonoBehaviour
         protected void EnsureTooltipCallback() => Source?.SetTooltipCallback(Tooltip);
 
         protected void SetVisible(bool visible) => Root?.gameObject?.SetActive(visible);
+
+        private void SetSubscribedShip(ShipController ship)
+        {
+            if (_subscribedShip == ship)
+            {
+                return;
+            }
+
+            if (_subscribedShip != null)
+            {
+                _subscribedShip.OnPowerQuantityStatusChanged -= HandlePowerQuantityChanged;
+            }
+
+            _subscribedShip = ship;
+            if (_subscribedShip != null)
+            {
+                _subscribedShip.OnPowerQuantityStatusChanged += HandlePowerQuantityChanged;
+            }
+        }
+
+        private void HandlePowerQuantityChanged(ShipController ship, QuantityStatus quantity)
+        {
+            if (isActiveAndEnabled && Source != null && ship == Source.ShipController)
+            {
+                UpdateVisibleStatus();
+            }
+        }
     }
 }
 
