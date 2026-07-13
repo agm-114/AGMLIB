@@ -30,10 +30,14 @@ public class LoiteringModularMissile : ModularMissile
     [SerializeField]
     private float _loiterLifetime = 120f;
 
-    [Tooltip("Range within which a hostile ship wakes the missile.")]
+    [Tooltip("Radius applied to a linked SphereCollider. Leave at zero to preserve the collider's authored radius.")]
     [Min(0f)]
     [SerializeField]
     private float _activationRange = 1000f;
+
+    [Tooltip("Any trigger collider used by the magnetic fuse. Sphere colliders use Activation Range as their radius; other collider shapes retain their authored dimensions.")]
+    [SerializeField]
+    private Collider _activationTrigger;
 
     [Tooltip("Enables proximity activation while the missile is loitering.")]
     public bool MagneticFuse = true;
@@ -50,10 +54,6 @@ public class LoiteringModularMissile : ModularMissile
     [Tooltip("One entry per runtime seeker. Enabled entries allow that seeker to trigger the magnetic fuse.")]
     public List<bool> SeekerFuses = new();
 
-    [Tooltip("Physics layers searched for ships. Leave as Everything unless the missile prefab uses a narrower mask.")]
-    [SerializeField]
-    private LayerMask _activationLayers = ~0;
-
     [Tooltip("Do not wake for targets hidden behind map geometry.")]
     [SerializeField]
     private bool _requireLineOfSight = true;
@@ -67,7 +67,7 @@ public class LoiteringModularMissile : ModularMissile
     [SerializeField]
     private float _loiterDrag = 1f;
 
-    private readonly Collider[] _activationResults = new Collider[64];
+    private readonly HashSet<Collider> _fuseContacts = new();
     private LoiteringFlightPhase _phase;
     private float _phaseTime;
     private float _defaultDrag;
@@ -82,6 +82,7 @@ public class LoiteringModularMissile : ModularMissile
     {
         base.Awake();
         _defaultDrag = _body.drag;
+        ConfigureActivationTrigger();
         ResetLoiteringState();
     }
 
@@ -114,7 +115,7 @@ public class LoiteringModularMissile : ModularMissile
                 break;
 
             case LoiteringFlightPhase.Loitering:
-                if (MagneticFuse && TryTriggerMagneticFuse())
+                if (MagneticFuse && (TryTriggerSelectedSeekerFuse() || TryTriggerContactFuse()))
                 {
                     EnterPhase(LoiteringFlightPhase.Attacking);
                 }
@@ -135,6 +136,25 @@ public class LoiteringModularMissile : ModularMissile
     protected override bool FuzeActive()
     {
         return _phase == LoiteringFlightPhase.Attacking && base.FuzeActive();
+    }
+
+    public new void OnTriggerEnter(Collider other)
+    {
+        if (_phase == LoiteringFlightPhase.Loitering)
+        {
+            _fuseContacts.Add(other);
+            return;
+        }
+
+        if (_phase == LoiteringFlightPhase.Attacking)
+        {
+            base.OnTriggerEnter(other);
+        }
+    }
+
+    public void OnTriggerExit(Collider other)
+    {
+        _fuseContacts.Remove(other);
     }
 
     protected override void OnUnpooled()
@@ -158,37 +178,35 @@ public class LoiteringModularMissile : ModularMissile
         {
             EngineOff();
             _body.drag = _loiterDrag;
+            if (_activationTrigger != null)
+            {
+                _activationTrigger.enabled = phase == LoiteringFlightPhase.Loitering && MagneticFuse;
+            }
         }
         else if (phase == LoiteringFlightPhase.Attacking)
         {
+            if (_activationTrigger != null)
+            {
+                _activationTrigger.enabled = false;
+            }
+            _fuseContacts.Clear();
             _body.drag = _defaultDrag;
             EngineOn();
             ResetFlightTime();
         }
     }
 
-    private bool TryTriggerMagneticFuse()
+    private bool TryTriggerContactFuse()
     {
-        if (TryTriggerSelectedSeekerFuse())
-        {
-            return true;
-        }
-
         if (!ProximityShips && !ProximityFighters && !ProximityMissiles)
         {
             return false;
         }
 
-        int count = Physics.OverlapSphereNonAlloc(
-            transform.position,
-            _activationRange,
-            _activationResults,
-            _activationLayers,
-            QueryTriggerInteraction.Collide);
-
-        for (int i = 0; i < count; i++)
+        _fuseContacts.RemoveWhere(collider => collider == null);
+        foreach (Collider contact in _fuseContacts)
         {
-            Transform targetRoot = _activationResults[i]?.transform.root;
+            Transform targetRoot = contact.transform.root;
             if (targetRoot == null)
             {
                 continue;
@@ -265,10 +283,30 @@ public class LoiteringModularMissile : ModularMissile
         return !_requireLineOfSight || !Physics.Linecast(transform.position, targetPosition, _obstructionLayers);
     }
 
+    private void ConfigureActivationTrigger()
+    {
+        if (_activationTrigger == null)
+        {
+            _activationTrigger = gameObject.AddComponent<SphereCollider>();
+        }
+
+        _activationTrigger.isTrigger = true;
+        if (_activationRange > 0f && _activationTrigger is SphereCollider sphereTrigger)
+        {
+            sphereTrigger.radius = _activationRange;
+        }
+        _activationTrigger.enabled = false;
+    }
+
     private void ResetLoiteringState()
     {
         _phase = LoiteringFlightPhase.Inactive;
         _phaseTime = 0f;
+        _fuseContacts.Clear();
+        if (_activationTrigger != null)
+        {
+            _activationTrigger.enabled = false;
+        }
         if (_body != null)
         {
             _body.drag = _defaultDrag;

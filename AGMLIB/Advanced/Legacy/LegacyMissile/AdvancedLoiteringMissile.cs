@@ -33,10 +33,6 @@ public class AdvancedLoiteringMissile : LoiteringMissile
     [Tooltip("Legacy missile seekers that may activate the munition when they acquire a target.")]
     public List<MissileSeeker> SensorFuses = new();
 
-    [Tooltip("Physics layers searched by the magnetic fuse.")]
-    [SerializeField]
-    private LayerMask _magneticFuseLayers = ~0;
-
     [Tooltip("Requires an unobstructed line between the munition and a physical proximity target.")]
     [SerializeField]
     private bool _requireFuseLineOfSight = true;
@@ -45,25 +41,41 @@ public class AdvancedLoiteringMissile : LoiteringMissile
     [SerializeField]
     private LayerMask _fuseObstructionLayers = 512;
 
-    private readonly Collider[] _magneticFuseResults = new Collider[64];
+    private readonly HashSet<Collider> _fuseContacts = new();
     private SphereCollider _stockActivationTrigger;
 
     protected override void Awake()
     {
         base.Awake();
         _stockActivationTrigger = ActivationTriggerField?.GetValue(this) as SphereCollider;
-        DisableStockActivationTrigger();
+        ConfigureActivationTrigger();
     }
 
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
-        DisableStockActivationTrigger();
+        if (!MagneticFuse && _stockActivationTrigger != null)
+        {
+            _stockActivationTrigger.enabled = false;
+        }
 
-        if (isServer && MagneticFuse && TryGetFuseTarget(out Vector3 targetPosition))
+        if (isServer && MagneticFuse && _stockActivationTrigger != null && _stockActivationTrigger.enabled && TryGetFuseTarget(out Vector3 targetPosition))
         {
             TriggerAttack(targetPosition);
         }
+    }
+
+    public new void OnTriggerEnter(Collider other)
+    {
+        if (isServer && MagneticFuse)
+        {
+            _fuseContacts.Add(other);
+        }
+    }
+
+    public new void OnTriggerExit(Collider other)
+    {
+        _fuseContacts.Remove(other);
     }
 
     protected override void OnImbued(IImbuedObjectSource platform)
@@ -88,7 +100,7 @@ public class AdvancedLoiteringMissile : LoiteringMissile
         {
             sensor?.ResetSeeker();
         }
-        DisableStockActivationTrigger();
+        _fuseContacts.Clear();
     }
 
     private bool TryGetFuseTarget(out Vector3 targetPosition)
@@ -104,16 +116,10 @@ public class AdvancedLoiteringMissile : LoiteringMissile
             return false;
         }
 
-        int count = Physics.OverlapSphereNonAlloc(
-            transform.position,
-            _magneticFuseRange,
-            _magneticFuseResults,
-            _magneticFuseLayers,
-            QueryTriggerInteraction.Collide);
-
-        for (int i = 0; i < count; i++)
+        _fuseContacts.RemoveWhere(collider => collider == null);
+        foreach (Collider contact in _fuseContacts)
         {
-            Transform targetRoot = _magneticFuseResults[i]?.transform.root;
+            Transform targetRoot = contact.transform.root;
             if (targetRoot == null)
             {
                 continue;
@@ -178,10 +184,12 @@ public class AdvancedLoiteringMissile : LoiteringMissile
         return !_requireFuseLineOfSight || !Physics.Linecast(transform.position, targetPosition, _fuseObstructionLayers);
     }
 
-    private void DisableStockActivationTrigger()
+    private void ConfigureActivationTrigger()
     {
         if (_stockActivationTrigger != null)
         {
+            _stockActivationTrigger.isTrigger = true;
+            _stockActivationTrigger.radius = _magneticFuseRange;
             _stockActivationTrigger.enabled = false;
         }
     }
