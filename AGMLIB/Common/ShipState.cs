@@ -19,6 +19,9 @@ public class InternalShipState : NetworkBehaviour
     public ConditionalState BattleshortState => ShipController?.BattleShortEnabled == true ? ConditionalState.Enabled : ConditionalState.Disabled;
     public ConditionalState ControlState => ShipController?.CommandState == CommandFunctions.None ? ConditionalState.Disabled : ConditionalState.Enabled;
     public ConditionalState ElimnatedState => ShipController?.IsEliminated ?? false ? ConditionalState.Disabled : ConditionalState.Enabled;
+    public ConditionalState WarpingIn => ShipController?.WarpMode == true && !ShipController.WarpDeparting ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState WarpingOut => ShipController?.WarpMode == true && ShipController.WarpDeparting ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState Warping => ShipController?.WarpMode == true ? ConditionalState.Enabled : ConditionalState.Disabled;
 
 
 
@@ -125,6 +128,9 @@ public class ShipState : NetworkBehaviour
     public ConditionalState BattleshortState => InternalShipState.BattleshortState;
     public ConditionalState ControlState => InternalShipState.ControlState;
     public ConditionalState ElimnatedState => InternalShipState.ElimnatedState;
+    public ConditionalState WarpingIn => InternalShipState.WarpingIn;
+    public ConditionalState WarpingOut => InternalShipState.WarpingOut;
+    public ConditionalState Warping => InternalShipState.Warping;
 
     private InternalShipState InternalShipState;
     public float Velocity => InternalShipState.Velocity;

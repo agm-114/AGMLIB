@@ -52,8 +52,14 @@ public class AdvancedLoiteringMissile : LoiteringMissile
 
     protected override string GetDetailTextInternal()
     {
-        EnsureActivationTrigger();
-        return base.GetDetailTextInternal();
+        _stockActivationTrigger ??= ActivationTriggerField?.GetValue(this) as SphereCollider;
+        if (_stockActivationTrigger != null)
+        {
+            return base.GetDetailTextInternal();
+        }
+
+        string rangeDetail = _magneticFuseRange > 0f ? $"\nActivation Range: {_magneticFuseRange * 10f:N0}m" : string.Empty;
+        return $"{GetWeaponSummary()}\nAdvanced Loitering Munition{rangeDetail}";
     }
 
     protected override void FixedUpdate()

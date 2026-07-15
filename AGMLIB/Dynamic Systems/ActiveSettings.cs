@@ -1,4 +1,4 @@
-interface IMonoBehaviourFilter<FilteredMonoBehaviour> where FilteredMonoBehaviour : MonoBehaviour
+﻿interface IMonoBehaviourFilter<FilteredMonoBehaviour> where FilteredMonoBehaviour : MonoBehaviour
 {
     bool Active(FilteredMonoBehaviour filter);
 }
@@ -57,6 +57,9 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
     //public string Notes = "T$$anonymous$$s component shouldn't be removed, it does important stuff.";
     public ConditionalState activateFlankState;
     public ConditionalState activateBattleshortState;
+    public ConditionalState activateWarpingInState;
+    public ConditionalState activateWarpingOutState;
+    public ConditionalState activateWarpState;
     //public State activateModuleState;
     public ConditionalState activateControlState;
     public ConditionalState activateHullComponentstate;
@@ -137,6 +140,12 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
         if (activateFlankState != ConditionalState.Ignore && activateFlankState != state.FlankState)
             objectactive = false;
         else if (activateBattleshortState != ConditionalState.Ignore && activateBattleshortState != state.BattleshortState)
+            objectactive = false;
+        else if (activateWarpingInState != ConditionalState.Ignore && activateWarpingInState != state.WarpingIn)
+            objectactive = false;
+        else if (activateWarpingOutState != ConditionalState.Ignore && activateWarpingOutState != state.WarpingOut)
+            objectactive = false;
+        else if (activateWarpState != ConditionalState.Ignore && activateWarpState != state.Warping)
             objectactive = false;
         else if (activateControlState != ConditionalState.Ignore && activateControlState != state.ControlState)
             objectactive = false;
