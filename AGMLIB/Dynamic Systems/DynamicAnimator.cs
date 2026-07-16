@@ -1,7 +1,10 @@
 ﻿public class DynamicAnimator : ActiveSettings
 {
     [SerializeField]
-    private Animator _animations = null!;
+    private List<Animator> _animations = new();
+
+    [SerializeField]
+    private bool _invertOutput;
 
     [SerializeField]
     private string _openTagName = "IsOpen";
@@ -14,9 +17,9 @@
 
     private bool _stateInitialized;
 
-    public bool IsOpen => _animations.GetCurrentAnimatorStateInfo(0).IsTag(_openTagName);
+    public bool IsOpen => HasAnimationState(_openTagName);
 
-    public bool IsClosed => _animations.GetCurrentAnimatorStateInfo(0).IsTag(_closedTagName);
+    public bool IsClosed => HasAnimationState(_closedTagName);
 
     protected override void FixedUpdate()
     {
@@ -27,7 +30,26 @@
             return;
         }
 
-        _animations.SetBool(_openControlVariableName, active);
+        bool output = _invertOutput ? !active : active;
+        foreach (Animator animation in _animations)
+        {
+            animation.SetBool(_openControlVariableName, output);
+        }
+
         _stateInitialized = true;
+    }
+
+    private bool HasAnimationState(string tagName)
+    {
+
+        foreach (Animator animation in _animations)
+        {
+            if (!animation.GetCurrentAnimatorStateInfo(0).IsTag(tagName))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
