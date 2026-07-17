@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -66,10 +66,10 @@ public class DelayedRezzingMuzzle : RezzingMuzzle
     private float _debugPreviousTimeScale = 1f;
     private bool _delayedShotReady;
 
-    public Transform beamBase => _effects.gameObject.transform;
+     public Transform beamBase => _effects.gameObject.transform;
     public override void Fire()
     {
-        Fire(transform.forward);
+        StartCoroutine(FireAfterDelay());
     }
 
     //Return value indicates if the patch should let the call go through or not
@@ -81,13 +81,35 @@ public class DelayedRezzingMuzzle : RezzingMuzzle
             return true;//Let the original Fire() call go through
         }
 
-        StartCoroutine(FireAfterDelay(shotDirection));
+        bool trackMuzzleForward = shotDirection == transform.forward;
+        StartCoroutine(FireAfterDelay(shotDirection, trackMuzzleForward));
         return false;//Don't let the original Fire() call go through, we will call it after the delay
     }
 
-    private IEnumerator FireAfterDelay(Vector3 shotDirection)
+    private IEnumerator FireAfterDelay()
     {
         yield return new WaitForSeconds(FireDelay);
+        FireDelayedShot(transform.forward);
+    }
+
+    private IEnumerator FireAfterDelay(Vector3 shotDirection, bool trackMuzzleForward)
+    {
+        yield return new WaitForSeconds(FireDelay);
+
+        if (trackMuzzleForward)
+        {
+            shotDirection = transform.forward;
+        }
+        else if (_weapon is FixedDiscreteWeaponComponent fixedWeapon && ((IWeapon)fixedWeapon).CurrentAimPoint() is Vector3 aimPoint)
+        {
+            shotDirection = transform.position.To(aimPoint).normalized;
+        }
+
+        FireDelayedShot(shotDirection);
+    }
+
+    private void FireDelayedShot(Vector3 shotDirection)
+    {
         _delayedShotReady = true;// Set this flag so that the next call to Fire() will go through
         Fire(shotDirection);
     }
