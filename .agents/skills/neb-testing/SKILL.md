@@ -78,15 +78,15 @@ For the verified 1920x1080 windowed layout, useful normalized references are `Sk
 
 ### Fast deployment automation
 
-After observing the deployment screen, place every visible deployment group and press `Deploy` in one Computer Use call. Click a group card, click a valid point inside the green deployment region, and repeat for each remaining card before clicking `Deploy`. Use different nearby map points so groups do not overlap.
+After observing the deployment screen, count the visible unchecked deployment-group cards, then place all of them and press `Deploy` in one Computer Use call. Click a group card, click a valid point inside the green deployment region, and repeat for each remaining unchecked card before clicking `Deploy`. Use different nearby map points so groups do not overlap.
 
-Represent click targets as normalized `(x / width, y / height)` positions from a verified deployment screenshot, then convert them using the current capture dimensions. For the currently verified two-group layout on The Pillars, the normalized references are:
+Represent click targets as normalized `(x / width, y / height)` positions from a verified deployment screenshot, then convert them using the current capture dimensions. For the currently verified three-group layout on The Pillars, the normalized references are:
 
-- First two group cards: approximately `(0.278, 0.858)` and `(0.425, 0.858)`.
-- Valid nearby placement points: approximately `(0.417, 0.548)` and `(0.447, 0.602)`.
+- Three group cards: approximately `(0.278, 0.858)`, `(0.425, 0.858)`, and `(0.575, 0.858)`.
+- Valid nearby placement points: approximately `(0.417, 0.548)`, `(0.447, 0.602)`, and `(0.477, 0.656)`.
 - `Deploy`: approximately `(0.745, 0.762)` after all cards show check marks.
 
-Use a helper such as `point = (nx, ny) => ({ x: Math.round(width * nx), y: Math.round(height * ny) })`, where `width` and `height` come from the latest Nebulous screenshot. These are layout references, not blind universal targets: verify that the expected cards, deployment region, and button are present once before batching. If Computer Use reports user input, discard the remaining queued assumptions, refresh the Nebulous window, and continue from the visible check marks rather than placing completed groups again.
+Use a helper such as `point = (nx, ny) => ({ x: Math.round(width * nx), y: Math.round(height * ny) })`, where `width` and `height` come from the latest Nebulous screenshot. Iterate the verified card and placement arrays with short waits, then click `Deploy` after the final placement. These are layout references, not blind universal targets: verify that the expected cards, deployment region, and button are present once before batching. If Computer Use reports user input, discard the remaining queued assumptions, refresh the Nebulous window, recount the unchecked cards, and continue from the visible check marks rather than placing completed groups again.
 
 ## Logs
 

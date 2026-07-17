@@ -252,6 +252,8 @@ public class EntryPoint : IModEntryPoint
 
     public void PostLoad()
     {
+        // Runtime testing-component injection is intentionally disabled.
+        // Lib.Testing.TestingComponentBootstrap.DiscoverAndCreate(Assembly.GetExecutingAssembly());
 
         foreach (FactionDescription faction in BundleManager.Instance.AllFactions)
         {
