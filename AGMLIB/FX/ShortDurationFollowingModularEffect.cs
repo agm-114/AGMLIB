@@ -8,6 +8,12 @@
         public override void OnUnpooled()
         {
             base.OnUnpooled();
+            ResetLifespan();
+        }
+
+        public void ResetLifespan()
+        {
+            StopAllCoroutines();
             RepoolSelfAfterDelay(_repoolDelay, disableImmediately: false);
         }
     }

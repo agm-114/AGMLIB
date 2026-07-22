@@ -88,6 +88,13 @@
         [SerializeField] protected Transform _muzzleEffectEffectlocation;
         [SerializeField] protected GameObject _muzzleEffect;
         [SerializeField] protected GameObject _hitEffect;
+        [SerializeField] protected GameObject _singletonEffect;
+        [SerializeField]
+        [Tooltip("Spawn the hit effect at the hit object's hierarchy root instead of the raycast impact point.")]
+        protected bool _spawnHitEffectAtTargetRoot = false;
+        [SerializeField]
+        [Tooltip("Spawn and share the singleton effect at the hit object's hierarchy root instead of the directly hit transform.")]
+        protected bool _spawnSingletonEffectAtTargetRoot = true;
         public override void FireEffect()
         {
             if (_muzzleEffect == null)
@@ -99,26 +106,79 @@
         }
         public override void SpawnHit(MunitionHitInfo? rayHit)
         {
-            if (rayHit == null || _hitEffect == null)
+            if (rayHit == null)
                 return;
-            Common.Trace("Custom Hit Effect");
 
             if (rayHit.HitObject == null)
+            {
                 Common.Hint("Hit object was null");
+                return;
+            }
 
-            Poolable hitob = ObjectPooler.Instance.GetNextOrNew(_hitEffect, rayHit.HitObject.transform);
-            hitob.transform.position = rayHit.Point;
-            //hitob = ObjectPooler.Instance.GetNextOrNew(_hitEffect, rayHit.HitObject.transform);
+            Transform hitTransform = rayHit.HitObject.transform;
+            SpawnHitEffect(rayHit.Point, hitTransform);
+            SpawnOrPulseSingletonEffect(rayHit.Point, hitTransform);
+        }
 
-            //hitob = ObjectPooler.Instance.GetNextOrNew(_hitEffect);
+        private void SpawnHitEffect(Vector3 hitPosition, Transform hitTransform)
+        {
+            if (_hitEffect == null)
+                return;
 
+            Common.Trace("Custom Hit Effect");
+            Transform effectParent = _spawnHitEffectAtTargetRoot ? hitTransform.root : hitTransform;
+            Vector3 effectPosition = _spawnHitEffectAtTargetRoot ? effectParent.position : hitPosition;
+            ObjectPooler.Instance.GetNextOrNew(_hitEffect, effectPosition, effectParent.rotation, effectParent);
+        }
 
+        private void SpawnOrPulseSingletonEffect(Vector3 hitPosition, Transform hitTransform)
+        {
+            if (_singletonEffect == null)
+                return;
 
-            //hitob = ObjectPooler.Instance.GetNextOrNew(_hitEffect);
+            Transform effectParent = _spawnSingletonEffectAtTargetRoot ? hitTransform.root : hitTransform;
+            string singletonName = GetSingletonEffectName(effectParent);
+            GameObject singleton = GameObject.Find(singletonName);
 
+            if (singleton == null)
+            {
+                if (_singletonEffect.GetComponent<Poolable>() == null)
+                {
+                    Common.Hint($"Singleton effect '{_singletonEffect.name}' does not have a Poolable component");
+                    return;
+                }
 
-            //GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            //sphere.transform.position = rayHit.HitObject.transform.position;
+                Vector3 effectPosition = _spawnSingletonEffectAtTargetRoot ? effectParent.position : hitPosition;
+                Poolable pooledEffect = ObjectPooler.Instance.GetNextOrNew(
+                    _singletonEffect,
+                    effectPosition,
+                    effectParent.rotation,
+                    effectParent);
+
+                if (pooledEffect == null)
+                    return;
+
+                singleton = pooledEffect.gameObject;
+                singleton.name = singletonName;
+            }
+            else
+            {
+                Lib.FX.ShortDurationFollowingModularEffect durationEffect =
+                    singleton.GetComponent<Lib.FX.ShortDurationFollowingModularEffect>();
+
+                if (durationEffect != null)
+                    durationEffect.ResetLifespan();
+                else
+                    Common.Hint($"Singleton effect '{singleton.name}' cannot reset its lifespan because it does not have a ShortDurationFollowingModularEffect component");
+            }
+
+            foreach (Lib.FX.PulsedLocalEffect pulsedEffect in singleton.GetComponentsInChildren<Lib.FX.PulsedLocalEffect>(true))
+                pulsedEffect.Pulse(hitPosition);
+        }
+
+        private string GetSingletonEffectName(Transform effectParent)
+        {
+            return $"AGMLIB Singleton Effect [{_singletonEffect.GetInstanceID()}:{effectParent.GetInstanceID()}]";
         }
         public void SpwawnCustomHit(Vector3 pos)
         {
