@@ -32,7 +32,9 @@ Use `-SkipBuild` only when the deployed DLL is already current. Use `-ValidateOn
 
 ## Snapshot contents
 
-The default output is `.agents/cache/neb-prefabs/` and is git-ignored. `manifest.yaml` records the schema version, game and AGMLIB versions, UTC timestamp, source/category counts, and every generated file.
+The default output is `.agents/cache/neb-prefabs/` and is git-ignored. `manifest.yaml` records the schema version, game and AGMLIB versions, UTC timestamp, enabled-mod summary, source/category counts, and every generated file. `mods.yaml` records the enabled mods in load order, including their versions, unique and Workshop IDs, local or Workshop source, exact content paths, load status, dependencies, assemblies, bundles, and catalogs.
+
+Check `mods.yaml` before interpreting a snapshot whenever local and Workshop copies share a display name. The `source` and `content_directory` fields identify which copy Nebulous actually selected.
 
 Registered content is captured from `BundleManager` after bundles load:
 

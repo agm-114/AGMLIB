@@ -18,7 +18,7 @@ public static class TestingPrefabYamlDumper
     private const string DumpEnvironmentVariable = "AGMLIB_PREFAB_DUMP_DIR";
     private const string DumpScheduledAppDomainKey = "AGMLIB_PREFAB_DUMP_SCHEDULED";
     private const string DumpCompletedAppDomainKey = "AGMLIB_PREFAB_DUMP_COMPLETED";
-    private const int SchemaVersion = 1;
+    private const int SchemaVersion = 2;
     private const int MaximumValueDepth = 4;
     private const int MaximumCollectionItems = 256;
     private const BindingFlags InstanceMemberFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
@@ -92,6 +92,8 @@ public static class TestingPrefabYamlDumper
         Directory.CreateDirectory(temporaryPath);
 
         List<PrefabDumpEntry> entries = CollectEntries();
+        List<EnabledModDumpEntry> enabledMods = CollectEnabledMods();
+        DateTime generatedUtc = DateTime.UtcNow;
         int errors = 0;
         try
         {
@@ -112,10 +114,13 @@ public static class TestingPrefabYamlDumper
                 }
             }
 
+            string modsPath = Path.Combine(temporaryPath, "mods.yaml");
+            File.WriteAllText(modsPath, CreateModsYaml(enabledMods, generatedUtc), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
             string manifestPath = Path.Combine(temporaryPath, "manifest.yaml");
-            File.WriteAllText(manifestPath, CreateManifestYaml(entries, errors), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            File.WriteAllText(manifestPath, CreateManifestYaml(entries, errors, enabledMods, generatedUtc), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             ReplaceDirectoryAtomically(temporaryPath, outputPath, backupPath);
-            Debug.Log($"[PrefabYamlDump] Completed path='{outputPath}' prefabs={entries.Count} errors={errors}.");
+            Debug.Log($"[PrefabYamlDump] Completed path='{outputPath}' prefabs={entries.Count} enabledMods={enabledMods.Count} errors={errors}.");
         }
         catch
         {
@@ -142,6 +147,17 @@ public static class TestingPrefabYamlDumper
             .ThenBy(entry => entry.Category, StringComparer.OrdinalIgnoreCase)
             .ThenBy(entry => entry.SaveKey, StringComparer.OrdinalIgnoreCase)
             .ThenBy(entry => entry.ObjectType, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static List<EnabledModDumpEntry> CollectEnabledMods()
+    {
+        return ModDatabase.Instance.MarkedForLoad
+            .Where(record => record?.Info != null)
+            .Select(record => new EnabledModDumpEntry(record))
+            .OrderBy(record => record.LoadOrder < 0 ? int.MaxValue : record.LoadOrder)
+            .ThenBy(record => record.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(record => record.UniqueIdentifier)
             .ToList();
     }
 
@@ -494,15 +510,33 @@ public static class TestingPrefabYamlDumper
         }
     }
 
-    private static string CreateManifestYaml(IReadOnlyCollection<PrefabDumpEntry> entries, int errors)
+    private static string CreateManifestYaml(
+        IReadOnlyCollection<PrefabDumpEntry> entries,
+        int errors,
+        IReadOnlyCollection<EnabledModDumpEntry> enabledMods,
+        DateTime generatedUtc)
     {
         StringBuilder builder = new();
         WriteLine(builder, 0, $"schema_version: {SchemaVersion}");
-        WriteLine(builder, 0, $"generated_utc: {Quote(DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture))}");
+        WriteLine(builder, 0, $"generated_utc: {Quote(generatedUtc.ToString("O", CultureInfo.InvariantCulture))}");
         WriteLine(builder, 0, $"game_version: {Quote(Application.version)}");
         WriteLine(builder, 0, $"agmlib_version: {Quote(typeof(TestingPrefabYamlDumper).Assembly.GetName().Version?.ToString() ?? "unknown")}");
         WriteLine(builder, 0, $"prefab_count: {entries.Count}");
         WriteLine(builder, 0, $"error_count: {errors}");
+        WriteLine(builder, 0, "mods_file: 'mods.yaml'");
+        WriteLine(builder, 0, $"enabled_mod_count: {enabledMods.Count}");
+        WriteLine(builder, 0, "enabled_mods:");
+        foreach (EnabledModDumpEntry mod in enabledMods)
+        {
+            WriteLine(builder, 1, $"- name: {Quote(mod.Name)}");
+            WriteLine(builder, 2, $"version: {Quote(mod.Version)}");
+            WriteLine(builder, 2, $"unique_id: {Quote(mod.UniqueIdentifier.ToString(CultureInfo.InvariantCulture))}");
+            WriteLine(builder, 2, $"source: {Quote(mod.Source)}");
+            WriteLine(builder, 2, $"content_directory: {Quote(mod.ContentDirectory)}");
+            WriteLine(builder, 2, $"load_order: {mod.LoadOrder}");
+            WriteLine(builder, 2, $"status: {Quote(mod.Status)}");
+        }
+
         WriteLine(builder, 0, "sources:");
         foreach (IGrouping<string, PrefabDumpEntry> source in entries.GroupBy(entry => entry.Source).OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
         {
@@ -531,6 +565,55 @@ public static class TestingPrefabYamlDumper
         }
 
         return builder.ToString();
+    }
+
+    private static string CreateModsYaml(IReadOnlyCollection<EnabledModDumpEntry> enabledMods, DateTime generatedUtc)
+    {
+        StringBuilder builder = new();
+        WriteLine(builder, 0, $"schema_version: {SchemaVersion}");
+        WriteLine(builder, 0, $"generated_utc: {Quote(generatedUtc.ToString("O", CultureInfo.InvariantCulture))}");
+        WriteLine(builder, 0, $"game_version: {Quote(Application.version)}");
+        WriteLine(builder, 0, $"enabled_mod_count: {enabledMods.Count}");
+        WriteLine(builder, 0, "mods:");
+        foreach (EnabledModDumpEntry mod in enabledMods)
+        {
+            WriteLine(builder, 1, $"- name: {Quote(mod.Name)}");
+            WriteLine(builder, 2, $"version: {Quote(mod.Version)}");
+            WriteLine(builder, 2, $"game_version: {Quote(mod.GameVersion)}");
+            WriteLine(builder, 2, $"unique_id: {Quote(mod.UniqueIdentifier.ToString(CultureInfo.InvariantCulture))}");
+            WriteLine(builder, 2, mod.WorkshopId.HasValue
+                ? $"workshop_id: {Quote(mod.WorkshopId.Value.ToString(CultureInfo.InvariantCulture))}"
+                : "workshop_id: null");
+            WriteLine(builder, 2, $"source: {Quote(mod.Source)}");
+            WriteLine(builder, 2, $"mod_info_path: {Quote(mod.ModInfoPath)}");
+            WriteLine(builder, 2, $"content_directory: {Quote(mod.ContentDirectory)}");
+            WriteLine(builder, 2, $"load_order: {mod.LoadOrder}");
+            WriteLine(builder, 2, $"status: {Quote(mod.Status)}");
+            WriteLine(builder, 2, $"loaded: {FormatBoolean(mod.Loaded)}");
+            WriteLine(builder, 2, $"missing: {FormatBoolean(mod.Missing)}");
+            WriteScalarList(builder, 2, "dependencies", mod.Dependencies.Select(value => value.ToString(CultureInfo.InvariantCulture)));
+            WriteScalarList(builder, 2, "assemblies", mod.Assemblies);
+            WriteScalarList(builder, 2, "asset_bundles", mod.AssetBundles);
+            WriteScalarList(builder, 2, "asset_catalogs", mod.AssetCatalogs);
+        }
+
+        return builder.ToString();
+    }
+
+    private static void WriteScalarList(StringBuilder builder, int indent, string key, IEnumerable<string> values)
+    {
+        List<string> items = values.Where(value => !string.IsNullOrWhiteSpace(value)).ToList();
+        if (items.Count == 0)
+        {
+            WriteLine(builder, indent, $"{key}: []");
+            return;
+        }
+
+        WriteLine(builder, indent, $"{key}:");
+        foreach (string item in items)
+        {
+            WriteLine(builder, indent + 1, $"- {Quote(item)}");
+        }
     }
 
     private static string CreateErrorYaml(PrefabDumpEntry entry)
@@ -887,6 +970,47 @@ public static class TestingPrefabYamlDumper
         public string ObjectType => RootObject.GetType().FullName ?? RootObject.GetType().Name;
 
         public string? Error { get; set; }
+    }
+
+    private sealed class EnabledModDumpEntry
+    {
+        public EnabledModDumpEntry(ModRecord record)
+        {
+            ModInfo info = record.Info;
+            Name = info.ModName ?? "";
+            Version = info.ModVer ?? "";
+            GameVersion = info.GameVer ?? "";
+            UniqueIdentifier = info.UniqueIdentifier;
+            WorkshopId = info.DownloadedFromWorkshop ? info.UniqueIdentifier : null;
+            Source = info.DownloadedFromWorkshop ? "workshop" : "local";
+            ModInfoPath = info.FileLocation.FullPath ?? "";
+            ContentDirectory = info.FileLocation.Directory ?? "";
+            LoadOrder = record.LoadOrder;
+            Status = record.Status.ToString();
+            Loaded = record.Loaded;
+            Missing = record.Missing;
+            Dependencies = info.Dependencies ?? Array.Empty<ulong>();
+            Assemblies = info.Assemblies ?? Array.Empty<string>();
+            AssetBundles = info.AssetBundles ?? Array.Empty<string>();
+            AssetCatalogs = info.AssetCatalogs ?? Array.Empty<string>();
+        }
+
+        public string Name { get; }
+        public string Version { get; }
+        public string GameVersion { get; }
+        public ulong UniqueIdentifier { get; }
+        public ulong? WorkshopId { get; }
+        public string Source { get; }
+        public string ModInfoPath { get; }
+        public string ContentDirectory { get; }
+        public int LoadOrder { get; }
+        public string Status { get; }
+        public bool Loaded { get; }
+        public bool Missing { get; }
+        public IReadOnlyCollection<ulong> Dependencies { get; }
+        public IReadOnlyCollection<string> Assemblies { get; }
+        public IReadOnlyCollection<string> AssetBundles { get; }
+        public IReadOnlyCollection<string> AssetCatalogs { get; }
     }
 
     private sealed class ReferenceComparer : IEqualityComparer<object>
