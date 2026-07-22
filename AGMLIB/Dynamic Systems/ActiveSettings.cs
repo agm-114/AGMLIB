@@ -60,6 +60,8 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
     public ConditionalState activateWarpingInState;
     public ConditionalState activateWarpingOutState;
     public ConditionalState activateWarpState;
+    [Tooltip("Enabled while the ship is inside the map boundary; Disabled while it is outside.")]
+    public ConditionalState activateInMapBoundsState;
     //public State activateModuleState;
     public ConditionalState activateControlState;
     public ConditionalState activateHullComponentstate;
@@ -146,6 +148,8 @@ public class ActiveSettings : ShipState, IMonoBehaviourFilter<Ship>
         else if (activateWarpingOutState != ConditionalState.Ignore && activateWarpingOutState != state.WarpingOut)
             objectactive = false;
         else if (activateWarpState != ConditionalState.Ignore && activateWarpState != state.Warping)
+            objectactive = false;
+        else if (activateInMapBoundsState != ConditionalState.Ignore && activateInMapBoundsState != state.InMapBounds)
             objectactive = false;
         else if (activateControlState != ConditionalState.Ignore && activateControlState != state.ControlState)
             objectactive = false;

@@ -22,6 +22,7 @@ public class InternalShipState : NetworkBehaviour
     public ConditionalState WarpingIn => ShipController?.WarpMode == true && !ShipController.WarpDeparting ? ConditionalState.Enabled : ConditionalState.Disabled;
     public ConditionalState WarpingOut => ShipController?.WarpMode == true && ShipController.WarpDeparting ? ConditionalState.Enabled : ConditionalState.Disabled;
     public ConditionalState Warping => ShipController?.WarpMode == true ? ConditionalState.Enabled : ConditionalState.Disabled;
+    public ConditionalState InMapBounds => ShipController?.MapBoundary?.OutsideBounds == false ? ConditionalState.Enabled : ConditionalState.Disabled;
 
 
 
@@ -131,6 +132,7 @@ public class ShipState : NetworkBehaviour
     public ConditionalState WarpingIn => InternalShipState.WarpingIn;
     public ConditionalState WarpingOut => InternalShipState.WarpingOut;
     public ConditionalState Warping => InternalShipState.Warping;
+    public ConditionalState InMapBounds => InternalShipState.InMapBounds;
 
     private InternalShipState InternalShipState;
     public float Velocity => InternalShipState.Velocity;

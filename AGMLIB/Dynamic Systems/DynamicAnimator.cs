@@ -7,6 +7,9 @@
     private bool _invertOutput;
 
     [SerializeField]
+    private bool _logOutputChanges = false;
+
+    [SerializeField]
     private string _openTagName = "IsOpen";
 
     [SerializeField]
@@ -34,6 +37,10 @@
         foreach (Animator animation in _animations)
         {
             animation.SetBool(_openControlVariableName, output);
+            if (_logOutputChanges)
+            {
+                Debug.LogError($"[AGMLIB DynamicAnimator] SetBool object='{name}' animator='{animation.name}' parameter='{_openControlVariableName}' active={active} invertOutput={_invertOutput} output={output}", this);
+            }
         }
 
         _stateInitialized = true;
