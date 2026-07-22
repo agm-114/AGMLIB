@@ -1,11 +1,49 @@
 ---
 name: neb-testing
-description: Build and deploy AGMLIB, launch Nebulous Fleet Command, reproduce fleet or missile editor bugs, and inspect Unity logs. Use for iterative Nebulous mod debugging, editor UI reproduction, AGMLIB Harmony diagnostics, testing modded content, or locating Player.log output.
+description: Build and deploy AGMLIB, dump vanilla and modded Nebulous prefabs to YAML, launch Nebulous Fleet Command, reproduce fleet or missile editor bugs, and inspect Unity logs. Use for iterative Nebulous mod debugging, prefab inspection, editor UI reproduction, AGMLIB Harmony diagnostics, testing modded content, or locating Player.log output.
 ---
 
 # Nebulous Testing
 
 Use this workflow to build, launch, reproduce, and collect evidence from Nebulous without rediscovering local paths.
+
+## Path conventions
+
+Before testing, read `.agents/neb-testing.local.md`. Its resolved per-user paths and any installation overrides take precedence over the reusable defaults below.
+
+Use these standard locations:
+
+- Game root: `C:\Program Files (x86)\Steam\steamapps\common\Nebulous`
+- Unity log template: `C:\Users\<user>\AppData\LocalLow\Eridanus Industries\Nebulous\Player.log`
+
+Resolve them in PowerShell with:
+
+```powershell
+$gameRoot = 'C:\Program Files (x86)\Steam\steamapps\common\Nebulous'
+$playerLog = Join-Path $env:USERPROFILE 'AppData\LocalLow\Eridanus Industries\Nebulous\Player.log'
+```
+
+Derive the remaining paths from `$gameRoot` rather than recording machine-specific absolute copies:
+
+- Game executable: `Nebulous.exe`
+- AGMLIB deployed DLL: `Mods\AGMLIB\Debug\net481\AGMLIB.dll`
+- Fleet saves: `Saves\Fleets`
+- BepInEx log: `BepInEx\LogOutput.log`
+
+## Process control authorization
+
+- The user authorizes terminating `Nebulous.exe` without asking again when testing requires an unlocked DLL, a clean game restart, or startup-only environment such as prefab dumping.
+- Preserve logs or other evidence needed from the current run before terminating it.
+
+## Refresh the prefab snapshot
+
+Before runtime testing, refresh the complete vanilla and enabled-mod prefab snapshot:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .agents\skills\neb-testing\scripts\dump-neb-prefabs.ps1
+```
+
+The command builds AGMLIB, launches Nebulous with dumping enabled, waits for the atomic YAML snapshot, and leaves the game open for testing. Read [references/prefab-dumping.md](references/prefab-dumping.md) before changing dump scope, overriding paths, diagnosing a failed dump, or interpreting the YAML schema.
 
 ## Build and deploy
 
@@ -15,10 +53,10 @@ Run from the repository root:
 dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal
 ```
 
-The project deploys directly to:
+The project deploys directly to this game-root-relative path:
 
 ```text
-C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB\Debug\net481\AGMLIB.dll
+Mods\AGMLIB\Debug\net481\AGMLIB.dll
 ```
 
 If deployment reports a mapped-section or locked-file error, Nebulous is running. Close it before rebuilding. Preserve CRLF in modified C# files.
@@ -30,7 +68,8 @@ Nebulous loads mod assemblies only during startup. After any DLL rebuild, fully 
 Prefer launching the existing executable directly with Unity's documented standalone-player display arguments:
 
 ```powershell
-Start-Process 'C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Nebulous.exe' -ArgumentList '-screen-width 1920 -screen-height 1080 -screen-fullscreen 0'
+$gameRoot = Join-Path ${env:ProgramFiles(x86)} 'Steam\steamapps\common\Nebulous'
+Start-Process (Join-Path $gameRoot 'Nebulous.exe') -ArgumentList '-screen-width 1920 -screen-height 1080 -screen-fullscreen 0'
 ```
 
 This makes a 1920x1080 windowed client the standard test environment. After launch, capture the game window and verify its actual dimensions; Unity, DPI scaling, or the desktop work area can change the logical capture size. For example, a 1920x1080 request appears near 1280x720 logical pixels at 150% Windows scaling. If the arguments are ignored, resize the window to a 1920x1080 client area when the display supports it. Continue to derive every click from normalized screenshot coordinates rather than relying on fixed 1080p pixel positions.
@@ -51,9 +90,11 @@ If window capture fails, stop automated input rather than clicking blind. Record
 
 ## Enter Testing Range
 
+Prefer Testing Range for rapid fleet, weapon, missile, mine, and fighter iteration. It starts opposing units much closer together and avoids the skirmish lobby and deployment workflow.
+
 1. Open `Fleet Editor` from the main menu.
 2. Load or create the fleet needed for the test.
-3. Use the Fleet Editor's testing-range action to launch the current fleet.
+3. Press `Esc` after the fleet is open, then choose the testing-range action from the pause/menu screen.
 4. Complete deployment if prompted, then select the relevant ship or object before reproducing the issue.
 
 ## Enter local skirmish
@@ -66,6 +107,18 @@ If window capture fails, stop automated input rather than clicking blind. Record
 6. Select the relevant ship or object before reproducing the issue.
 
 Use local skirmish when testing the offline single-player path. It is distinct from Testing Range and from a locally hosted multiplayer server, so compare those modes when investigating lifecycle or authority differences.
+
+## In-match debug console
+
+Press `F2` during a match to open the developer console.
+
+To select and control enemy ships during a test match, enter:
+
+```text
+dbgEnableEnemyControl true
+```
+
+Use enemy control when a reproduction requires both sides to maneuver, launch craft or missiles, or position targets inside a fuse or sensor range. Treat it as test-state setup and record when it was enabled in reproduction notes.
 
 ### Fast skirmish startup automation
 
@@ -90,13 +143,13 @@ Use a helper such as `point = (nx, ny) => ({ x: Math.round(width * nx), y: Math.
 
 ## Logs
 
-The active Unity log is:
+The active Unity log uses Unity's standard per-user location:
 
 ```text
 %USERPROFILE%\AppData\LocalLow\Eridanus Industries\Nebulous\Player.log
 ```
 
-`Nebulous\BepInEx\LogOutput.log` may be stale; use `Player.log` unless its timestamp proves otherwise.
+`BepInEx\LogOutput.log` under the game root may be stale; use `Player.log` unless its timestamp proves otherwise.
 
 Use the bundled script for focused output:
 
@@ -115,3 +168,9 @@ Before launching, record the log length or last-write time. Nebulous recreates o
 5. Extract only the relevant prefixed lines plus nearby exceptions.
 6. Explain the observed rule path before changing behavior.
 7. Apply the smallest fix, remove or reduce noisy diagnostics, rebuild, and repeat the same reproduction.
+
+## Maintain testing knowledge
+
+- Update this skill when a reliable reusable testing procedure or console command is discovered.
+- Update `.agents/neb-testing.local.md` when a reliable reproduction fleet, mod dependency, installation override, or resolved local path is discovered.
+- Record the exact fleet name and relevant ship, missile, component, or munition save key when it materially shortens a future reproduction.

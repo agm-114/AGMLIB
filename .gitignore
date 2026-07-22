@@ -364,3 +364,9 @@ FodyWeavers.xsd
 
 # Generated AGMLIB mod manifest
 /AGMLIB/ModInfo.xml
+
+# Machine-, mod-, and fleet-specific Nebulous testing notes
+/.agents/neb-testing.local.md
+
+# Generated vanilla and mod prefab snapshots
+/.agents/cache/neb-prefabs/

@@ -1,4 +1,4 @@
 interface:
   display_name: "Nebulous Testing"
-  short_description: "Build, launch, reproduce, and inspect Nebulous"
-  default_prompt: "Use $neb-testing to build AGMLIB and reproduce a Nebulous editor issue."
+  short_description: "Dump prefabs, build, launch, and debug Nebulous"
+  default_prompt: "Use $neb-testing to refresh prefab YAML, build AGMLIB, and reproduce a Nebulous issue."

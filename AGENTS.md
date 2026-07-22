@@ -18,3 +18,9 @@
 - Runtime missile/component behaviours are often created on a finalized pattern and then cloned or pooled for live instances. Private runtime fields that must survive into the spawned instance, especially descriptor references and bound component references, should follow the vanilla pattern and be marked `[SerializeField]`.
 - Do not rely on `OnAdded`-assigned private fields being present on launched/pooled runtime copies unless those fields are serialized or rebuilt in `OnUnpooled`/`OnLaunched`.
 - When storing a typed descriptor field, prefer a small typed fallback helper that recovers from the base descriptor reference if the typed field is null.
+
+## Local Testing Context
+
+- Before Nebulous testing, read `.agents/neb-testing.local.md` for machine-, mod-, and fleet-specific paths and reproduction notes.
+- `.agents/neb-testing.local.md` is intentionally git-ignored. Keep useful local testing discoveries there so future sessions do not have to rediscover them.
+- Keep reusable testing procedures in `.agents/skills/neb-testing/SKILL.md`; keep installation-specific details in the local notes file.
