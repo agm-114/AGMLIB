@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nebulous Runtime Research"
+  short_description: "Prove native behavior from assemblies and evidence"
+  default_prompt: "Use $neb-runtime-research to trace this Nebulous behavior through source, decompiled game code, prefab data, and logs."

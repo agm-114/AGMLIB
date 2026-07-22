@@ -89,4 +89,23 @@ public class FixedEWarComponent : FixedContinuousWeaponComponent, IEWarWeapon, I
         }
         return ((1 << (int)passive) & sigMask) != 0;
     }
+
+    public static bool WeaponGroupNeedsFacing(WeaponGroup group)
+    {
+        return group?.Members?.Any(member => member is FixedEWarComponent) == true;
+    }
+}
+
+[HarmonyPatch]
+class WeaponGroupFixedEWarNeedsFacing
+{
+    static System.Reflection.MethodBase TargetMethod()
+    {
+        return AccessTools.Method(typeof(WeaponGroup), "Ships.IFacingDriver.get_NeedsFacing");
+    }
+
+    static void Postfix(WeaponGroup __instance, ref bool __result)
+    {
+        __result = __result || FixedEWarComponent.WeaponGroupNeedsFacing(__instance);
+    }
 }

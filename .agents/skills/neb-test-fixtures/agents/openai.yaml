@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nebulous Test Fixtures"
+  short_description: "Design safe deterministic in-game test rigs"
+  default_prompt: "Use $neb-test-fixtures to design an isolated Nebulous test rig and evidence plan for this behavior."
