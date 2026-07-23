@@ -89,7 +89,7 @@ public class ShipStatusPowerBar : MonoBehaviour
             ?? GetComponentInChildren<ShipController>();
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         ShipStatusPowerBarBinding[] bindings = FindObjectsOfType<ShipStatusPowerBarBinding>();
         foreach (ShipStatusPowerBarBinding binding in bindings)
@@ -341,11 +341,13 @@ public class ShipStatusPowerBar : MonoBehaviour
         private int _barCount;
         private float _nextUpdateTime;
         private ShipController _subscribedShip;
+        private ShipStatusPowerBarUpdater _updater;
 
         protected void SetPowerSource(ShipStatusPowerBar source)
         {
-            SetSubscribedShip(source?.ShipController);
             Source = source;
+            SetSubscribedShip(source?.ShipController);
+            SetUpdater(source);
             EnsureTooltipCallback();
             UpdateVisibleStatus();
         }
@@ -359,6 +361,7 @@ public class ShipStatusPowerBar : MonoBehaviour
 
             Source = null;
             SetSubscribedShip(null);
+            SetUpdater(null);
             ClearVisualState();
         }
 
@@ -366,28 +369,63 @@ public class ShipStatusPowerBar : MonoBehaviour
         {
             Source = null;
             SetSubscribedShip(null);
+            SetUpdater(null);
             ClearVisualState();
         }
 
-        protected virtual void OnDisable()
+        protected void DisableBinding()
         {
-            ClearVisualState();
-        }
-
-        protected virtual void Update()
-        {
-            if (Source == null || Time.unscaledTime < _nextUpdateTime)
+            if (Root == null || Root.IsChildOf(transform))
             {
-                return;
+                ClearVisualState();
+            }
+        }
+
+        protected void EnableBinding()
+        {
+            _nextUpdateTime = 0f;
+            if (Source != null)
+            {
+                UpdateVisibleStatus();
+            }
+        }
+
+        internal bool PollSource(ShipStatusPowerBarUpdater updater)
+        {
+            if (_updater != updater)
+            {
+                return false;
+            }
+
+            if (Source == null)
+            {
+                SetSubscribedShip(null);
+                _updater = null;
+                ClearVisualState();
+                return false;
+            }
+
+            if (!ShouldPoll() || Time.unscaledTime < _nextUpdateTime)
+            {
+                return true;
             }
 
             _nextUpdateTime = Time.unscaledTime + Mathf.Max(0.02f, Source.UpdateInterval);
             UpdateVisibleStatus();
+            return true;
         }
 
-        protected virtual void OnDestroy()
+        internal bool ShouldPoll()
+        {
+            return Source != null
+                && (isActiveAndEnabled || (Root != null && Root.gameObject.activeInHierarchy));
+        }
+
+        protected void DestroyBinding()
         {
             SetSubscribedShip(null);
+            SetUpdater(null);
+            DestroyGraph();
         }
 
         protected void UpdateVisibleStatus()
@@ -456,12 +494,7 @@ public class ShipStatusPowerBar : MonoBehaviour
         {
             if (Root != null && _barCount != barCount)
             {
-                Destroy(Root.gameObject);
-                Root = null;
-                _barBackgroundRects = null;
-                _fillRects = null;
-                _fills = null;
-                _barCount = 0;
+                DestroyGraph();
             }
 
             if (Root != null)
@@ -581,10 +614,37 @@ public class ShipStatusPowerBar : MonoBehaviour
 
         private void HandlePowerQuantityChanged(ShipController ship, QuantityStatus quantity)
         {
-            if (isActiveAndEnabled && Source != null && ship == Source.ShipController)
+            if (ShouldPoll() && ship == Source.ShipController)
             {
                 UpdateVisibleStatus();
             }
+        }
+
+        private void SetUpdater(ShipStatusPowerBar source)
+        {
+            ShipStatusPowerBarUpdater updater = source == null ? null : ShipStatusPowerBarUpdater.Instance;
+            if (_updater == updater)
+            {
+                return;
+            }
+
+            _updater?.Unregister(this);
+            _updater = updater;
+            _updater?.Register(this);
+        }
+
+        private void DestroyGraph()
+        {
+            if (Root != null)
+            {
+                Destroy(Root.gameObject);
+            }
+
+            Root = null;
+            _barBackgroundRects = null;
+            _fillRects = null;
+            _fills = null;
+            _barCount = 0;
         }
     }
 }
@@ -592,5 +652,59 @@ public class ShipStatusPowerBar : MonoBehaviour
 internal sealed class DebugShipStatusPowerIconBar : ShipStatusPowerBar
 {
     public override DisplaySurface DisplayTarget => DisplaySurface.StatusIcon;
+}
+
+internal sealed class ShipStatusPowerBarUpdater : MonoBehaviour
+{
+    private static ShipStatusPowerBarUpdater _instance;
+    private readonly List<ShipStatusPowerBar.Binding> _bindings = new();
+
+    public static ShipStatusPowerBarUpdater Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                GameObject updaterObject = new("AGMLIB Ship Status Power Bar Updater");
+                DontDestroyOnLoad(updaterObject);
+                _instance = updaterObject.AddComponent<ShipStatusPowerBarUpdater>();
+            }
+
+            return _instance;
+        }
+    }
+
+    public void Register(ShipStatusPowerBar.Binding binding)
+    {
+        if (binding != null && !_bindings.Contains(binding))
+        {
+            _bindings.Add(binding);
+        }
+    }
+
+    public void Unregister(ShipStatusPowerBar.Binding binding)
+    {
+        _bindings.Remove(binding);
+    }
+
+    private void OnDestroy()
+    {
+        if (_instance == this)
+        {
+            _instance = null;
+        }
+    }
+
+    private void Update()
+    {
+        for (int i = _bindings.Count - 1; i >= 0; i--)
+        {
+            ShipStatusPowerBar.Binding binding = _bindings[i];
+            if (binding == null || !binding.PollSource(this))
+            {
+                _bindings.RemoveAt(i);
+            }
+        }
+    }
 }
 

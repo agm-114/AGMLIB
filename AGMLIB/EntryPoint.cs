@@ -253,11 +253,10 @@ public class EntryPoint : IModEntryPoint
     public void PostLoad()
     {
 #if DEBUG
-        //Lib.Testing.TestingPrefabYamlDumper.ScheduleDumpAfterAllModsLoaded();
+        Lib.Testing.TestingPrefabYamlDumper.ScheduleDumpAfterAllModsLoaded();
 #endif
 
-        // Runtime testing-component injection is intentionally disabled.
-        // Lib.Testing.TestingComponentBootstrap.DiscoverAndCreate(Assembly.GetExecutingAssembly());
+        Lib.Testing.TestingComponentBootstrap.DiscoverAndCreate(Assembly.GetExecutingAssembly());
 
         foreach (FactionDescription faction in BundleManager.Instance.AllFactions)
         {

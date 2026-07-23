@@ -370,3 +370,9 @@ FodyWeavers.xsd
 
 # Generated vanilla and mod prefab snapshots
 /.agents/cache/neb-prefabs/
+
+# Generated managed-assembly decompilation evidence
+/.agents/cache/neb-runtime-research/
+
+# Locally installed Python modules used for asset-bundle inspection
+/.agents/cache/unitypy/

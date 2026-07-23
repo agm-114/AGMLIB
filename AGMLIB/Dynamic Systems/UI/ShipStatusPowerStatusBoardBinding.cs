@@ -2,6 +2,12 @@ public class ShipStatusPowerStatusBoardBinding : ShipStatusPowerBar.Binding
 {
     private RectTransform _layoutParent;
 
+    private void OnEnable() => EnableBinding();
+
+    private void OnDisable() => DisableBinding();
+
+    private void OnDestroy() => DestroyBinding();
+
     public void SetSource(ShipStatusPowerBar source)
     {
         SetPowerSource(source);

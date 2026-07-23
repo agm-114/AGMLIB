@@ -5,6 +5,12 @@ public class ShipStatusPowerBarBinding : ShipStatusPowerBar.Binding
     private Image _maskImage;
     private RectTransform _maskRect;
 
+    private void OnEnable() => EnableBinding();
+
+    private void OnDisable() => DisableBinding();
+
+    private void OnDestroy() => DestroyBinding();
+
     public void SetSource(ShipStatusPowerBar source, QuantityStatusIcon powerIcon)
     {
         _powerIcon = powerIcon;
