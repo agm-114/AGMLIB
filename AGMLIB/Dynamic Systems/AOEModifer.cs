@@ -330,9 +330,9 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
 
     public static void HandleJammer(ActiveEWarEffect eWarEffect, IEWarTarget target, bool applicationarg)
     {
-        FratricidalWeapon weapon = eWarEffect.GetComponent<FratricidalWeapon>();
-        WeaponComponent weaponcom = weapon?.Source;
-        AreaEffect AOEModifer = weaponcom?.GetComponentInChildren<AreaEffect>();
+        WeaponCheckOverrides? overrides = eWarEffect.GetComponent<WeaponCheckOverrides>();
+        WeaponComponent? weaponcom = overrides?.Source;
+        AreaEffect? AOEModifer = weaponcom?.GetComponentInChildren<AreaEffect>();
         if (target is not MonoBehaviour targetmono)
             return;
         AOEModifer?.OnTrigger(targetmono?.transform, applicationarg);

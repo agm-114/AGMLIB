@@ -76,9 +76,9 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 - [ ] Add Harmony guidance for stable IDs, small patch entrypoints, typed helpers, lifecycle/authority checks, and feature ownership.
 - [ ] Add generated-file, binary-reference, and packaging boundaries.
 - [ ] Route build/deploy/game reproduction tasks to `.agents/skills/neb-testing/SKILL.md`.
-- [ ] Create `.agents/README.md` as the deeper map for skills, compatibility baselines, durable notes, and task plans.
+- [ ] Create `.agents/AGENTS.md` as the deeper map for skills, compatibility baselines, durable notes, and task plans.
 - [ ] Decide when a finding deserves a durable `.agents/notes/` document instead of expanding `AGENTS.md`.
-- [ ] Replace the one-line root `README.md` with:
+- [ ] Expand the root `AGENTS.md` with:
   - [ ] Project purpose and supported NEBULOUS version.
   - [ ] Installation and Workshop information.
   - [ ] Prerequisites and dependency setup.
@@ -86,14 +86,14 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
   - [ ] Repository architecture and major feature areas.
   - [ ] Public API stability policy.
   - [ ] Testing and log-triage instructions.
-  - [ ] Contributor guidance and links to `AGENTS.md` and `.agents/README.md`.
+  - [ ] Contributor guidance and links to scoped `AGENTS.md` files.
 - [ ] Do not add `llms-full.txt` or generated agent indexes until the documentation set is large enough to justify their context and maintenance cost.
 
 ## P1 - Create a Workshop Update Publishing Skill
 
 - [ ] Use the skill-creator workflow to create a dedicated AGMLIB Workshop publishing skill.
 - [ ] Choose a clear trigger-oriented name, such as `agmlib-workshop-publish`.
-- [ ] Place the skill under `.agents/skills/` and add it to `.agents/README.md`.
+- [ ] Place the skill under `.agents/skills/` and add it to `.agents/AGENTS.md`.
 - [ ] Treat Workshop item `2960504230` as configuration that must be verified before publishing, not as an unchecked assumption.
 - [ ] Document ownership and authorization requirements for updating the Workshop item.
 - [ ] Keep Steam credentials, session tokens, guard codes, and machine-specific secrets outside Git and outside generated logs.
@@ -138,7 +138,7 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 - [ ] Create a CI-safe compatibility checker that fails on accidental removal, rename, namespace change, enum-value change, or serialized-field loss.
 - [ ] Require an explicit baseline update and migration note for intentional breaking changes.
 - [ ] Add collision checks for public serialized/editor-visible simple type names where NEBULOUS or Unity resolves by simple name.
-- [ ] Publish the compatibility policy in the README.
+- [ ] Publish the compatibility policy in the appropriate scoped `AGENTS.md`.
 
 ## P1 - Namespace and Harmony Patch Governance
 
@@ -219,7 +219,7 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 
 ## P3 - Optional Documentation Generation
 
-- [ ] Reassess documentation discovery after the README, agent map, API policy, and release documentation exist.
+- [ ] Reassess documentation discovery after the scoped agent map, API policy, and release documentation exist.
 - [ ] If navigation becomes difficult, add a small curated `llms.txt` or structured index generated from canonical metadata.
 - [ ] Keep generated documentation reproducible and add a `-Check` mode to CI.
 - [ ] Avoid committing duplicated full-context documents that materially inflate repository context.

@@ -213,8 +213,8 @@ public class AreaEffect : ActiveSettings
 
     public static void HandleJammer(ActiveEWarEffect eWarEffect, IEWarTarget target, bool applicationarg)
     {
-        FratricidalWeapon weapon = eWarEffect.GetComponent<FratricidalWeapon>();
-        WeaponComponent? weaponcom = weapon?.Source;
+        WeaponCheckOverrides? overrides = eWarEffect.GetComponent<WeaponCheckOverrides>();
+        WeaponComponent? weaponcom = overrides?.Source;
         AreaEffect? areaeffect = weaponcom?.GetComponentInChildren<AreaEffect>();
         if (target is not MonoBehaviour targetmono)
             return;

@@ -201,11 +201,7 @@ public class LoiteringModularMissile : ModularMissile
                 if (_usingPushoffEngines)
                 {
                     FlightInterface.PointTowards(_pushoffDirection, Vector3.up);
-                    FlightInterface.ThrustTowards(_pushoffDirection);
-                    if (!_useManeuveringThrustersForPushoff)
-                    {
-                        UpdateThrusters(Vector3.zero);
-                    }
+                    ApplyPushoffThrust();
                 }
                 else
                 {
@@ -633,8 +629,36 @@ public class LoiteringModularMissile : ModularMissile
 
     private bool HasPushoffThrust()
     {
-        return GetInstalledComponents<MissileEngineDescriptor>()
-            .Any(engine => engine.StrafeThrust(inBoostPhase: true) > 0f);
+        MissileEngineDescriptor? engine = GetCurrentStageEngine();
+        return engine != null && engine.StrafeThrust(inBoostPhase: true) > 0f;
+    }
+
+    private void ApplyPushoffThrust()
+    {
+        MissileEngineDescriptor? engine = GetCurrentStageEngine();
+        if (engine == null)
+        {
+            return;
+        }
+
+        bool inBoostPhase = InBoostPhase;
+        Thrust(
+            _pushoffDirection,
+            engine.StrafeThrust(inBoostPhase),
+            Mathf.Max(engine.StrafeSpeed(inBoostPhase), _launchedFromSpeed * 1.25f),
+            null);
+
+        if (_useManeuveringThrustersForPushoff)
+        {
+            UpdateThrusters(_pushoffDirection);
+        }
+    }
+
+    private MissileEngineDescriptor? GetCurrentStageEngine()
+    {
+        return this.Internals().TryGetCurrentStage(out ModularMissile.Stage stage)
+            ? stage.EngineComp
+            : null;
     }
 
     private bool HasActivationLineOfSight(Vector3 targetPosition)
