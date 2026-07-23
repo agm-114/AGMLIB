@@ -1,24 +1,53 @@
 ﻿using Munitions.ModularMissiles;
+using Munitions.ModularMissiles.Descriptors;
 using Ships;
 using Munitions.ModularMissiles.Runtime.Seekers;
 using SmallCraft;
+using Mirror;
+using Mirror.RemoteCalls;
+using Utility;
+using Game.UI;
+using Game.Sensors;
+using Game.EWar;
+using UnityEngine.Serialization;
 
 public class LoiteringModularMissile : ModularMissile
 {
+    private const int MissileFuzeLayer = SpecialLayers.ProximityDetection;
+
     private enum LoiteringFlightPhase
     {
         Inactive,
         Flyout,
         Arming,
         Loitering,
+        TurningToTarget,
         Attacking
     }
 
     [Header("Loitering Munition")]
-    [Tooltip("Time spent following the programmed missile course before entering the loiter state.")]
+    [Tooltip("Time spent in guided flyout or push-off before entering the arming state.")]
     [Min(0f)]
     [SerializeField]
     private float _flyoutTime = 5f;
+
+    [Tooltip("Uses the installed engine's pre-ignition positioning thrust during flyout instead of normal missile guidance. This is useful for mines deployed as submunitions.")]
+    [SerializeField]
+    private bool _usePushoffEngines = true;
+
+    [Tooltip("Displays the current modular stage's maneuvering-thruster particles during push-off. This does not affect the thrust force.")]
+    [SerializeField]
+    private bool _useManeuveringThrustersForPushoff = true;
+
+    [Tooltip("Optional additional push-off effect played alongside the modular stage's maneuvering-thruster particles.")]
+    [SerializeField]
+    private DynamicVisibleParticles _pushoffEngineParticles;
+
+    [SerializeField]
+    private AudioSource _pushoffEngineLoop;
+
+    [SerializeField]
+    private Animation _deployedAnimation;
 
     [Tooltip("Delay between completing flyout and becoming able to detect targets.")]
     [Min(0f)]
@@ -51,8 +80,26 @@ public class LoiteringModularMissile : ModularMissile
     [Tooltip("Allows the magnetic fuse to be triggered by hostile missiles.")]
     public bool ProximityMissiles = false;
 
+    [Tooltip("When enabled, friendly contacts are ignored only when their comms can reach this mine, matching vanilla mine behavior. When disabled, friendly IFF is always respected.")]
+    public bool RequireCommsForIFF = true;
+
     [Tooltip("One entry per runtime seeker. Enabled entries allow that seeker to trigger the magnetic fuse.")]
     public List<bool> SeekerFuses = new();
+
+    [Tooltip("Applies the seeker-fuse filters below. IFF and the ship, fighter, and missile target-type switches are always respected.")]
+    public bool FilterSeekerFuses = false;
+
+    [Tooltip("Prevents enabled seeker fuses from triggering on large, non-point-defense targets.")]
+    public bool FilterLargeSeekerFuseTargets = false;
+
+    [Tooltip("Prevents enabled seeker fuses from triggering on small point-defense targets.")]
+    public bool FilterSmallSeekerFuseTargets = false;
+
+    [Tooltip("Prevents enabled seeker fuses from triggering on fighter targets.")]
+    public bool FilterFighterSeekerFuseTargets = false;
+
+    [Tooltip("Prevents enabled seeker fuses from triggering on missile targets.")]
+    public bool FilterMissileSeekerFuseTargets = false;
 
     [Tooltip("Do not wake for targets hidden behind map geometry.")]
     [SerializeField]
@@ -67,20 +114,70 @@ public class LoiteringModularMissile : ModularMissile
     [SerializeField]
     private float _loiterDrag = 1f;
 
+    [SerializeField]
+    private Communicator _comms;
+
     private readonly HashSet<Collider> _fuseContacts = new();
     private LoiteringFlightPhase _phase;
     private float _phaseTime;
     private float _defaultDrag;
+    private Vector3 _pushoffDirection;
+    private Vector3 _attackDirection;
+    private bool _usingPushoffEngines;
+    private bool _pushoffEngineOn;
 
     public bool IsLoitering => _phase == LoiteringFlightPhase.Loitering;
+
+    protected override string _contactIntelPrefix => "UI_HUD_STATUS";
+
+    protected override string _contactIntel
+    {
+        get
+        {
+            if (_phase == LoiteringFlightPhase.Arming)
+            {
+                return "Armed in " +
+                    TimeSpan.FromSeconds(_armingDelay - _phaseTime).ToString("mm\\:ss");
+            }
+
+            if (_phase == LoiteringFlightPhase.Loitering && _loiterLifetime > 0f)
+            {
+                return "ARMED - BAT: " +
+                    TimeSpan.FromSeconds(_loiterLifetime - _phaseTime).ToString("mm\\:ss");
+            }
+
+            return null;
+        }
+    }
+
+    protected override MarkerType _markerType =>
+        OwnedBy != null &&
+        OwnedBy.IsOnLocalPlayerTeam &&
+        _phase == LoiteringFlightPhase.Loitering
+            ? MarkerType.MineActive
+            : MarkerType.Mine;
 
     public override bool SupportsPositionTargeting => true;
 
     public override bool SupportsTrackTargeting => false;
 
+    static LoiteringModularMissile()
+    {
+        RemoteCallHelper.RegisterRpcDelegate(
+            typeof(LoiteringModularMissile),
+            nameof(RpcBeginEngagement),
+            InvokeUserCode_RpcBeginEngagement);
+    }
+
     protected override void Awake()
     {
         base.Awake();
+        _comms ??= GetComponent<Communicator>();
+        if (_comms != null)
+        {
+            _comms.SetOwnership(this, GetComponents<ICommsAntenna>().ToList());
+        }
+
         _defaultDrag = _body.drag;
         ConfigureActivationTrigger();
         ResetLoiteringState();
@@ -90,7 +187,8 @@ public class LoiteringModularMissile : ModularMissile
     {
         base.LaunchInternal(platform, forceHotLaunch, immediateSearching);
         ExtendSeekerFuseList();
-        EnterPhase(immediateSearching ? LoiteringFlightPhase.Attacking : LoiteringFlightPhase.Flyout);
+        _usingPushoffEngines = _usePushoffEngines && HasPushoffThrust();
+        EnterPhase(immediateSearching ? LoiteringFlightPhase.Loitering : LoiteringFlightPhase.Flyout);
     }
 
     protected override void FixedUpdate()
@@ -100,7 +198,20 @@ public class LoiteringModularMissile : ModularMissile
         switch (_phase)
         {
             case LoiteringFlightPhase.Flyout:
-                base.FixedUpdate();
+                if (_usingPushoffEngines)
+                {
+                    FlightInterface.PointTowards(_pushoffDirection, Vector3.up);
+                    FlightInterface.ThrustTowards(_pushoffDirection);
+                    if (!_useManeuveringThrustersForPushoff)
+                    {
+                        UpdateThrusters(Vector3.zero);
+                    }
+                }
+                else
+                {
+                    base.FixedUpdate();
+                }
+
                 if (_phaseTime >= _flyoutTime)
                 {
                     EnterPhase(LoiteringFlightPhase.Arming);
@@ -115,13 +226,22 @@ public class LoiteringModularMissile : ModularMissile
                 break;
 
             case LoiteringFlightPhase.Loitering:
-                if (MagneticFuse && (TryTriggerSelectedSeekerFuse() || TryTriggerContactFuse()))
+                if (isServer && MagneticFuse && TryGetFuseTarget(out Vector3 targetPosition))
                 {
-                    EnterPhase(LoiteringFlightPhase.Attacking);
+                    TriggerAttack(targetPosition);
                 }
                 else if (_loiterLifetime > 0f && _phaseTime >= _loiterLifetime && isServer)
                 {
                     SelfDestruct();
+                }
+                break;
+
+            case LoiteringFlightPhase.TurningToTarget:
+                FlightInterface.PointTowards(_attackDirection, Vector3.up);
+                UpdateThrusters(_attackDirection);
+                if (Vector3.Angle(transform.forward, _attackDirection) <= 1f)
+                {
+                    EnterPhase(LoiteringFlightPhase.Attacking);
                 }
                 break;
 
@@ -140,7 +260,7 @@ public class LoiteringModularMissile : ModularMissile
 
     public new void OnTriggerEnter(Collider other)
     {
-        if (_phase == LoiteringFlightPhase.Loitering)
+        if (isServer && _phase == LoiteringFlightPhase.Loitering)
         {
             _fuseContacts.Add(other);
             return;
@@ -154,13 +274,20 @@ public class LoiteringModularMissile : ModularMissile
 
     public void OnTriggerExit(Collider other)
     {
-        _fuseContacts.Remove(other);
+        if (isServer)
+        {
+            _fuseContacts.Remove(other);
+        }
     }
 
     protected override void OnUnpooled()
     {
         base.OnUnpooled();
         ResetLoiteringState();
+        if (_deployedAnimation != null)
+        {
+            _deployedAnimation.Rewind();
+        }
     }
 
     protected override void OnRepooled()
@@ -171,17 +298,55 @@ public class LoiteringModularMissile : ModularMissile
 
     private void EnterPhase(LoiteringFlightPhase phase)
     {
+        bool markerChanged =
+            (_phase == LoiteringFlightPhase.Loitering) !=
+            (phase == LoiteringFlightPhase.Loitering);
+
+        if (_pushoffEngineOn && phase != LoiteringFlightPhase.Flyout)
+        {
+            _pushoffEngineOn = false;
+            SetPushoffEngineEmission(false);
+        }
+
         _phase = phase;
         _phaseTime = 0f;
 
-        if (phase is LoiteringFlightPhase.Arming or LoiteringFlightPhase.Loitering)
+        if (phase == LoiteringFlightPhase.Flyout && _usingPushoffEngines)
+        {
+            _pushoffDirection = transform.forward;
+            EngineOff();
+            _body.drag = _defaultDrag;
+            _pushoffEngineOn = true;
+            SetPushoffEngineEmission(true);
+        }
+        else if (phase is LoiteringFlightPhase.Arming or LoiteringFlightPhase.Loitering)
         {
             EngineOff();
+            if (_usingPushoffEngines)
+            {
+                UpdateThrusters(Vector3.zero);
+            }
+
             _body.drag = _loiterDrag;
             if (_activationTrigger != null)
             {
                 _activationTrigger.enabled = phase == LoiteringFlightPhase.Loitering && MagneticFuse;
             }
+
+            if (phase == LoiteringFlightPhase.Loitering && _deployedAnimation != null)
+            {
+                _deployedAnimation.Play();
+            }
+        }
+        else if (phase == LoiteringFlightPhase.TurningToTarget)
+        {
+            EngineOff();
+            _body.drag = _loiterDrag;
+            if (_activationTrigger != null)
+            {
+                _activationTrigger.enabled = false;
+            }
+            _fuseContacts.Clear();
         }
         else if (phase == LoiteringFlightPhase.Attacking)
         {
@@ -190,61 +355,80 @@ public class LoiteringModularMissile : ModularMissile
                 _activationTrigger.enabled = false;
             }
             _fuseContacts.Clear();
+            UpdateThrusters(Vector3.zero);
             _body.drag = _defaultDrag;
             EngineOn();
             ResetFlightTime();
         }
+
+        if (markerChanged)
+        {
+            FireTrackingChangedEvent();
+        }
     }
 
-    private bool TryTriggerContactFuse()
+    private bool TryGetFuseTarget(out Vector3 targetPosition)
+    {
+        return TryGetSelectedSeekerFuseTarget(out targetPosition) || TryGetContactFuseTarget(out targetPosition);
+    }
+
+    private bool TryGetContactFuseTarget(out Vector3 targetPosition)
     {
         if (!ProximityShips && !ProximityFighters && !ProximityMissiles)
         {
+            targetPosition = default;
             return false;
         }
 
         _fuseContacts.RemoveWhere(collider => collider == null);
         foreach (Collider contact in _fuseContacts)
         {
-            Transform targetRoot = contact.transform.root;
-            if (targetRoot == null)
+            Component target = contact.GetComponentInParent<Missile>();
+            target ??= contact.GetComponentInParent<Spacecraft>();
+            target ??= contact.GetComponentInParent<ShipController>();
+            if (target == null || !HasActivationLineOfSight(target.transform.position))
             {
                 continue;
             }
 
-            if (ProximityShips)
+            switch (target)
             {
-                ShipController ship = targetRoot.GetComponent<ShipController>();
-                if (ship != null && !ship.IsEliminated && !ship.GetIFF(OwnedBy).IsFriendly() && HasActivationLineOfSight(ship.Position))
-                {
+                case ShipController ship
+                    when ProximityShips &&
+                    !ship.IsEliminated &&
+                    IsFuseIFFTarget(ship):
+                    targetPosition = ship.Position;
                     return true;
-                }
-            }
 
-            if (ProximityFighters)
-            {
-                Spacecraft fighter = targetRoot.GetComponent<Spacecraft>();
-                if (fighter != null && !fighter.GetIFF(OwnedBy).IsFriendly() && HasActivationLineOfSight(fighter.Position))
-                {
+                case Spacecraft fighter
+                    when ProximityFighters &&
+                    IsFuseIFFTarget(fighter):
+                    targetPosition = fighter.Position;
                     return true;
-                }
-            }
 
-            if (ProximityMissiles)
-            {
-                Missile missile = targetRoot.GetComponent<Missile>();
-                if (missile != null && missile != this && !IFFExtensions.GetIFF(missile.OwnedBy, OwnedBy).IsFriendly() && HasActivationLineOfSight(missile.transform.position))
-                {
+                case Missile missile
+                    when ProximityMissiles &&
+                    missile != this &&
+                    IsFuseIFFTarget(missile):
+                    targetPosition = missile.transform.position;
                     return true;
-                }
             }
         }
 
+        targetPosition = default;
         return false;
     }
 
-    private bool TryTriggerSelectedSeekerFuse()
+    private bool TryGetSelectedSeekerFuseTarget(out Vector3 targetPosition)
     {
+        if (FilterSeekerFuses &&
+            FilterLargeSeekerFuseTargets &&
+            FilterSmallSeekerFuseTargets)
+        {
+            targetPosition = default;
+            return false;
+        }
+
         RuntimeMissileSeeker[] seekers = GetComponentsInChildren<RuntimeMissileSeeker>();
         IReadOnlyList<RuntimeMissileSeeker> noValidators = Array.Empty<RuntimeMissileSeeker>();
 
@@ -256,18 +440,187 @@ public class LoiteringModularMissile : ModularMissile
                 continue;
             }
 
+            if (FilterSeekerFuses &&
+                FilterLargeSeekerFuseTargets &&
+                !FilterSmallSeekerFuseTargets)
+            {
+                seeker.SetForceDetectPDTargets();
+            }
+
             RuntimeMissileSeeker.SeekerSearchResult result = seeker.SearchForTarget(
                 noValidators,
-                out _,
+                out targetPosition,
                 out _,
                 out _);
-            if (result == RuntimeMissileSeeker.SeekerSearchResult.Found)
+            if (result == RuntimeMissileSeeker.SeekerSearchResult.Found &&
+                IsAllowedSeekerFuseTarget(seeker.CurrentTarget))
+            {
+                return true;
+            }
+        }
+
+        targetPosition = default;
+        return false;
+    }
+
+    private bool IsAllowedSeekerFuseTarget(ISensorTrackable target)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        Component component = target as Component;
+        if (!IsFuseIFFTarget(component, target.GetIFF(OwnedBy)))
+        {
+            return false;
+        }
+
+        if (FilterSeekerFuses &&
+            ((FilterLargeSeekerFuseTargets && !target.IsPointDefenseTarget) ||
+            (FilterSmallSeekerFuseTargets && target.IsPointDefenseTarget)))
+        {
+            return false;
+        }
+
+        if (component == null)
+        {
+            return false;
+        }
+
+        if (ProximityFighters)
+        {
+            Spacecraft fighter = component.GetComponentInParent<Spacecraft>();
+            if (fighter != null)
+            {
+                return !FilterSeekerFuses || !FilterFighterSeekerFuseTargets;
+            }
+        }
+
+        if (ProximityMissiles)
+        {
+            Missile missile = component.GetComponentInParent<Missile>();
+            if (missile != null &&
+                missile != this)
+            {
+                return !FilterSeekerFuses || !FilterMissileSeekerFuseTargets;
+            }
+        }
+
+        if (ProximityShips)
+        {
+            ShipController ship = component.GetComponentInParent<ShipController>();
+            if (ship != null && !ship.IsEliminated)
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    protected override void HandleVisibilityChanged(bool visible)
+    {
+        base.HandleVisibilityChanged(visible);
+        SetPushoffEngineAudio(visible && _pushoffEngineOn);
+    }
+
+    private void SetPushoffEngineEmission(bool active)
+    {
+        if (active)
+        {
+            _pushoffEngineParticles?.Play();
+        }
+        else
+        {
+            _pushoffEngineParticles?.Stop();
+        }
+
+        SetPushoffEngineAudio(active && IsVisible);
+    }
+
+    private void SetPushoffEngineAudio(bool active)
+    {
+        if (active)
+        {
+            _pushoffEngineLoop?.Play();
+        }
+        else
+        {
+            _pushoffEngineLoop?.Stop();
+        }
+    }
+
+    private bool IsFuseIFFTarget(Component? target, IFF? targetIFF = null)
+    {
+        IFF resolvedIFF =
+            targetIFF ??
+            (target as IOwned)?.GetIFF(OwnedBy) ??
+            IFF.None;
+        if (!resolvedIFF.IsFriendly())
+        {
+            return true;
+        }
+
+        if (!RequireCommsForIFF)
+        {
+            return false;
+        }
+
+        Communicator? targetComms = target?.GetComponentInParent<Communicator>();
+        if (_comms == null || targetComms == null)
+        {
+            return true;
+        }
+
+        Communicator.CommsPath broadcastPath = targetComms.GetBroadcastPath();
+        return !(broadcastPath.ConnectionOpen && broadcastPath.ReceiverCanReceive(_comms));
+    }
+
+    private void TriggerAttack(Vector3 targetPosition)
+    {
+        Vector3 attackDirection = transform.position.To(targetPosition);
+        SetProgramPath(this, new List<Vector3>
+        {
+            transform.position,
+            targetPosition
+        });
+        BeginEngagement(attackDirection);
+        RpcBeginEngagement(attackDirection);
+    }
+
+    private void BeginEngagement(Vector3 attackDirection)
+    {
+        _attackDirection = attackDirection;
+        EnterPhase(LoiteringFlightPhase.TurningToTarget);
+    }
+
+    private void RpcBeginEngagement(Vector3 attackDirection)
+    {
+        PooledNetworkWriter writer = NetworkWriterPool.GetWriter();
+        writer.WriteVector3(attackDirection);
+        SendRPCInternal(typeof(LoiteringModularMissile), nameof(RpcBeginEngagement), writer, 0, true);
+        NetworkWriterPool.Recycle(writer);
+    }
+
+    private static void InvokeUserCode_RpcBeginEngagement(
+        NetworkBehaviour behaviour,
+        NetworkReader reader,
+        NetworkConnectionToClient senderConnection)
+    {
+        if (NetworkClient.active)
+        {
+            ((LoiteringModularMissile)behaviour).UserCode_RpcBeginEngagement(reader.ReadVector3());
+        }
+    }
+
+    private void UserCode_RpcBeginEngagement(Vector3 attackDirection)
+    {
+        if (_phase != LoiteringFlightPhase.TurningToTarget &&
+            _phase != LoiteringFlightPhase.Attacking)
+        {
+            BeginEngagement(attackDirection);
+        }
     }
 
     private void ExtendSeekerFuseList()
@@ -278,6 +631,12 @@ public class LoiteringModularMissile : ModularMissile
         }
     }
 
+    private bool HasPushoffThrust()
+    {
+        return GetInstalledComponents<MissileEngineDescriptor>()
+            .Any(engine => engine.StrafeThrust(inBoostPhase: true) > 0f);
+    }
+
     private bool HasActivationLineOfSight(Vector3 targetPosition)
     {
         return !_requireLineOfSight || !Physics.Linecast(transform.position, targetPosition, _obstructionLayers);
@@ -285,9 +644,24 @@ public class LoiteringModularMissile : ModularMissile
 
     private void ConfigureActivationTrigger()
     {
+        if (!MagneticFuse)
+        {
+            return;
+        }
         if (_activationTrigger == null)
         {
-            _activationTrigger = gameObject.AddComponent<SphereCollider>();
+            GameObject triggerObject = new("Magnetic Fuse Trigger");
+            triggerObject.layer = MissileFuzeLayer;
+            triggerObject.transform.SetParent(transform, false);
+            _activationTrigger = triggerObject.AddComponent<SphereCollider>();
+        }
+        else
+        {
+            if (_activationTrigger.gameObject.layer != MissileFuzeLayer)
+            {
+                Debug.LogWarning($"Possible bug, activation trigger '{_activationTrigger.name}' is not on the correct layer. Changing to layer {MissileFuzeLayer}.");
+            }
+            _activationTrigger.gameObject.layer = MissileFuzeLayer;
         }
 
         _activationTrigger.isTrigger = true;
@@ -302,6 +676,11 @@ public class LoiteringModularMissile : ModularMissile
     {
         _phase = LoiteringFlightPhase.Inactive;
         _phaseTime = 0f;
+        _pushoffDirection = Vector3.zero;
+        _attackDirection = Vector3.zero;
+        _usingPushoffEngines = false;
+        _pushoffEngineOn = false;
+        SetPushoffEngineEmission(false);
         _fuseContacts.Clear();
         if (_activationTrigger != null)
         {

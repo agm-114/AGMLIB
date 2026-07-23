@@ -549,7 +549,7 @@ internal static class DopplerNotchOverlayVisibilityPatch
     }
 }
 
-[TestingComponentFactory(Order = 100)]
+//[TestingComponentFactory(Order = 100)]
 public sealed class DopplerTestingComponentFactory : ITestingComponentFactory
 {
     public void CreateTestingComponents(TestingComponentContext context)

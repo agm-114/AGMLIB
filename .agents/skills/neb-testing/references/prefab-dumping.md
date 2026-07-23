@@ -44,9 +44,11 @@ Registered content is captured from `BundleManager` after bundles load:
 - Munitions
 - Factions
 
+The dumper also follows legacy `SubmunitionWarhead._submunitionPrefab` references recursively and records those otherwise-unregistered GameObjects under `referenced-munitions`. This includes embedded mines such as Domos L05 that are reachable only through a dispenser.
+
 Files are grouped as `Vanilla/<category>/` or `<mod-name>/<category>/`. Each file contains identity data, its GameObject hierarchy, component types, enabled state, and serialized fields. Unity object references are emitted as stable hierarchy references when possible and are never recursively expanded. Collections and serializable nested values are capped at a safe depth.
 
-This is a registered-prefab snapshot, not a raw extraction of textures, meshes, audio, scenes, or every transient scene object.
+This is a registered-prefab and referenced-submunition snapshot, not a raw extraction of textures, meshes, audio, scenes, or every transient scene object.
 
 ## Query before testing
 

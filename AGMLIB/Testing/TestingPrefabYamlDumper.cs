@@ -141,6 +141,7 @@ public static class TestingPrefabYamlDumper
         AddEntries(entries, "missile-components", bundleManager.AllMissileComponents);
         AddEntries(entries, "munitions", bundleManager.AllMunitions);
         AddEntries(entries, "factions", bundleManager.AllFactions);
+        AddReferencedSubmunitionEntries(entries);
 
         return entries
             .OrderBy(entry => entry.Source, StringComparer.OrdinalIgnoreCase)
@@ -178,6 +179,59 @@ public static class TestingPrefabYamlDumper
             string relativePath = Path.Combine(SanitizePathPart(source), SanitizePathPart(category), fileName);
             entries.Add(new PrefabDumpEntry(category, source, saveKey, unityObject, relativePath));
         }
+    }
+
+    private static void AddReferencedSubmunitionEntries(List<PrefabDumpEntry> entries)
+    {
+        HashSet<int> knownGameObjects = entries
+            .Select(entry => GetGameObject(entry.RootObject))
+            .Where(gameObject => gameObject != null)
+            .Select(gameObject => gameObject!.GetInstanceID())
+            .ToHashSet();
+        Queue<PrefabDumpEntry> pending = new(entries);
+
+        while (pending.Count > 0)
+        {
+            PrefabDumpEntry parent = pending.Dequeue();
+            GameObject? parentObject = GetGameObject(parent.RootObject);
+            if (parentObject == null)
+            {
+                continue;
+            }
+
+            foreach (global::Munitions.SubmunitionWarhead warhead in parentObject.GetComponentsInChildren<global::Munitions.SubmunitionWarhead>(includeInactive: true))
+            {
+                GameObject? submunitionPrefab = ReadMember(warhead, "_submunitionPrefab") as GameObject;
+                if (submunitionPrefab == null || !knownGameObjects.Add(submunitionPrefab.GetInstanceID()))
+                {
+                    continue;
+                }
+
+                string saveKey = ReadGameObjectIdentity(submunitionPrefab);
+                const string category = "referenced-munitions";
+                string baseName = SanitizePathPart(string.IsNullOrWhiteSpace(saveKey) ? submunitionPrefab.name : saveKey.Replace('/', '_'));
+                string identity = string.Join("|", parent.Source, category, saveKey, submunitionPrefab.GetType().FullName, submunitionPrefab.name);
+                string fileName = $"{baseName}-{ComputeFnv1a(identity):x8}.yaml";
+                string relativePath = Path.Combine(SanitizePathPart(parent.Source), category, fileName);
+                PrefabDumpEntry entry = new(category, parent.Source, saveKey, submunitionPrefab, relativePath);
+                entries.Add(entry);
+                pending.Enqueue(entry);
+            }
+        }
+    }
+
+    private static string ReadGameObjectIdentity(GameObject gameObject)
+    {
+        foreach (Component component in gameObject.GetComponents<Component>().Where(component => component != null))
+        {
+            object? identity = ReadMember(component, "SaveKey", "FactionKey", "Key", "_saveKey", "_factionKey");
+            if (identity is string text && !string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
+        }
+
+        return gameObject.name;
     }
 
     private static string CreatePrefabYaml(PrefabDumpEntry entry)

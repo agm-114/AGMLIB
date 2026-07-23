@@ -97,6 +97,20 @@ Prefer Testing Range for rapid fleet, weapon, missile, mine, and fighter iterati
 3. Press `Esc` after the fleet is open, then choose the testing-range action from the pause/menu screen.
 4. Complete deployment if prompted, then select the relevant ship or object before reproducing the issue.
 
+### Fire a weapon in Testing Range
+
+To issue a position-targeted weapon order:
+
+1. Select the firing ship.
+2. Right-click open space at the intended target area to open the order menu.
+3. Choose `WEP`.
+4. Choose the `POS` tab. The weapons panel also exposes `TRK` and `VIZ`; use the mode supported by the weapon under test.
+5. Select the exact weapon-mount row. For `POS`, this opens the target-position tool and displays the current range and estimated travel time.
+6. Left-click the desired target position to confirm and fire.
+7. Verify that the weapon-order icon appears, then allow enough time for launch, flight, end-of-path behavior, and submunition release before reading telemetry.
+
+Do not start by clicking the weapon cards in the lower ship-status panel; the reliable firing path is the right-click order menu. When Computer Use is controlling the game, have it press `Esc` itself because a physical `Esc` press stops the automation session.
+
 ## Enter local skirmish
 
 1. Open `Skirmish` > `New Skirmish` from the main menu.
