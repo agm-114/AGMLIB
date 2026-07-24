@@ -1,6 +1,6 @@
 ﻿# Repository file inventory
 
-Generated from 377 repository files. Generated output and ignored native-code dumps are excluded.
+Generated from 381 repository files. Generated output and ignored native-code dumps are excluded.
 
 ## .agents
 
@@ -79,7 +79,6 @@ Generated from 377 repository files. Generated output and ignored native-code du
 - `AGMLIB/Advanced/StrikeCraft/SimpleCraft.cs` - Defines CraftKinematics, ICraft, SimpleCraft. Types: CraftKinematics, ICraft, SimpleCraft.
 - `AGMLIB/AGMLIB - Backup.csproj` - MSBuild project configuration and dependency surface.
 - `AGMLIB/AGMLIB.csproj` - MSBuild project configuration and dependency surface.
-- `AGMLIB/build.bat` - Repository asset or configuration file.
 - `AGMLIB/Common/BrokenDesignator.cs` - Defines BrokenDesignator. Types: BrokenDesignator.
 - `AGMLIB/Common/ChildSocket.cs` - Defines ChildSocket. Types: ChildSocket.
 - `AGMLIB/Common/Common.cs` - Defines Common, CommonNonStatic, MonoComponent. Types: Common, CommonNonStatic, MonoComponent.
@@ -142,7 +141,7 @@ Generated from 377 repository files. Generated output and ignored native-code du
 - `AGMLIB/Editor/Yaml/Components/YamlHullComponent.cs` - Defines YamlVector3Int, YamlStatModifier, YamlResourceModifier, YamlHullComponent. Types: YamlVector3Int, YamlStatModifier, YamlResourceModifier, YamlHullComponent.
 - `AGMLIB/Editor/Yaml/Components/YamlHullPart.cs` - Defines YamlHullPart. Types: YamlHullPart.
 - `AGMLIB/Editor/Yaml/YamlLoader.cs` - Defines clicktest, YamlComp, ModRecordLoadMod. Types: clicktest, YamlComp, ModRecordLoadMod.
-- `AGMLIB/EntryPoint.cs` - Defines EntryPoint, HullComponentGetMissingResources, BundleCache, QuickLoad, DependencyPatch. Types: EntryPoint, HullComponentGetMissingResources, BundleCache, QuickLoad, DependencyPatch.
+- `AGMLIB/EntryPoint.cs` - Defines EntryPoint. Types: EntryPoint.
 - `AGMLIB/FX/BeamEffectModule.cs` - Defines BeamEffectModule, ShortDurationBeamEffect. Types: BeamEffectModule, ShortDurationBeamEffect.
 - `AGMLIB/FX/DynamicFX.cs` - Defines DynamicFX, StaticFX. Types: DynamicFX, StaticFX.
 - `AGMLIB/FX/EffectSpawner.cs` - Defines EffectSpawner. Types: EffectSpawner.
@@ -164,7 +163,7 @@ Generated from 377 repository files. Generated output and ignored native-code du
 - `AGMLIB/Generic Gameplay/Craft/FighterLimit.cs` - Defines CraftLaunchLimit, CraftLaunchLimitExtensions, ShipControllerInitializeCraftLaunchLimitPatch, CraftCarrierControllerTickCraftLaunchLimitPatch, SuspendedLaunchOrder, CraftLandingPadLaunchCraftLimitPatch, SpacecraftSetInStorageCraftLaunchLimitPatch. Types: CraftLaunchLimit, CraftLaunchLimitExtensions, ShipControllerInitializeCraftLaunchLimitPatch, CraftCarrierControllerTickCraftLaunchLimitPatch, SuspendedLaunchOrder, CraftLandingPadLaunchCraftLimitPatch, SpacecraftSetInStorageCraftLaunchLimitPatch.
 - `AGMLIB/Generic Gameplay/Craft/LightweightCraftWorkSlotComponent.cs` - Defines CraftWorkSlotComponentBase, LightweightCraftWorkSlotComponent, WorkSlot. Types: CraftWorkSlotComponentBase, LightweightCraftWorkSlotComponent, WorkSlot.
 - `AGMLIB/Generic Gameplay/CustomAimPoint.cs` - Defines CustomAimPoint, BaseTurretedLauncherComponentFixedUpdate, WeaponComponentGetAimPoint. Types: CustomAimPoint, BaseTurretedLauncherComponentFixedUpdate, WeaponComponentGetAimPoint.
-- `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` - Defines DecoyOrderResult, DecoyAmmoSettings, DecoyFireRequest, ShotSubscription, WeaponGroupFirePositionSidecarPatch, ShipControllerHasAnyDecoysSidecarPatch, FireDecoyTaskSidecarPatch, FireDecoyTaskCompletionSidecarPatch. Types: DecoyOrderResult, DecoyAmmoSettings, DecoyFireRequest, ShotSubscription, WeaponGroupFirePositionSidecarPatch, ShipControllerHasAnyDecoysSidecarPatch, FireDecoyTaskSidecarPatch, FireDecoyTaskCompletionSidecarPatch.
+- `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` - Defines DecoyOrderResult, DecoyAmmoSettings, DecoyFireRequest, ShotSubscription, ShipControllerHasAnyDecoysSidecarPatch, FireDecoyTaskSidecarPatch, FireDecoyTaskCompletionSidecarPatch. Types: DecoyOrderResult, DecoyAmmoSettings, DecoyFireRequest, ShotSubscription, ShipControllerHasAnyDecoysSidecarPatch, FireDecoyTaskSidecarPatch, FireDecoyTaskCompletionSidecarPatch.
 - `AGMLIB/Generic Gameplay/Discrete/CustomLeadLogic.cs` - Defines DiscreteWeaponComponentLeadLogic, DiscreteWeaponComponentCalculateLead. Types: DiscreteWeaponComponentLeadLogic, DiscreteWeaponComponentCalculateLead.
 - `AGMLIB/Generic Gameplay/Discrete/DiscreteMag.cs` - Defines InternalDiscreteMagazine, DiscreteMagazine. Types: InternalDiscreteMagazine, DiscreteMagazine.
 - `AGMLIB/Generic Gameplay/Discrete/DiscreteWeaponEjectors.cs` - Defines DiscreteWeaponEjectors, FixedDiscreteWeaponComponentOnTarget. Types: DiscreteWeaponEjectors, FixedDiscreteWeaponComponentOnTarget.
@@ -252,7 +251,7 @@ Generated from 377 repository files. Generated output and ignored native-code du
 - `AGMLIB/libs/Vectrosity.dll` - Tracked binary dependency; inspect provenance and version manifest.
 - `AGMLIB/libs/where-allocations.dll` - Tracked binary dependency; inspect provenance and version manifest.
 - `AGMLIB/libs/XNode.dll` - Tracked binary dependency; inspect provenance and version manifest.
-- `AGMLIB/ModInfoOutput.xml` - XML configuration, manifest, or serialized content.
+- `AGMLIB/ModInfo.template.xml` - XML configuration, manifest, or serialized content.
 - `AGMLIB/Munitions/Damagers/MultiRayConeDamagerSettings.cs` - Defines MultiRayConeDamagerSettings. Types: MultiRayConeDamagerSettings.
 - `AGMLIB/Munitions/Damagers/SingleRayDamagerSettings.cs` - Defines RangeBasedDamageCharacteristic, SingleRayDamagerSettings. Types: RangeBasedDamageCharacteristic, SingleRayDamagerSettings.
 - `AGMLIB/Munitions/Damagers/SingleSpherecastDamagerSettings.cs` - Defines SingleSpherecastDamagerSettings. Types: SingleSpherecastDamagerSettings.
@@ -309,8 +308,9 @@ Generated from 377 repository files. Generated output and ignored native-code du
 - `AGMLIB/Nebulous/Bundles/BundleManagerInternals.cs` - Defines NativeInternalsExtensions, BundleManagerInternals, Refs. Types: NativeInternalsExtensions, BundleManagerInternals, Refs.
 - `AGMLIB/Nebulous/Game/Orders/Tasks/FireDecoyTaskInternals.cs` - Defines NativeInternalsExtensions, FireDecoyTaskInternals, Refs. Types: NativeInternalsExtensions, FireDecoyTaskInternals, Refs.
 - `AGMLIB/Nebulous/Munitions/ModularMissiles/ModularMissileInternals.cs` - Defines NativeInternalsExtensions, ModularMissileInternals, Refs. Types: NativeInternalsExtensions, ModularMissileInternals, Refs.
+- `AGMLIB/Nebulous/Ships/DiscreteWeaponComponentInternals.cs` - Defines NativeInternalsExtensions, DiscreteWeaponComponentInternals, Refs. Types: NativeInternalsExtensions, DiscreteWeaponComponentInternals, Refs.
 - `AGMLIB/Nebulous/Ships/WeaponComponentInternals.cs` - Defines NativeInternalsExtensions, WeaponComponentInternals, Refs. Types: NativeInternalsExtensions, WeaponComponentInternals, Refs.
-- `AGMLIB/postbuild.bat` - Repository asset or configuration file.
+- `AGMLIB/Patches/HullPartResourceConnectedGetMissingResourcesPatch.cs` - Defines HullPartResourceConnectedGetMissingResourcesPatch. Types: HullPartResourceConnectedGetMissingResourcesPatch.
 - `AGMLIB/ProjectFiles/AGMLIB.xml` - XML configuration, manifest, or serialized content.
 - `AGMLIB/Properties/launchSettings.json` - Structured configuration or metadata.
 - `AGMLIB/Properties/Settings.Designer.cs` - Defines Settings. Types: Settings.
@@ -324,6 +324,7 @@ Generated from 377 repository files. Generated output and ignored native-code du
 - `AGMLIB/Testing/TestingComponents.cs` - Defines TestingComponentAttribute, TestingComponentFactoryAttribute, ITestingComponentFactory, TestingComponentReport, TestingComponentMarker, TestingComponentBuilder, TestingComponentContext, TestingComponentBootstrap, DiscoveryJob. Types: TestingComponentAttribute, TestingComponentFactoryAttribute, ITestingComponentFactory, TestingComponentReport, TestingComponentMarker, TestingComponentBuilder, TestingComponentContext, TestingComponentBootstrap, DiscoveryJob.
 - `AGMLIB/Testing/TestingPrefabInspectors.cs` - Defines TestingPrefabInspectorAttribute, ITestingPrefabInspector, TestingPrefabInspectionContext, TestingPrefabColliderReport, TestingPrefabInspectorBootstrap. Types: TestingPrefabInspectorAttribute, ITestingPrefabInspector, TestingPrefabInspectionContext, TestingPrefabColliderReport, TestingPrefabInspectorBootstrap.
 - `AGMLIB/Testing/TestingPrefabYamlDumper.cs` - Defines TestingPrefabYamlDumper, PrefabDumpEntry, EnabledModDumpEntry, ReferenceComparer. Types: TestingPrefabYamlDumper, PrefabDumpEntry, EnabledModDumpEntry, ReferenceComparer.
+- `AGMLIB/Version.props` - Repository asset or configuration file.
 
 ## AGMMULTITOOL.cs
 
@@ -409,6 +410,9 @@ Generated from 377 repository files. Generated output and ignored native-code du
 
 ## scripts
 
+- `scripts/Build/Deploy-Agmlib.ps1` - PowerShell automation or diagnostic workflow.
+- `scripts/Build/Get-AgmlibBuildVersion.ps1` - PowerShell automation or diagnostic workflow.
+- `scripts/Build/Test-AgmlibBuildIsolation.ps1` - PowerShell automation or diagnostic workflow.
 - `scripts/Documentation/AGENTS.md` - Documentation, instructions, or planning material.
 - `scripts/Documentation/export_agmlib_data_touchpoints.py` - Repository asset or configuration file.
 - `scripts/Documentation/Export-AgmlibDataTouchpoints.ps1` - PowerShell automation or diagnostic workflow.

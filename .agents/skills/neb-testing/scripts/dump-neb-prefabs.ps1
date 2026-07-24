@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
 $projectPath = Join-Path $repositoryRoot 'AGMLIB\AGMLIB.csproj'
 $executablePath = Join-Path $GameRoot 'Nebulous.exe'
-$deploymentRoot = Join-Path $GameRoot 'Mods\AGMLIB'
+$deployScriptPath = Join-Path $repositoryRoot 'scripts\Build\Deploy-Agmlib.ps1'
 
 if ([string]::IsNullOrWhiteSpace($OutputPath))
 {
@@ -27,6 +27,11 @@ $manifestPath = Join-Path $OutputPath 'manifest.yaml'
 if (-not (Test-Path -LiteralPath $projectPath -PathType Leaf))
 {
     throw "AGMLIB project was not found at $projectPath"
+}
+
+if (-not (Test-Path -LiteralPath $deployScriptPath -PathType Leaf))
+{
+    throw "AGMLIB deployment script was not found at $deployScriptPath"
 }
 
 if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf))
@@ -52,18 +57,10 @@ if (Get-Process -Name 'Nebulous' -ErrorAction SilentlyContinue)
 
 if (-not $SkipBuild)
 {
-    $baseOutputPath = $deploymentRoot + [IO.Path]::DirectorySeparatorChar
-    & dotnet build $projectPath --no-restore -v:minimal "-p:BaseOutputPath=$baseOutputPath"
+    & $deployScriptPath -GameRoot $GameRoot -Configuration Debug
     if ($LASTEXITCODE -ne 0)
     {
-        throw "AGMLIB build failed with exit code $LASTEXITCODE."
-    }
-
-    $modInfoPath = Join-Path $repositoryRoot 'AGMLIB\ModInfo.xml'
-    if (Test-Path -LiteralPath $modInfoPath -PathType Leaf)
-    {
-        New-Item -ItemType Directory -Force $deploymentRoot | Out-Null
-        Copy-Item -LiteralPath $modInfoPath -Destination (Join-Path $deploymentRoot 'ModInfo.xml') -Force
+        throw "AGMLIB build and deployment failed with exit code $LASTEXITCODE."
     }
 }
 

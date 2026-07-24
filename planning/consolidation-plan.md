@@ -27,11 +27,12 @@ remain where they are and delegate into the new core.
 
 ### Entry point and patch activation
 
-Reduce `EntryPoint` to logging/version, compatibility preflight, and feature
-registration. Delete or archive unreachable dependency, Steam, asset-bundle, and
-debug experiments only after history/reference review. Replace one `PatchAll`
-with feature-owned registration incrementally, retaining stable IDs or explicit
-compatibility policy.
+Completed: `EntryPoint` is reduced to its live loader responsibilities, and the
+unreachable dependency, Steam, asset-bundle, load-order, quick-load, and dump
+experiments were removed after reference review. The active missing-resource
+patch moved to a feature-neutral patch file. Remaining work is to replace the
+single `PatchAll` with feature-owned registration incrementally while retaining
+the stable Harmony ID or an explicit compatibility policy.
 
 ### Filters and sockets
 
@@ -77,13 +78,15 @@ logic into a conventional testable project.
 
 ## Large-file extraction order
 
-1. `EntryPoint.cs`: remove unreachable responsibilities.
-2. `SocketFilterCore.cs`: pure evaluation model and explanation.
-3. `PassiveCommsSensorComponent.cs`: observation/scoring/track/UI split.
-4. `CommandSeekers.cs`: descriptor, runtime guidance, overlay/debug split.
-5. `ShipStatusPowerBar.cs`: model, binding, view/updater split.
-6. duplicated discrete weapon variants: shared magazine/ejector core.
-7. prefab YAML dumper: traversal, serialization, redaction, output split.
+1. `SocketFilterCore.cs`: pure evaluation model and explanation.
+2. `PassiveCommsSensorComponent.cs`: observation/scoring/track/UI split.
+3. `CommandSeekers.cs`: descriptor, runtime guidance, overlay/debug split.
+4. `ShipStatusPowerBar.cs`: model, binding, view/updater split.
+5. duplicated discrete weapon variants: shared magazine/ejector core.
+6. prefab YAML dumper: traversal, serialization, redaction, output split.
+
+Completed ahead of this queue: `EntryPoint.cs` unreachable-responsibility
+removal.
 
 Each extraction requires compatibility baseline, focused tests, and no public or
 serialized move unless a shim is proven.

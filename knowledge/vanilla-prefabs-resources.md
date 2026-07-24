@@ -49,10 +49,10 @@ the manifest's resource-definition XML, processes the declared registries, and
 then unloads the bundle while retaining loaded objects.
 
 The installed `Assets/ComAssetBundles` files are older, differently hashed
-copies. AGMLIB still declares both stock and compressed paths in
-`EntryPoint.cs`, but the bundle experiment is unreachable because `PreLoad`
-returns immediately after `Harmony.PatchAll()`. The `QuickLoad` Harmony patch
-is commented out. Do not use the compressed copies as evidence of the live
+copies. AGMLIB previously contained an unreachable recompression experiment and
+a disabled quick-load patch; both were removed when
+[`EntryPoint.cs`](../AGMLIB/EntryPoint.cs) was reduced to the live mod-loader
+contract. Do not use the compressed copies as evidence of the native live
 loader.
 
 The pristine manifests contain:

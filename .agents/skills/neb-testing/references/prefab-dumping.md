@@ -13,7 +13,7 @@ powershell -ExecutionPolicy Bypass -File .agents\skills\neb-testing\scripts\dump
 The script:
 
 1. Verifies the repository, executable, output, and log paths.
-2. Builds and deploys the Debug AGMLIB assembly.
+2. Runs the explicit Debug build-and-deploy command for AGMLIB.
 3. Starts Nebulous with `AGMLIB_PREFAB_DUMP_DIR` set for that process.
 4. Waits for a new `manifest.yaml` written after launch.
 5. Leaves Nebulous open at the main menu for the test.
@@ -28,7 +28,8 @@ powershell -ExecutionPolicy Bypass -File .agents\skills\neb-testing\scripts\dump
     -PlayerLog 'D:\LocalLow\Eridanus Industries\Nebulous\Player.log'
 ```
 
-Use `-SkipBuild` only when the deployed DLL is already current. Use `-ValidateOnly` to check paths without building or launching.
+Use `-SkipBuild` only when the explicitly deployed DLL is already current. Use
+`-ValidateOnly` to check paths without building, deploying, or launching.
 
 ## Snapshot contents
 

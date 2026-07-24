@@ -1,10 +1,10 @@
 ﻿{
     "schemaVersion":  1,
-    "sourceRevision":  "3849f24ff40d959621c2b944bbd423cd70c01e0a",
-    "repositoryFileCount":  377,
-    "sourceFileCount":  225,
-    "componentCount":  124,
-    "harmonyPatchAttributeCount":  163,
+    "sourceRevision":  "bc976bd39e6f2b5eb9dbdbfbec040a6597a30302",
+    "repositoryFileCount":  381,
+    "sourceFileCount":  227,
+    "componentCount":  123,
+    "harmonyPatchAttributeCount":  162,
     "binaryDependencyCount":  61,
     "binaryDependencies":  [
                                {
@@ -684,7 +684,7 @@
                   {
                       "path":  ".agents/skills/neb-testing/references/prefab-dumping.md",
                       "extension":  ".md",
-                      "bytes":  4010,
+                      "bytes":  4048,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -707,7 +707,7 @@
                   {
                       "path":  ".agents/skills/neb-testing/scripts/dump-neb-prefabs.ps1",
                       "extension":  ".ps1",
-                      "bytes":  3727,
+                      "bytes":  3498,
                       "lines":  0,
                       "purpose":  "PowerShell automation or diagnostic workflow.",
                       "namespaces":  [
@@ -753,7 +753,7 @@
                   {
                       "path":  ".agents/skills/neb-testing/SKILL.md",
                       "extension":  ".md",
-                      "bytes":  13160,
+                      "bytes":  14364,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -845,7 +845,7 @@
                   {
                       "path":  ".gitignore",
                       "extension":  ".gitignore",
-                      "bytes":  7059,
+                      "bytes":  7123,
                       "lines":  0,
                       "purpose":  "Repository asset or configuration file.",
                       "namespaces":  [
@@ -1973,32 +1973,9 @@
                   {
                       "path":  "AGMLIB/AGMLIB.csproj",
                       "extension":  ".csproj",
-                      "bytes":  10939,
+                      "bytes":  14446,
                       "lines":  0,
                       "purpose":  "MSBuild project configuration and dependency surface.",
-                      "namespaces":  [
-
-                                     ],
-                      "types":  [
-
-                                ],
-                      "harmonyTargets":  [
-
-                                         ],
-                      "lifecycleMethods":  [
-
-                                           ],
-                      "serializedFieldCount":  0,
-                      "reflectionCount":  0,
-                      "logCount":  0,
-                      "todoCount":  0
-                  },
-                  {
-                      "path":  "AGMLIB/build.bat",
-                      "extension":  ".bat",
-                      "bytes":  1774,
-                      "lines":  0,
-                      "purpose":  "Repository asset or configuration file.",
                       "namespaces":  [
 
                                      ],
@@ -2247,7 +2224,7 @@
                   {
                       "path":  "AGMLIB/Common/Sidecars.md",
                       "extension":  ".md",
-                      "bytes":  4661,
+                      "bytes":  6331,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -4579,9 +4556,9 @@
                   {
                       "path":  "AGMLIB/EntryPoint.cs",
                       "extension":  ".cs",
-                      "bytes":  24136,
-                      "lines":  577,
-                      "purpose":  "Defines EntryPoint, HullComponentGetMissingResources, BundleCache, QuickLoad, DependencyPatch.",
+                      "bytes":  1409,
+                      "lines":  49,
+                      "purpose":  "Defines EntryPoint.",
                       "namespaces":  [
 
                                      ],
@@ -4591,41 +4568,17 @@
                                         "kind":  "class",
                                         "name":  "EntryPoint",
                                         "bases":  "IModEntryPoint"
-                                    },
-                                    {
-                                        "access":  "",
-                                        "kind":  "class",
-                                        "name":  "HullComponentGetMissingResources",
-                                        "bases":  "MonoBehaviour"
-                                    },
-                                    {
-                                        "access":  "",
-                                        "kind":  "class",
-                                        "name":  "BundleCache",
-                                        "bases":  ""
-                                    },
-                                    {
-                                        "access":  "",
-                                        "kind":  "class",
-                                        "name":  "QuickLoad",
-                                        "bases":  ""
-                                    },
-                                    {
-                                        "access":  "",
-                                        "kind":  "class",
-                                        "name":  "DependencyPatch",
-                                        "bases":  ""
                                     }
                                 ],
                       "harmonyTargets":  [
-                                             "typeof(HullPartResourceConnected), \"GetMissingResources\""
+
                                          ],
                       "lifecycleMethods":  [
 
                                            ],
                       "serializedFieldCount":  0,
-                      "reflectionCount":  4,
-                      "logCount":  43,
+                      "reflectionCount":  0,
+                      "logCount":  1,
                       "todoCount":  0
                   },
                   {
@@ -5426,9 +5379,9 @@
                   {
                       "path":  "AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs",
                       "extension":  ".cs",
-                      "bytes":  17246,
-                      "lines":  589,
-                      "purpose":  "Defines DecoyOrderResult, DecoyAmmoSettings, DecoyFireRequest, ShotSubscription, WeaponGroupFirePositionSidecarPatch, ShipControllerHasAnyDecoysSidecarPatch, FireDecoyTaskSidecarPatch, FireDecoyTaskCompletionSidecarPatch.",
+                      "bytes":  19526,
+                      "lines":  648,
+                      "purpose":  "Defines DecoyOrderResult, DecoyAmmoSettings, DecoyFireRequest, ShotSubscription, ShipControllerHasAnyDecoysSidecarPatch, FireDecoyTaskSidecarPatch, FireDecoyTaskCompletionSidecarPatch.",
                       "namespaces":  [
                                          "Lib.Generic_Gameplay"
                                      ],
@@ -5460,12 +5413,6 @@
                                     {
                                         "access":  "internal",
                                         "kind":  "class",
-                                        "name":  "WeaponGroupFirePositionSidecarPatch",
-                                        "bases":  ""
-                                    },
-                                    {
-                                        "access":  "internal",
-                                        "kind":  "class",
                                         "name":  "ShipControllerHasAnyDecoysSidecarPatch",
                                         "bases":  ""
                                     },
@@ -5483,7 +5430,6 @@
                                     }
                                 ],
                       "harmonyTargets":  [
-                                             "\r\n    typeof(WeaponGroup),\r\n    nameof(WeaponGroup.FirePosition),\r\n    typeof(Vector3),\r\n    typeof(int),\r\n    typeof(bool",
                                              "typeof(ShipController), nameof(ShipController.HasAnyDecoys",
                                              "typeof(FireDecoyTask), \"UpdateInternal\"",
                                              "typeof(OrderTask), nameof(OrderTask.Complete"
@@ -8372,9 +8318,9 @@
                       "todoCount":  0
                   },
                   {
-                      "path":  "AGMLIB/ModInfoOutput.xml",
+                      "path":  "AGMLIB/ModInfo.template.xml",
                       "extension":  ".xml",
-                      "bytes":  313,
+                      "bytes":  317,
                       "lines":  0,
                       "purpose":  "XML configuration, manifest, or serialized content.",
                       "namespaces":  [
@@ -10395,7 +10341,7 @@
                   {
                       "path":  "AGMLIB/Nebulous/Game/Orders/Tasks/FireDecoyTaskInternals.cs",
                       "extension":  ".cs",
-                      "bytes":  926,
+                      "bytes":  957,
                       "lines":  32,
                       "purpose":  "Defines NativeInternalsExtensions, FireDecoyTaskInternals, Refs.",
                       "namespaces":  [
@@ -10473,6 +10419,46 @@
                       "todoCount":  0
                   },
                   {
+                      "path":  "AGMLIB/Nebulous/Ships/DiscreteWeaponComponentInternals.cs",
+                      "extension":  ".cs",
+                      "bytes":  1089,
+                      "lines":  32,
+                      "purpose":  "Defines NativeInternalsExtensions, DiscreteWeaponComponentInternals, Refs.",
+                      "namespaces":  [
+
+                                     ],
+                      "types":  [
+                                    {
+                                        "access":  "public",
+                                        "kind":  "class",
+                                        "name":  "NativeInternalsExtensions",
+                                        "bases":  ""
+                                    },
+                                    {
+                                        "access":  "public",
+                                        "kind":  "struct",
+                                        "name":  "DiscreteWeaponComponentInternals",
+                                        "bases":  ""
+                                    },
+                                    {
+                                        "access":  "private",
+                                        "kind":  "class",
+                                        "name":  "Refs",
+                                        "bases":  ""
+                                    }
+                                ],
+                      "harmonyTargets":  [
+
+                                         ],
+                      "lifecycleMethods":  [
+
+                                           ],
+                      "serializedFieldCount":  0,
+                      "reflectionCount":  4,
+                      "logCount":  0,
+                      "todoCount":  0
+                  },
+                  {
                       "path":  "AGMLIB/Nebulous/Ships/WeaponComponentInternals.cs",
                       "extension":  ".cs",
                       "bytes":  991,
@@ -10513,26 +10499,31 @@
                       "todoCount":  0
                   },
                   {
-                      "path":  "AGMLIB/postbuild.bat",
-                      "extension":  ".bat",
-                      "bytes":  2161,
-                      "lines":  0,
-                      "purpose":  "Repository asset or configuration file.",
+                      "path":  "AGMLIB/Patches/HullPartResourceConnectedGetMissingResourcesPatch.cs",
+                      "extension":  ".cs",
+                      "bytes":  1206,
+                      "lines":  41,
+                      "purpose":  "Defines HullPartResourceConnectedGetMissingResourcesPatch.",
                       "namespaces":  [
 
                                      ],
                       "types":  [
-
+                                    {
+                                        "access":  "internal",
+                                        "kind":  "class",
+                                        "name":  "HullPartResourceConnectedGetMissingResourcesPatch",
+                                        "bases":  ""
+                                    }
                                 ],
                       "harmonyTargets":  [
-
+                                             "typeof(HullPartResourceConnected), \"GetMissingResources\""
                                          ],
                       "lifecycleMethods":  [
 
                                            ],
                       "serializedFieldCount":  0,
                       "reflectionCount":  0,
-                      "logCount":  0,
+                      "logCount":  1,
                       "todoCount":  0
                   },
                   {
@@ -11056,6 +11047,29 @@
                       "serializedFieldCount":  0,
                       "reflectionCount":  6,
                       "logCount":  5,
+                      "todoCount":  0
+                  },
+                  {
+                      "path":  "AGMLIB/Version.props",
+                      "extension":  ".props",
+                      "bytes":  719,
+                      "lines":  0,
+                      "purpose":  "Repository asset or configuration file.",
+                      "namespaces":  [
+
+                                     ],
+                      "types":  [
+
+                                ],
+                      "harmonyTargets":  [
+
+                                         ],
+                      "lifecycleMethods":  [
+
+                                           ],
+                      "serializedFieldCount":  0,
+                      "reflectionCount":  0,
+                      "logCount":  0,
                       "todoCount":  0
                   },
                   {
@@ -12269,7 +12283,7 @@
                   {
                       "path":  "knowledge/vanilla-prefabs-resources.md",
                       "extension":  ".md",
-                      "bytes":  14086,
+                      "bytes":  14076,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -12361,7 +12375,7 @@
                   {
                       "path":  "planning/build-release-plan.md",
                       "extension":  ".md",
-                      "bytes":  4233,
+                      "bytes":  5582,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -12384,7 +12398,7 @@
                   {
                       "path":  "planning/component-audit-plan.md",
                       "extension":  ".md",
-                      "bytes":  3279,
+                      "bytes":  3326,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -12407,7 +12421,7 @@
                   {
                       "path":  "planning/consolidation-plan.md",
                       "extension":  ".md",
-                      "bytes":  3997,
+                      "bytes":  4138,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -12453,7 +12467,7 @@
                   {
                       "path":  "planning/file-review-findings.md",
                       "extension":  ".md",
-                      "bytes":  16800,
+                      "bytes":  16978,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -12568,7 +12582,7 @@
                   {
                       "path":  "planning/risk-register.md",
                       "extension":  ".md",
-                      "bytes":  9902,
+                      "bytes":  10018,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [
@@ -12591,9 +12605,78 @@
                   {
                       "path":  "planning/roadmap.md",
                       "extension":  ".md",
-                      "bytes":  3707,
+                      "bytes":  3729,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
+                      "namespaces":  [
+
+                                     ],
+                      "types":  [
+
+                                ],
+                      "harmonyTargets":  [
+
+                                         ],
+                      "lifecycleMethods":  [
+
+                                           ],
+                      "serializedFieldCount":  0,
+                      "reflectionCount":  0,
+                      "logCount":  0,
+                      "todoCount":  0
+                  },
+                  {
+                      "path":  "scripts/Build/Deploy-Agmlib.ps1",
+                      "extension":  ".ps1",
+                      "bytes":  3364,
+                      "lines":  0,
+                      "purpose":  "PowerShell automation or diagnostic workflow.",
+                      "namespaces":  [
+
+                                     ],
+                      "types":  [
+
+                                ],
+                      "harmonyTargets":  [
+
+                                         ],
+                      "lifecycleMethods":  [
+
+                                           ],
+                      "serializedFieldCount":  0,
+                      "reflectionCount":  0,
+                      "logCount":  0,
+                      "todoCount":  0
+                  },
+                  {
+                      "path":  "scripts/Build/Get-AgmlibBuildVersion.ps1",
+                      "extension":  ".ps1",
+                      "bytes":  3783,
+                      "lines":  0,
+                      "purpose":  "PowerShell automation or diagnostic workflow.",
+                      "namespaces":  [
+
+                                     ],
+                      "types":  [
+
+                                ],
+                      "harmonyTargets":  [
+
+                                         ],
+                      "lifecycleMethods":  [
+
+                                           ],
+                      "serializedFieldCount":  0,
+                      "reflectionCount":  0,
+                      "logCount":  0,
+                      "todoCount":  0
+                  },
+                  {
+                      "path":  "scripts/Build/Test-AgmlibBuildIsolation.ps1",
+                      "extension":  ".ps1",
+                      "bytes":  2261,
+                      "lines":  0,
+                      "purpose":  "PowerShell automation or diagnostic workflow.",
                       "namespaces":  [
 
                                      ],
@@ -12844,7 +12927,7 @@
                   {
                       "path":  "TODO.md",
                       "extension":  ".md",
-                      "bytes":  29913,
+                      "bytes":  30200,
                       "lines":  0,
                       "purpose":  "Documentation, instructions, or planning material.",
                       "namespaces":  [

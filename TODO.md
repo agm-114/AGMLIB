@@ -345,11 +345,11 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 - [ ] Review the largest source files and extract feature-focused helpers when they are next modified:
   - [ ] `Generic Gameplay/Ewar/PassiveCommsSensorComponent.cs`.
   - [ ] `Munitions/ModularMissile/CommandSeekers.cs`.
-  - [ ] `EntryPoint.cs`.
+  - [x] `EntryPoint.cs`.
   - [ ] `Dynamic Systems/UI/ShipStatusPowerBar.cs`.
   - [ ] `Editor/SocketFilterCore.cs`.
 - [ ] Move reusable behavior out of Harmony patch classes into typed domain helpers.
-- [ ] Reduce unrelated responsibilities in `EntryPoint.cs`.
+- [x] Reduce unrelated responsibilities in `EntryPoint.cs`.
 - [ ] Inventory unfinished and legacy code and decide whether to maintain, isolate, exclude, or remove it.
 - [ ] Keep runtime, authoring/editor, diagnostics, and experimental code boundaries explicit.
 

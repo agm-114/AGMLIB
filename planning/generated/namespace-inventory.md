@@ -4,7 +4,7 @@ This inventory exposes global-namespace and mixed-namespace compatibility risks.
 
 | Namespace | Files | Declared types | Public types |
 |---|---:|---:|---:|
-| `<global>` | 168 | 486 | 305 |
+| `<global>` | 170 | 486 | 307 |
 | `AGMLIB.Dynamic_Systems.Area` | 7 | 15 | 14 |
 | `AGMLIB.Editor` | 1 | 1 | 1 |
 | `AGMLIB.Generic_Gameplay` | 1 | 4 | 4 |
@@ -21,7 +21,7 @@ This inventory exposes global-namespace and mixed-namespace compatibility risks.
 | `Lib.Editor.Yaml` | 1 | 3 | 1 |
 | `Lib.Editor.Yaml.Components` | 2 | 5 | 5 |
 | `Lib.FX` | 3 | 3 | 3 |
-| `Lib.Generic_Gameplay` | 2 | 10 | 3 |
+| `Lib.Generic_Gameplay` | 2 | 9 | 3 |
 | `Lib.Generic_Gameplay.Discrete` | 2 | 10 | 10 |
 | `Lib.Generic_Gameplay.Engines` | 2 | 3 | 2 |
 | `Lib.Generic_Gameplay.Ewar` | 3 | 8 | 7 |

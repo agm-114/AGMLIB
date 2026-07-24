@@ -1,51 +1,63 @@
 # Build, CI, package, and release plan
 
-## Current behavior captured
+## B1 build isolation implemented
 
-`AGMLIB.csproj` currently:
+The previous build chain was captured before replacement:
 
 - targets `net481` and C# 12;
-- declares version `6.2.2.855` and game version `0.6.2`;
 - sends `BaseOutputPath` directly to a hard-coded NEBULOUS mod directory;
 - invokes `build.bat` before build;
 - invokes `postbuild.bat` and copies `ModInfo.xml` after build;
-- references 46 tracked assemblies and includes UnityEditor references;
-- bundles `0Harmony.dll` as a private dependency;
-- uses root namespace `Lib` while many types remain global.
+- rewrites the source `ModInfo.xml` on every build;
+- increments `VersionPrefix` in the project after successful builds.
 
-`build.bat` writes the tracked `ModInfo.xml` and hard-codes
-`Debug/net481/AGMLIB.dll` plus `0Harmony.dll`. This mixes source generation,
-build configuration, and deployment.
+That behavior is now removed. `AGMLIB/Version.props` is the explicit committed
+version baseline (`6.2.2.867`, game version `0.6.2`). Normal Debug and Release
+builds write beneath `artifacts/AGMLIB`, generate the artifact `ModInfo.xml`
+from `ModInfo.template.xml`, and never deploy or edit source files.
 
-## B1 design
+`Get-AgmlibBuildVersion.ps1` preserves the useful fourth-component build
+revision without restoring source mutation. It fingerprints build-relevant
+project inputs and records the fingerprint/revision in ignored
+`.build-state/agmlib-version.json`. Identical inputs reuse the revision; the
+next build after a relevant change increments it once. Assembly and manifest
+consume that same derived version. The ledger is local iteration history, not a
+portable release input: promote the intended baseline into `Version.props`
+before a release or supply a future release/CI version explicitly.
 
-Introduce explicit properties:
+The supported commands are:
 
-```text
-AgmlibVersion        explicit committed/tag/release input
-NebulousGameVersion supported game version metadata
-ArtifactsDir         repository-local output root
-PackageDir           disposable package layout
-NebulousInstallDir   optional local installation
-ModInstallDir        derived/overridable deployment destination
-DeployToGame         false by default
+```powershell
+# Repository-local build
+dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal
+
+# Clean-build proof that tracked files and source ModInfo.xml do not change
+powershell -ExecutionPolicy Bypass -File scripts\Build\Test-AgmlibBuildIsolation.ps1
+
+# Explicit local build and deployment
+powershell -ExecutionPolicy Bypass -File scripts\Build\Deploy-Agmlib.ps1
 ```
 
-Generate `ModInfo.xml` into `PackageDir`. Assembly version, manifest version, and
-package metadata must use the same `AgmlibVersion`. Debug builds never increment
-or rewrite release state.
+`Deploy-Agmlib.ps1` owns the machine-local default game path, accepts
+`-GameRoot` and `-Configuration`, refuses to deploy while Nebulous is running,
+and verifies the deployed DLL, Harmony dependency, and manifest against their
+source SHA-256 hashes. The MSBuild `DeployToGame` property defaults to `false`;
+only the explicit script enables the deployment target.
 
-Commands to deliver:
+Verification evidence for the change-aware revision was
+`867, 867, 868, 868`: initial input, identical rebuild, changed input, identical
+rebuild. Debug and Release clean-build isolation checks both left tracked files
+and the source manifest unchanged.
 
-- restore;
-- clean build;
-- package;
-- package validation;
-- explicit local deploy;
-- clean-build/no-Git-mutation verification.
+The loader entry point was reduced to its live contract: inventory debug setup,
+the stable Harmony ID and `PatchAll`, prefab/test bootstrap, and modular-faction
+inventory setup. The active missing-resource patch moved to `AGMLIB/Patches`.
+Unreachable bundle recompression, dependency repair, load-order restart,
+quick-load cache, and hull-dump experiments were removed.
 
-The deploy command should detect a locked destination and report the likely game
-process, source and destination hashes, and recovery action.
+Remaining work in this plan starts with a disposable publish/package layout and
+package validation. Local build/deploy isolation is complete; it does not imply
+that CI, GitHub release, or Workshop publishing is complete.
 
 ## B2 CI design
 

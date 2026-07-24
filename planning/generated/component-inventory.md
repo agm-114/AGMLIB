@@ -1,6 +1,6 @@
 ﻿# Component inventory
 
-Detected 124 Unity/game component-like public and internal types.
+Detected 123 Unity/game component-like public and internal types.
 
 | Type | Base/interface surface | Source | Serialized fields | Lifecycle methods |
 |---|---|---|---:|---|
@@ -63,7 +63,6 @@ Detected 124 Unity/game component-like public and internal types.
 | `Fragment` | `MonoBehaviour` | `AGMLIB/Munitions/LightweightMunition/LightweightMultiShell.cs` | 2 | FixedUpdate, Update |
 | `Fragments` | `MonoBehaviour` | `AGMLIB/Munitions/LightweightMunition/LightweightMultiShell.cs` | 2 | FixedUpdate, Update |
 | `HoldingTargets` | `ShipState` | `AGMLIB/Advanced/Legacy/Refactored/HoldingTargets.cs` | 0 |  |
-| `HullComponentGetMissingResources` | `MonoBehaviour` | `AGMLIB/EntryPoint.cs` | 0 |  |
 | `IFFComponent` | `MonoBehaviour` | `AGMLIB/Generic Gameplay/Ewar/IFFComponent.cs` | 0 | FixedUpdate, Start |
 | `IndexedSocketFilter` | `MonoBehaviour, IFilterIndexed` | `AGMLIB/Munitions/ModularMissile/ModularSystems/IndexedSocketFilter.cs` | 8 |  |
 | `InternalDiscreteMagazine` | `MonoBehaviour, IMagazineProvider` | `AGMLIB/Generic Gameplay/Discrete/DiscreteMag.cs` | 0 |  |

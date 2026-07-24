@@ -47,19 +47,42 @@ The command builds AGMLIB, launches Nebulous with dumping enabled, waits for the
 
 ## Build and deploy
 
-Run from the repository root:
+An ordinary build writes only to the repository-local `artifacts\AGMLIB`
+directory. It does not rewrite the committed version baseline or source
+`ModInfo.xml`, and it does not copy files into the game:
 
 ```powershell
 dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal
 ```
 
-The project deploys directly to this game-root-relative path:
+The final version component is a change-aware local build revision.
+`AGMLIB/Version.props` contains the committed baseline. The ignored
+`.build-state/agmlib-version.json` ledger increments that revision when a
+build-relevant project input fingerprint changes and reuses it for identical
+inputs. Assembly and generated manifest versions always use the same derived
+value. Promote an intended revision into `Version.props` deliberately for a
+portable release baseline; the ignored ledger is local build history.
 
-```text
-Mods\AGMLIB\Debug\net481\AGMLIB.dll
+Deploy to the local game only with the explicit command:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Build\Deploy-Agmlib.ps1
 ```
 
-If deployment reports a mapped-section or locked-file error, Nebulous is running. Close it before rebuilding. Preserve CRLF in modified C# files.
+Use `-Configuration Release` or `-GameRoot <path>` when needed. The script
+builds first unless `-SkipBuild` is supplied, refuses to deploy while Nebulous
+is running, copies to `Mods\AGMLIB\<Configuration>\net481`, and verifies the
+deployed DLL, Harmony dependency, and manifest by SHA-256.
+
+Run the isolation check after changing build logic:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Build\Test-AgmlibBuildIsolation.ps1
+```
+
+An ordinary build is safe while Nebulous is running because it no longer writes
+to the game installation. Close Nebulous only before explicit deployment.
+Preserve CRLF in modified C# files.
 
 Nebulous loads mod assemblies only during startup. After any DLL rebuild, fully close and restart the game before testing; returning to the main menu or starting another match does not load the new DLL.
 

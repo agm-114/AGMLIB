@@ -4,16 +4,16 @@ Generated lexical navigation aid. Type-name presence does not prove runtime
 use, member compatibility, authority, or prefab correctness. Read the source,
 native consumer, and serialized graph before making a behavioral claim.
 
-- AGMLIB C# files: 230
-- Distinct pinned native type names mentioned: 496
+- AGMLIB C# files: 232
+- Distinct pinned native type names mentioned: 489
 - Mentioned native types with vanilla serialized evidence: 77
 
 ## Highest-frequency serialized touchpoints
 
 | Native type | AGMLIB files | Registered roots | Registered prefab components | Raw serialized instances | Example vanilla prefab dumps |
 |---|---:|---:|---:|---:|---|
-| `HullComponent` | 37 | 20 | 34 | 21 | `Vanilla/hull-components/Stock_Actively Cooled Amplifiers-804d4d38.yaml`<br>`Vanilla/hull-components/Stock_Adaptive Radar Receiver-e3507498.yaml` |
-| `Hull` | 28 | 14 | 19 | 14 | `Vanilla/hulls/Stock_Axford Heavy Cruiser-fe49285f.yaml`<br>`Vanilla/hulls/Stock_Bulk Feeder-5f4fb7e3.yaml` |
+| `HullComponent` | 36 | 20 | 34 | 21 | `Vanilla/hull-components/Stock_Actively Cooled Amplifiers-804d4d38.yaml`<br>`Vanilla/hull-components/Stock_Adaptive Radar Receiver-e3507498.yaml` |
+| `Hull` | 27 | 14 | 19 | 14 | `Vanilla/hulls/Stock_Axford Heavy Cruiser-fe49285f.yaml`<br>`Vanilla/hulls/Stock_Bulk Feeder-5f4fb7e3.yaml` |
 | `ModularMissile` | 17 | 10 | 22 | 10 | `Vanilla/missile-bodies/CM-4 Body-6dfeaed6.yaml`<br>`Vanilla/missile-bodies/CM-S-4 Body-6ec03bd2.yaml` |
 | `HullSocket` | 14 | 0 | 489 | 579 | `Vanilla/hulls/Stock_Axford Heavy Cruiser-fe49285f.yaml`<br>`Vanilla/hulls/Stock_Bulk Feeder-5f4fb7e3.yaml`<br>`Vanilla/hulls/Stock_Keystone Destroyer-81bb4da7.yaml` |
 | `Distance` | 14 | 0 | 0 | 8 |  |
@@ -189,7 +189,7 @@ native consumer, and serialized graph before making a behavioral claim.
 | `AGMLIB/Editor/Yaml/Components/YamlHullComponent.cs` | 8 | `ComponentDebuff`, `HullComponent` |
 | `AGMLIB/Editor/Yaml/Components/YamlHullPart.cs` | 3 |  |
 | `AGMLIB/Editor/Yaml/YamlLoader.cs` | 8 | `ComponentDebuff`, `HullComponent` |
-| `AGMLIB/EntryPoint.cs` | 26 | `FactionDescription`, `Hull`, `HullComponent` |
+| `AGMLIB/EntryPoint.cs` | 3 | `FactionDescription` |
 | `AGMLIB/FX/BeamEffectModule.cs` | 4 | `LineBeamMuzzleEffects`, `ShortDurationEffect` |
 | `AGMLIB/FX/DynamicFX.cs` | 3 | `BookendedAudioPlayer`, `DynamicVisibleParticles` |
 | `AGMLIB/FX/EffectSpawner.cs` | 2 |  |
@@ -211,7 +211,7 @@ native consumer, and serialized graph before making a behavioral claim.
 | `AGMLIB/Generic Gameplay/Craft/FighterLimit.cs` | 8 | `Spacecraft` |
 | `AGMLIB/Generic Gameplay/Craft/LightweightCraftWorkSlotComponent.cs` | 6 | `Spacecraft` |
 | `AGMLIB/Generic Gameplay/CustomAimPoint.cs` | 7 | `TurretController` |
-| `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | 22 | `ImmediateLaunchMissileMuzzle`, `RezzingMuzzle` |
+| `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | 23 | `ImmediateLaunchMissileMuzzle`, `RezzingMuzzle` |
 | `AGMLIB/Generic Gameplay/Discrete/CustomLeadLogic.cs` | 4 |  |
 | `AGMLIB/Generic Gameplay/Discrete/DiscreteMag.cs` | 12 | `BulkMagazineComponent` |
 | `AGMLIB/Generic Gameplay/Discrete/DiscreteWeaponEjectors.cs` | 12 | `FixedDiscreteWeaponComponent`, `MissileEjector` |
@@ -307,6 +307,7 @@ native consumer, and serialized graph before making a behavioral claim.
 | `AGMLIB/Nebulous/Bundles/BundleManagerInternals.cs` | 2 | `ComponentDebuff` |
 | `AGMLIB/Nebulous/Game/Orders/Tasks/FireDecoyTaskInternals.cs` | 3 |  |
 | `AGMLIB/Nebulous/Munitions/ModularMissiles/ModularMissileInternals.cs` | 2 | `ModularMissile` |
+| `AGMLIB/Nebulous/Ships/DiscreteWeaponComponentInternals.cs` | 1 |  |
 | `AGMLIB/Nebulous/Ships/WeaponComponentInternals.cs` | 2 |  |
 | `AGMLIB/obj/Debug/net481/.NETFramework,Version=v4.8.1.AssemblyAttributes.cs` | 0 |  |
 | `AGMLIB/obj/Debug/net481/AGMLIB.AssemblyInfo.cs` | 0 |  |
@@ -314,6 +315,7 @@ native consumer, and serialized graph before making a behavioral claim.
 | `AGMLIB/obj/Release/net481/.NETFramework,Version=v4.8.1.AssemblyAttributes.cs` | 0 |  |
 | `AGMLIB/obj/Release/net481/AGMLIB.AssemblyInfo.cs` | 0 |  |
 | `AGMLIB/obj/Release/net481/AGMLIB.GlobalUsings.g.cs` | 0 |  |
+| `AGMLIB/Patches/HullPartResourceConnectedGetMissingResourcesPatch.cs` | 2 |  |
 | `AGMLIB/Properties/Settings.Designer.cs` | 0 |  |
 | `AGMLIB/Server/CarrierSigPatch.cs` | 1 |  |
 | `AGMLIB/Server/DamageCollector.cs` | 15 | `FactionDescription`, `Hull`, `HullComponent` |

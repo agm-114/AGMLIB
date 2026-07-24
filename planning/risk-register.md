@@ -144,7 +144,7 @@
 
 | Risk | Evidence | Impact | First control |
 |---|---|---|---|
-| Normal build mutates/deploys | project pre/post targets and `build.bat` | dirty trees, stale/locked installs, broken CI | B1 build isolation |
+| Normal build mutates/deploys (controlled) | mutating targets/batch files removed; clean-build isolation check passes | regression could restore dirty trees, stale/locked installs, or broken CI | keep `Test-AgmlibBuildIsolation.ps1` in the build-change gate |
 | Accidental API/serialized break | large global public surface, no assembly baseline | downstream mods/content fail | C1 release-DLL baseline |
 | Native update breaks patches | 163 patch declarations, 88 reflection files | startup or feature failures | native target verifier |
 | One patch failure affects all | single `PatchAll` | partial/unexplained initialization | feature-owned registration |

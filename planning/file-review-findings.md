@@ -49,11 +49,13 @@ Counts are prioritization signals, not bug counts.
 
 ### Root/project
 
-`EntryPoint.cs` contains the live duplicate-patch guard and `PatchAll`, followed
-by large unreachable historical experiments. Split boot from experiments after
-history review. The project and batch scripts are the highest release-safety
-risk because ordinary build mutates/deploys. `AGMMULTITOOL.cs` is a separate
-large utility surface and needs an explicit build/runtime ownership decision.
+`EntryPoint.cs` now contains only the live loader contract: inventory debug
+setup, the stable duplicate-patch guard and `PatchAll`, test bootstrap, and
+modular-faction inventory setup. The active missing-resource patch lives under
+`AGMLIB/Patches`. Ordinary builds now use repository-local artifacts and an
+explicit deploy command; the mutating batch scripts were removed.
+`AGMMULTITOOL.cs` remains a separate large utility surface and needs an explicit
+build/runtime ownership decision.
 
 ### Common
 
@@ -290,12 +292,13 @@ it. The pinned vanilla dump now confirms all seven directed EWAR muzzles set it
 true and all three omnidirectional muzzles set it false. Add a prefab gate for
 fixed directed content.
 
-### `EntryPoint.cs` bundle experiments
+### Removed `EntryPoint.cs` bundle experiments
 
-- `PreLoad` returns immediately after `Harmony.PatchAll()`.
-- The stock/compressed bundle recompression block and later dependency/load
-  experiments are unreachable.
-- The `QuickLoad` Harmony attribute is commented out.
+- History review confirmed the stock/compressed bundle recompression,
+  dependency/load-order repair, quick-load cache, and hull CSV dump were
+  unreachable or unpatched and had no external references.
+- Those experiments were removed; `PreLoad` now ends naturally after
+  `Harmony.PatchAll()`.
 - Installed `Assets/ComAssetBundles` copies are older and have different hashes
   from the three runtime bundles declared by native `BundleManager`.
 

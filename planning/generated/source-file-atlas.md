@@ -126,7 +126,7 @@ Every C# source file is listed with the structural signals used to prioritize re
 
 | Source | Lines | Types | Namespace | Serialized | Lifecycle | Patches | Reflection | Logs | TODO markers |
 |---|---:|---|---|---:|---|---:|---:|---:|---:|
-| `AGMLIB/EntryPoint.cs` | 577 | EntryPoint : IModEntryPoint<br>HullComponentGetMissingResources : MonoBehaviour<br>BundleCache<br>QuickLoad<br>DependencyPatch |  | 0 |  | 1 | 4 | 43 | 0 |
+| `AGMLIB/EntryPoint.cs` | 49 | EntryPoint : IModEntryPoint |  | 0 |  | 0 | 0 | 1 | 0 |
 | `AGMLIB/GlobalSuppressions.cs` | 25 |  |  | 0 |  | 0 | 0 | 0 | 0 |
 | `AGMLIB/SetCopiedAssetId.cs` | 37 | SetCopiedAssetId : MonoBehaviour | Utility | 0 |  | 0 | 1 | 0 | 0 |
 
@@ -160,7 +160,7 @@ Every C# source file is listed with the structural signals used to prioritize re
 | `AGMLIB/Generic Gameplay/Craft/FighterLimit.cs` | 264 | CraftLaunchLimit : MonoBehaviour<br>CraftLaunchLimitExtensions<br>ShipControllerInitializeCraftLaunchLimitPatch<br>CraftCarrierControllerTickCraftLaunchLimitPatch<br>SuspendedLaunchOrder<br>CraftLandingPadLaunchCraftLimitPatch<br>SpacecraftSetInStorageCraftLaunchLimitPatch |  | 0 |  | 4 | 6 | 6 | 0 |
 | `AGMLIB/Generic Gameplay/Craft/LightweightCraftWorkSlotComponent.cs` | 88 | CraftWorkSlotComponentBase : MonoBehaviour, ICraftWorkSlotProvider<br>LightweightCraftWorkSlotComponent : CraftWorkSlotComponentBase<br>WorkSlot : ICraftWorkSlot |  | 5 | Awake | 0 | 0 | 0 | 0 |
 | `AGMLIB/Generic Gameplay/CustomAimPoint.cs` | 101 | CustomAimPoint : ShipState<br>BaseTurretedLauncherComponentFixedUpdate<br>WeaponComponentGetAimPoint |  | 0 |  | 2 | 14 | 3 | 0 |
-| `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | 589 | DecoyOrderResult<br>DecoyAmmoSettings : MonoBehaviour<br>DecoyFireRequest<br>ShotSubscription<br>WeaponGroupFirePositionSidecarPatch<br>ShipControllerHasAnyDecoysSidecarPatch<br>FireDecoyTaskSidecarPatch<br>FireDecoyTaskCompletionSidecarPatch | Lib.Generic_Gameplay | 0 | Awake, OnDestroy, Update | 4 | 0 | 1 | 0 |
+| `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | 648 | DecoyOrderResult<br>DecoyAmmoSettings : MonoBehaviour<br>DecoyFireRequest<br>ShotSubscription<br>ShipControllerHasAnyDecoysSidecarPatch<br>FireDecoyTaskSidecarPatch<br>FireDecoyTaskCompletionSidecarPatch | Lib.Generic_Gameplay | 0 | Awake, OnDestroy, Update | 3 | 0 | 1 | 0 |
 | `AGMLIB/Generic Gameplay/Discrete/CustomLeadLogic.cs` | 40 | DiscreteWeaponComponentLeadLogic : MonoBehaviour<br>DiscreteWeaponComponentCalculateLead |  | 0 |  | 1 | 1 | 0 | 0 |
 | `AGMLIB/Generic Gameplay/Discrete/DiscreteMag.cs` | 58 | InternalDiscreteMagazine : MonoBehaviour, IMagazineProvider<br>DiscreteMagazine : MonoBehaviour |  | 0 |  | 0 | 0 | 0 | 0 |
 | `AGMLIB/Generic Gameplay/Discrete/DiscreteWeaponEjectors.cs` | 143 | DiscreteWeaponEjectors : MonoBehaviour<br>FixedDiscreteWeaponComponentOnTarget |  | 1 | Start | 1 | 16 | 3 | 0 |
@@ -265,7 +265,14 @@ Every C# source file is listed with the structural signals used to prioritize re
 | `AGMLIB/Nebulous/Bundles/BundleManagerInternals.cs` | 32 | NativeInternalsExtensions<br>BundleManagerInternals<br>Refs |  | 0 |  | 0 | 4 | 0 | 0 |
 | `AGMLIB/Nebulous/Game/Orders/Tasks/FireDecoyTaskInternals.cs` | 32 | NativeInternalsExtensions<br>FireDecoyTaskInternals<br>Refs |  | 0 |  | 0 | 4 | 0 | 0 |
 | `AGMLIB/Nebulous/Munitions/ModularMissiles/ModularMissileInternals.cs` | 65 | NativeInternalsExtensions<br>ModularMissileInternals<br>Refs |  | 0 |  | 0 | 4 | 0 | 0 |
+| `AGMLIB/Nebulous/Ships/DiscreteWeaponComponentInternals.cs` | 32 | NativeInternalsExtensions<br>DiscreteWeaponComponentInternals<br>Refs |  | 0 |  | 0 | 4 | 0 | 0 |
 | `AGMLIB/Nebulous/Ships/WeaponComponentInternals.cs` | 31 | NativeInternalsExtensions<br>WeaponComponentInternals<br>Refs |  | 0 |  | 0 | 4 | 0 | 0 |
+
+## Patches
+
+| Source | Lines | Types | Namespace | Serialized | Lifecycle | Patches | Reflection | Logs | TODO markers |
+|---|---:|---|---|---:|---|---:|---:|---:|---:|
+| `AGMLIB/Patches/HullPartResourceConnectedGetMissingResourcesPatch.cs` | 41 | HullPartResourceConnectedGetMissingResourcesPatch |  | 0 |  | 1 | 0 | 1 | 0 |
 
 ## Properties
 

@@ -74,10 +74,11 @@ record.
 
 ## Priority findings from structural analysis
 
-- `PassiveCommsSensorComponent`, `CommandSeekers`, `ShipStatusPowerBar`,
-  `SocketFilterCore`, and `EntryPoint` have large responsibility surfaces.
-- 88 source files contain known reflection-boundary tokens.
-- 163 patch declarations are activated through one `PatchAll`.
+- `PassiveCommsSensorComponent`, `CommandSeekers`, `ShipStatusPowerBar`, and
+  `SocketFilterCore` have large responsibility surfaces. `EntryPoint` has been
+  reduced to its live loader contract.
+- 90 source files contain known reflection-boundary tokens.
+- 162 patch declarations are activated through one `PatchAll`.
 - duplicate and global simple type names create migration risk.
 - runtime testing infrastructure is substantial but no conventional pure test
   project exists.

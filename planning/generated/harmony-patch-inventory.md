@@ -1,6 +1,6 @@
 ﻿# Harmony patch inventory
 
-Detected 163 active-looking `HarmonyPatch` attribute declarations. Verify overloads against the current native assembly.
+Detected 162 active-looking `HarmonyPatch` attribute declarations. Verify overloads against the current native assembly.
 
 | Source | Declared target arguments | Reflection references in file |
 |---|---|---:|
@@ -62,7 +62,6 @@ Detected 163 active-looking `HarmonyPatch` attribute declarations. Verify overlo
 | `AGMLIB/Editor/SocketRendering.cs` | `typeof(SocketOutlineManager), nameof(SocketOutlineManager.DrawShapes` | 0 |
 | `AGMLIB/Editor/Yaml/YamlLoader.cs` | `typeof(ModRecord), "LoadMod"` | 44 |
 | `AGMLIB/Editor/Yaml/YamlLoader.cs` | `typeof(SocketItem), nameof(SocketItem.ButtonLeftClick` | 44 |
-| `AGMLIB/EntryPoint.cs` | `typeof(HullPartResourceConnected), "GetMissingResources"` | 4 |
 | `AGMLIB/Generic Gameplay/AmmoFilter.cs` | `typeof(BaseCellLauncherComponent), nameof(BaseCellLauncherComponent.IsAmmoCompatible` | 0 |
 | `AGMLIB/Generic Gameplay/AmmoFilter.cs` | `typeof(BaseTubeLauncherComponent), nameof(BaseTubeLauncherComponent.IsAmmoCompatible` | 0 |
 | `AGMLIB/Generic Gameplay/AmmoFilter.cs` | `typeof(BulkMagazineComponent), nameof(BulkMagazineComponent.RestrictionCheck` | 0 |
@@ -74,12 +73,6 @@ Detected 163 active-looking `HarmonyPatch` attribute declarations. Verify overlo
 | `AGMLIB/Generic Gameplay/Craft/FighterLimit.cs` | `typeof(Spacecraft), nameof(Spacecraft.SetInStorage` | 6 |
 | `AGMLIB/Generic Gameplay/CustomAimPoint.cs` | `typeof(BaseTurretedLauncherComponent), "FixedUpdate"` | 14 |
 | `AGMLIB/Generic Gameplay/CustomAimPoint.cs` | `typeof(DiscreteWeaponComponent), "CalculateLead"` | 14 |
-| `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | `
-    typeof(WeaponGroup),
-    nameof(WeaponGroup.FirePosition),
-    typeof(Vector3),
-    typeof(int),
-    typeof(bool` | 0 |
 | `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | `typeof(FireDecoyTask), "UpdateInternal"` | 0 |
 | `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | `typeof(OrderTask), nameof(OrderTask.Complete` | 0 |
 | `AGMLIB/Generic Gameplay/DecoyAmmoSettings.cs` | `typeof(ShipController), nameof(ShipController.HasAnyDecoys` | 0 |
@@ -169,6 +162,7 @@ Detected 163 active-looking `HarmonyPatch` attribute declarations. Verify overlo
 | `AGMLIB/Munitions/ModularMissile/ModularSystems/ScriptableFilter.cs` | `typeof(HullComponent), nameof(HullComponent.UseableByFaction` | 6 |
 | `AGMLIB/Munitions/ModularMissile/ModularSystems/ScriptableFilter.cs` | `typeof(LookaheadMunition), nameof(LookaheadMunition.UseableByFaction` | 6 |
 | `AGMLIB/Munitions/ModularMissile/ModularSystems/ScriptableFilter.cs` | `typeof(Spacecraft), nameof(Spacecraft.UseableByFaction` | 6 |
+| `AGMLIB/Patches/HullPartResourceConnectedGetMissingResourcesPatch.cs` | `typeof(HullPartResourceConnected), "GetMissingResources"` | 0 |
 | `AGMLIB/Server/CarrierSigPatch.cs` | `typeof(BoxSignature), "Awake"` | 2 |
 | `AGMLIB/Server/DamageCollector.cs` | `typeof(ShipController), nameof(ShipController.GetAfterActionDetails` | 0 |
 | `AGMLIB/Systems/DroneTester.cs` | `typeof(ShipController), nameof(ShipController.Initialize` | 0 |

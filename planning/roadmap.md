@@ -37,9 +37,10 @@ item-to-package and evidence mapping is generated at
 
 ### Slice 1: build without side effects
 
-Capture the current behavior, move generated `ModInfo.xml` to package output,
-default output to repository-local artifacts, add explicit deploy properties, and
-prove that a clean Debug and Release build leaves tracked files unchanged.
+Completed. The prior behavior is captured, generated `ModInfo.xml` lives in
+repository-local artifacts, `DeployToGame` defaults false, deployment is an
+explicit PowerShell command, and clean Debug and Release isolation checks leave
+tracked files unchanged.
 
 ### Slice 2: compatibility and native target baselines
 
