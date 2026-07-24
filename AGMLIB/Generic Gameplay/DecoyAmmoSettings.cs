@@ -1,7 +1,5 @@
 using System.Reflection;
-using Game.Intel;
 using Game.Orders;
-using Game.Sensors;
 using Game.Units;
 using HarmonyLib;
 using Munitions;
@@ -15,9 +13,6 @@ namespace Lib.Generic_Gameplay;
 [DisallowMultipleComponent]
 public sealed class DecoyAmmoSettings : MonoBehaviour
 {
-    private const int AimPointAttempts = 24;
-    private const float AimPointDistance = 10f;
-
     private ShipController _ship = null!;
 
     /// <summary>
@@ -37,237 +32,124 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
 
     internal bool HasAnyDecoys() => FindCandidates().Any();
 
-    internal bool CanFireDecoy()
-    {
-        foreach ((WeaponGroup Group, IMunition Ammo) candidate in FindCandidates())
-        {
-            if (candidate.Group.SelectedAmmoType != candidate.Ammo ||
-                candidate.Group.CheckCanFire(playerOrder: false))
-            {
-                return true;
-            }
-        }
+    internal bool CanFireDecoy() => FindCandidates().Any();
 
-        return false;
-    }
-
-    internal bool FireDecoy(ITrack? threat)
+    internal bool FireDecoy()
     {
         if (!_ship.isServer)
         {
             return false;
         }
 
-        bool accepted = false;
-        foreach ((WeaponGroup Group, IMunition Ammo) candidate in FindCandidates())
+        bool fired = false;
+        foreach ((WeaponGroup group, IMagazine source) in FindCandidates())
         {
-            WeaponGroup group = candidate.Group;
-            if (!CanCounter(candidate.Ammo, threat) ||
-                !SelectAmmo(group, candidate.Ammo) ||
-                !group.CheckCanFire(playerOrder: false) ||
-                !Fire(group))
+            int firedByGroup = SpawnChaff(group, source);
+            if (firedByGroup <= 0)
             {
                 continue;
             }
 
-            accepted = true;
+            fired = true;
             UnityEngine.Debug.Log(
-                $"AGMLIB DecoyAmmoSettings: event=fire ship={_ship.name} group={group.GroupKey} ammo={candidate.Ammo.SaveKey} target={(threat == null ? "none" : "track")}");
+                $"AGMLIB DecoyAmmoSettings: event=forced-fire ship={_ship.name} group={group.GroupKey} ammo={source.AmmoType.SaveKey} count={firedByGroup}");
         }
 
-        return accepted;
+        return fired;
     }
 
-    private IEnumerable<(WeaponGroup Group, IMunition Ammo)> FindCandidates()
+    private IEnumerable<(WeaponGroup Group, IMagazine Source)> FindCandidates()
     {
         foreach (IWeaponGroup candidate in _ship.WeaponGroups)
         {
             if (candidate is not WeaponGroup group ||
                 group.WepType == WeaponType.Decoy ||
                 group.FunctioningMemberCount == 0 ||
-                group.MixedAmmo)
+                group.MixedAmmo ||
+                !CanSpawnChaff(group))
             {
                 continue;
             }
 
-            IMunition? ammo = FindDecoyAmmo(group);
-            if (ammo != null)
+            IMagazine? source = group.GetAvailableAmmoSources()
+                .FirstOrDefault(source =>
+                    source.QuantityAvailable > 0 &&
+                    IsChaff(source.AmmoType));
+            if (source != null)
             {
-                yield return (group, ammo);
+                yield return (group, source);
             }
         }
     }
 
-    private static IMunition? FindDecoyAmmo(IWeaponGroup group)
+    private static bool IsChaff(IMunition? ammo) =>
+        ammo is IMissile { IsDecoy: true };
+
+    private static bool CanSpawnChaff(WeaponGroup group) =>
+        group.Members.Any(member =>
+            member is WeaponComponent { IsFunctional: true } weapon &&
+            GetCurrentMuzzle(weapon) != null);
+
+    private static int SpawnChaff(WeaponGroup group, IMagazine source)
     {
-        IMunition? selectedAmmo = group.SelectedAmmoType;
-        if (IsDecoy(selectedAmmo) && group.AmmoQuantityRemaining(selectedAmmo!) > 0)
+        int spawned = 0;
+        foreach (IWeapon member in group.Members)
         {
-            return selectedAmmo;
-        }
-
-        if (!group.SupportsAmmoSelection || !group.SupportsImmediateAmmoSwitch)
-        {
-            return null;
-        }
-
-        foreach (IMagazine source in group.GetAvailableAmmoSources())
-        {
-            IMunition ammo = source.AmmoType;
-            if (source.QuantityAvailable > 0 && IsDecoy(ammo))
+            if (source.QuantityAvailable <= 0)
             {
-                return ammo;
+                break;
             }
-        }
 
-        return null;
-    }
-
-    private static bool IsDecoy(IMunition? ammo) =>
-        ammo is IMissile { IsDecoy: true, DecoyInfo: DecoyCapabilities };
-
-    private static bool CanCounter(IMunition ammo, ITrack? threat)
-    {
-        if (ammo is not IMissile { DecoyInfo: DecoyCapabilities capabilities })
-        {
-            return false;
-        }
-
-        if (threat?.IntelReport is MissileIntelReport missileReport)
-        {
-            return capabilities.CanDecoyMissile(missileReport.DecoySeekerMask) > 0;
-        }
-
-        return !capabilities.RequireTarget || threat != null;
-    }
-
-    private static bool SelectAmmo(IWeaponGroup group, IMunition ammo) =>
-        group.SelectedAmmoType == ammo || group.ChangeAmmoType(ammo);
-
-    private static bool Fire(WeaponGroup group)
-    {
-        if (!group.SupportsPositionTargeting)
-        {
-            return false;
-        }
-
-        if (group.PositionTargetingIsDirectional)
-        {
-            return group.FirePosition(Vector3.up, -1, playerOrder: false);
-        }
-
-        return FireForwardThenSlew(group);
-    }
-
-    private static bool FireForwardThenSlew(WeaponGroup group)
-    {
-        bool accepted = false;
-        foreach (IWeapon weapon in group.Members)
-        {
-            if (!weapon.CanFire || !weapon.SupportsPositionTargeting)
+            if (member is not WeaponComponent { IsFunctional: true } weapon ||
+                GetCurrentMuzzle(weapon) is not Muzzle muzzle)
             {
                 continue;
             }
 
-            Muzzle? muzzle = GetCurrentMuzzle(weapon);
-            if (muzzle == null)
+            IMunition chaff = source.AmmoType;
+            Vector3 direction = muzzle.transform.forward;
+            source.Withdraw(1u);
+            NetworkPoolable spawnedChaff = chaff.InstantiateSelf(
+                muzzle.transform.position,
+                Quaternion.LookRotation(direction),
+                direction * chaff.FlightSpeed);
+            if (spawnedChaff is ILocalImbued localChaff)
             {
-                continue;
+                localChaff.ImbueLocal(((IMuzzleWeapon)weapon).Platform);
+                localChaff.SetWeaponReportPath(weapon);
             }
 
-            Action? unsubscribe = null;
-            if (!TrySubscribeToFired(muzzle, () =>
-            {
-                unsubscribe?.Invoke();
-                weapon.CeaseFire();
-                if (TryFindAimPoint(weapon, muzzle, out Vector3 randomAimPoint))
-                {
-                    weapon.FirePosition(randomAimPoint, -1, playerOrder: false);
-                }
-            }, out unsubscribe))
-            {
-                continue;
-            }
-
-            Vector3 forwardAimPoint = muzzle.transform.position +
-                muzzle.transform.forward * AimPointDistance;
-            weapon.FirePosition(forwardAimPoint, -1, playerOrder: false);
-            accepted = true;
+            spawned++;
         }
 
-        return accepted;
+        return spawned;
     }
 
-    private static bool TrySubscribeToFired(
-        Muzzle muzzle,
-        Action onFired,
-        out Action? unsubscribe)
+    private static Muzzle? GetCurrentMuzzle(WeaponComponent weapon)
     {
-        switch (muzzle)
-        {
-            case RezzingMuzzle rezzing:
-                Action<NetworkPoolable> rezzingHandler = _ => onFired();
-                rezzing.OnFired += rezzingHandler;
-                unsubscribe = () => rezzing.OnFired -= rezzingHandler;
-                return true;
-            case ImmediateLaunchMissileMuzzle missile:
-                Action<IMissile> missileHandler = _ => onFired();
-                missile.OnFired += missileHandler;
-                unsubscribe = () => missile.OnFired -= missileHandler;
-                return true;
-            default:
-                unsubscribe = null;
-                return false;
-        }
-    }
-
-    private static bool TryFindAimPoint(
-        IWeapon weapon,
-        Muzzle muzzle,
-        out Vector3 aimPoint)
-    {
-        for (int attempt = 0; attempt < AimPointAttempts; attempt++)
-        {
-            aimPoint = muzzle.transform.position +
-                UnityEngine.Random.onUnitSphere * AimPointDistance;
-            if (weapon.CanTrainOnTarget(aimPoint) &&
-                weapon.IsTargetInRange(aimPoint, Vector3.zero, 0f, strict: true) &&
-                !MunitionsHelpers.CheckObstaclesInWay(weapon.AimFromPosition, aimPoint))
-            {
-                return true;
-            }
-        }
-
-        aimPoint = default;
-        return false;
-    }
-
-    private static Muzzle? GetCurrentMuzzle(IWeapon weapon)
-    {
-        if (weapon is not WeaponComponent weaponComponent)
-        {
-            return null;
-        }
-
-        WeaponComponentInternals internals = weaponComponent.Internals();
+        WeaponComponentInternals internals = weapon.Internals();
         Muzzle[] muzzles = internals.Muzzles;
         int currentMuzzle = internals.CurrentMuzzle;
         return muzzles != null && (uint)currentMuzzle < (uint)muzzles.Length
             ? muzzles[currentMuzzle]
             : null;
     }
-
 }
 
 internal static class ShipControllerDecoyPatchTargets
 {
     internal static MethodBase Find(string methodName)
     {
-        InterfaceMapping map = typeof(ShipController).GetInterfaceMap(typeof(IWarshipOrderReceiver));
-        int index = Array.FindIndex(map.InterfaceMethods, method => method.Name == methodName);
+        InterfaceMapping map =
+            typeof(ShipController).GetInterfaceMap(typeof(IWarshipOrderReceiver));
+        int index = Array.FindIndex(
+            map.InterfaceMethods,
+            method => method.Name == methodName);
         return index >= 0
             ? map.TargetMethods[index]
-            : throw new MissingMethodException(typeof(ShipController).FullName, methodName);
+            : throw new MissingMethodException(
+                typeof(ShipController).FullName,
+                $"{typeof(IWarshipOrderReceiver).FullName}.{methodName}");
     }
 }
 
@@ -286,10 +168,8 @@ internal static class ShipControllerHasAnyDecoysSidecarPatch
 [HarmonyPatch]
 internal static class ShipControllerCanFireDecoySidecarPatch
 {
-    private static MethodBase TargetMethod()
-    {
-        return ShipControllerDecoyPatchTargets.Find(nameof(IWarshipOrderReceiver.CanFireDecoy));
-    }
+    private static MethodBase TargetMethod() =>
+        ShipControllerDecoyPatchTargets.Find(nameof(IWarshipOrderReceiver.CanFireDecoy));
 
     private static void Postfix(ShipController __instance, ref bool __result)
     {
@@ -303,14 +183,13 @@ internal static class ShipControllerCanFireDecoySidecarPatch
 [HarmonyPatch]
 internal static class ShipControllerFireDecoySidecarPatch
 {
-    private static MethodBase TargetMethod()
-    {
-        return ShipControllerDecoyPatchTargets.Find(nameof(IWarshipOrderReceiver.FireDecoy));
-    }
+    private static MethodBase TargetMethod() =>
+        ShipControllerDecoyPatchTargets.Find(nameof(IWarshipOrderReceiver.FireDecoy));
 
-    private static void Postfix(ShipController __instance, ITrack __0, ref bool __result)
+    private static void Postfix(
+        ShipController __instance,
+        ref bool __result)
     {
-        bool sidecarAccepted = DecoyAmmoSettings.For(__instance)?.FireDecoy(__0) ?? false;
-        __result |= sidecarAccepted;
+        __result |= DecoyAmmoSettings.For(__instance)?.FireDecoy() ?? false;
     }
 }
