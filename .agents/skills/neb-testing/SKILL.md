@@ -110,6 +110,7 @@ Prefer a known keyboard shortcut or short key macro over an equivalent multi-ste
 - Use UI navigation when no binding exists, the shortcut is remapped or context-sensitive, or the resulting state cannot be verified.
 - When a reliable shortcut or macro is discovered, add its exact keys, required context, and observable result to this skill in the same change.
 - Record user-specific remaps in `.agents/neb-testing.local.md`, not in this shared skill.
+- In Testing Range, select a ship and press `F` to focus the camera on it. Prefer this over repeated card clicks when the selected ship is off-screen.
 
 ## Reproduce editor issues
 
@@ -150,9 +151,10 @@ Use the order menu for a reliable manual decoy launch:
 
 1. Select the ship.
 2. Press `Shift+Z` while no order widget is open.
-3. Verify that the decoy-order icon appears and that the focused diagnostic reports the accepted weapon groups.
+3. If the game opens `Select Target`, click a live incoming missile track. A position-only missile path that is not registered as a threat is not a valid substitute.
+4. Verify that target selection closes, the decoy-order icon appears, and the focused diagnostic reports the accepted weapon groups.
 
-If the shortcut is remapped or cannot be verified, right-click open space, away from the ship cards and other UI, and click `DCY`.
+If the shortcut is remapped or cannot be verified, right-click open space, away from the ship cards and other UI, click `DCY`, and choose `Launch Decoys`.
 
 The `DECOY DSBL/LEAST/BEST/AUTO` control in the lower status panel configures automatic point-defense decoy policy; it is not the manual launch button.
 
