@@ -22,6 +22,24 @@ public static class TestingPrefabYamlDumper
     private const int MaximumValueDepth = 4;
     private const int MaximumCollectionItems = 256;
     private const BindingFlags InstanceMemberFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+    private static readonly string[] RegistryCategories =
+    [
+        "ai-role-definitions",
+        "codex",
+        "debuffs",
+        "factions",
+        "hud-themes",
+        "hull-components",
+        "hulls",
+        "maps",
+        "missile-bodies",
+        "missile-components",
+        "mission-sets",
+        "munitions",
+        "referenced-munitions",
+        "scenarios",
+        "spaceframes",
+    ];
 
     public static void ScheduleDumpAfterAllModsLoaded()
     {
@@ -141,6 +159,21 @@ public static class TestingPrefabYamlDumper
         AddEntries(entries, "missile-components", bundleManager.AllMissileComponents);
         AddEntries(entries, "munitions", bundleManager.AllMunitions);
         AddEntries(entries, "factions", bundleManager.AllFactions);
+        AddEntries(entries, "maps", bundleManager.SkirmishMaps);
+        AddEntries(entries, "mission-sets", bundleManager.MissionSets);
+        AddEntries(entries, "scenarios", bundleManager.AllScenarios);
+        AddEntries(entries, "codex", bundleManager.CodexEntries);
+        AddEntries(entries, "hud-themes", bundleManager.AllHUDThemes);
+        AddEntries(entries, "ai-role-definitions", bundleManager.SupplementaryAIRoleDefs);
+        AddEntries(
+            entries,
+            "debuffs",
+            bundleManager
+                .Internals()
+                .Debuffs
+                .Values
+                .SelectMany(values => values)
+                .Distinct());
         AddReferencedSubmunitionEntries(entries);
 
         return entries
@@ -599,11 +632,21 @@ public static class TestingPrefabYamlDumper
         }
 
         WriteLine(builder, 0, "categories:");
-        foreach (IGrouping<string, PrefabDumpEntry> category in entries.GroupBy(entry => entry.Category).OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+        IReadOnlyDictionary<string, int> categoryCounts = entries
+            .GroupBy(entry => entry.Category, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+        foreach (string category in RegistryCategories
+            .Concat(categoryCounts.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase))
         {
-            WriteLine(builder, 1, $"- name: {Quote(category.Key)}");
-            WriteLine(builder, 2, $"count: {category.Count()}");
+            WriteLine(builder, 1, $"- name: {Quote(category)}");
+            WriteLine(builder, 2, $"count: {(categoryCounts.TryGetValue(category, out int count) ? count : 0)}");
         }
+
+        WriteLine(builder, 0, "scalar_collections:");
+        WriteLine(builder, 1, "- name: 'tips'");
+        WriteLine(builder, 2, $"count: {BundleManager.Instance.Internals().Tips.Count}");
 
         WriteLine(builder, 0, "files:");
         foreach (PrefabDumpEntry entry in entries)
