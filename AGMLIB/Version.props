@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <!-- Change these baselines intentionally; builds derive later local revisions without editing this file. -->
+    <AgmlibVersionPrefix>6.2.2</AgmlibVersionPrefix>
+    <AgmlibBuildRevision>867</AgmlibBuildRevision>
+    <AgmlibVersion>$(AgmlibVersionPrefix).$(AgmlibBuildRevision)</AgmlibVersion>
+    <NebulousGameVersion>0.6.2</NebulousGameVersion>
+
+    <Version>$(AgmlibVersion)</Version>
+    <VersionPrefix>$(AgmlibVersion)</VersionPrefix>
+    <AssemblyVersion>$(AgmlibVersion)</AssemblyVersion>
+    <FileVersion>$(AgmlibVersion)</FileVersion>
+    <InformationalVersion>$(AgmlibVersion)</InformationalVersion>
+    <GameVer>$(NebulousGameVersion)</GameVer>
+  </PropertyGroup>
+</Project>

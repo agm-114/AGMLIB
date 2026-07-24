@@ -1,11 +1,17 @@
 ﻿  <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="Version.props" />
+
   <PropertyGroup>
     <TargetFramework>net481</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <BaseOutputPath>C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB</BaseOutputPath>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <ModName>AGMLIB</ModName>
+    <ModDescription>By: AGM</ModDescription>
+    <DeployToGame>false</DeployToGame>
+    <ArtifactsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\artifacts'))</ArtifactsDir>
+    <BaseOutputPath>$(ArtifactsDir)\$(ModName)\</BaseOutputPath>
+    <AgmlibManifestPath>$(BaseOutputPath)ModInfo.xml</AgmlibManifestPath>
     <LangVersion>12.0</LangVersion>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-all</AnalysisLevel>
@@ -13,12 +19,7 @@
     <RootNamespace>Lib</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 
-    <VersionPrefix>6.2.2.796</VersionPrefix>
-
     <Copyright>≽^•⩊•^≼</Copyright>
-    <ModName>AGMLIB</ModName>
-    <ModDescription>By: AGM</ModDescription>
-    <GameVer>0.6.2</GameVer>
   </PropertyGroup>
 
   <ItemGroup>
@@ -322,18 +323,78 @@
     <Folder Include="Advanced\Legacy\Incomplete\" />
   </ItemGroup>
 
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-
-    <Exec Command="call postbuild.bat&#xD;&#xA;" />
-
-    <Copy DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB" SourceFiles="ModInfo.xml" />
-
+  <Target Name="ComputeAgmlibBuildVersion"
+          BeforeTargets="GetAssemblyVersion;GenerateModInfo">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\scripts\Build\Get-AgmlibBuildVersion.ps1&quot; -ProjectRoot &quot;$(MSBuildProjectDirectory)&quot; -StatePath &quot;$(MSBuildProjectDirectory)\..\.build-state\agmlib-version.json&quot; -BaseVersion &quot;$(AgmlibVersionPrefix)&quot; -BaseRevision $(AgmlibBuildRevision)"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" ItemName="_AgmlibComputedVersionOutput" />
+    </Exec>
+    <PropertyGroup>
+      <AgmlibVersion>@(_AgmlibComputedVersionOutput)</AgmlibVersion>
+      <Version>$(AgmlibVersion)</Version>
+      <VersionPrefix>$(AgmlibVersion)</VersionPrefix>
+      <AssemblyVersion>$(AgmlibVersion)</AssemblyVersion>
+      <FileVersion>$(AgmlibVersion)</FileVersion>
+      <InformationalVersion>$(AgmlibVersion)</InformationalVersion>
+    </PropertyGroup>
+    <Message Importance="High" Text="AGMLIB build version: $(AgmlibVersion)" />
   </Target>
 
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="call build.bat $(VersionPrefix) $(GameVer)" />
+  <Target Name="GenerateModInfo"
+          AfterTargets="Build"
+          DependsOnTargets="ComputeAgmlibBuildVersion">
+    <MakeDir Directories="$(BaseOutputPath)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\ModInfo.template.xml"
+          DestinationFiles="$(AgmlibManifestPath)" />
+    <XmlPoke XmlInputPath="$(AgmlibManifestPath)"
+             Query="/ModInfo/ModName"
+             Value="$(ModName)" />
+    <XmlPoke XmlInputPath="$(AgmlibManifestPath)"
+             Query="/ModInfo/ModDescription"
+             Value="$(ModDescription)" />
+    <XmlPoke XmlInputPath="$(AgmlibManifestPath)"
+             Query="/ModInfo/ModVer"
+             Value="$(AgmlibVersion)" />
+    <XmlPoke XmlInputPath="$(AgmlibManifestPath)"
+             Query="/ModInfo/Assemblies/string[1]"
+             Value="$(Configuration)/$(TargetFramework)/$(AssemblyName).dll" />
+    <XmlPoke XmlInputPath="$(AgmlibManifestPath)"
+             Query="/ModInfo/Assemblies/string[2]"
+             Value="$(Configuration)/$(TargetFramework)/0Harmony.dll" />
+    <XmlPoke XmlInputPath="$(AgmlibManifestPath)"
+             Query="/ModInfo/GameVer"
+             Value="$(NebulousGameVersion)" />
+    <Message Importance="High" Text="Generated AGMLIB manifest: $(AgmlibManifestPath)" />
+  </Target>
+
+  <Target Name="DeployAgmlibToGame"
+          AfterTargets="Build"
+          DependsOnTargets="GenerateModInfo"
+          Condition="'$(DeployToGame)' == 'true'">
+    <Error Condition="'$(ModInstallDir)' == ''"
+           Text="ModInstallDir is required. Use scripts\Build\Deploy-Agmlib.ps1 for explicit local deployment." />
+    <Error Condition="!Exists('$(TargetPath)')"
+           Text="Build output not found at $(TargetPath). Build AGMLIB before deploying." />
+    <Error Condition="!Exists('$(TargetDir)0Harmony.dll')"
+           Text="Deployment dependency not found at $(TargetDir)0Harmony.dll. Build AGMLIB before deploying." />
+
+    <ItemGroup>
+      <_AgmlibDeployBinary Include="$(TargetPath)" />
+      <_AgmlibDeployBinary Include="$(TargetDir)$(AssemblyName).pdb"
+                           Condition="Exists('$(TargetDir)$(AssemblyName).pdb')" />
+      <_AgmlibDeployBinary Include="$(TargetDir)0Harmony.dll" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(ModInstallDir)\$(Configuration)\$(TargetFramework)" />
+    <Copy SourceFiles="@(_AgmlibDeployBinary)"
+          DestinationFolder="$(ModInstallDir)\$(Configuration)\$(TargetFramework)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(AgmlibManifestPath)"
+          DestinationFiles="$(ModInstallDir)\ModInfo.xml"
+          SkipUnchangedFiles="true" />
+    <Message Importance="High" Text="Deployed AGMLIB to $(ModInstallDir)" />
   </Target>
 
 </Project>

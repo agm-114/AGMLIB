@@ -365,6 +365,9 @@ FodyWeavers.xsd
 # Generated AGMLIB mod manifest
 /AGMLIB/ModInfo.xml
 
+# Local source-fingerprint and build-revision ledger
+/.build-state/
+
 # Machine-, mod-, and fleet-specific Nebulous testing notes
 /.agents/neb-testing.local.md
 

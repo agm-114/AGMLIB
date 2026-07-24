@@ -5,30 +5,31 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 ## Working Principles
 
 - [ ] Preserve released public APIs, serialized Unity contracts, save keys, Harmony IDs, and Workshop compatibility unless a migration is explicitly designed.
-- [ ] Keep normal builds reproducible and free of tracked-file mutations.
-- [ ] Separate build, package, local deploy, game testing, and Workshop publishing into explicit operations.
+- [ ] Make normal builds portable/reproducible across clean machines; tracked-file mutation is eliminated, but the change-aware local revision ledger intentionally carries local iteration history.
+- [ ] Separate build, package, local deploy, game testing, and Workshop publishing into explicit operations; build and deploy are separated, while package/publish work remains.
 - [ ] Preserve CRLF line endings in C# and VB files and verify touched files do not contain mixed line endings.
 - [ ] Keep new agent documentation concise and task-routed; do not copy One More Jump's full generated-document system unless AGMLIB grows enough to need it.
 
 ## P0 - Reproducible, Non-Mutating Builds
 
-- [ ] Record the current build inputs, outputs, version behavior, and deployment behavior before changing them.
-- [ ] Stop `AGMLIB/build.bat` from rewriting `AGMLIB.csproj` during ordinary builds.
-- [ ] Stop ordinary builds from rewriting tracked `AGMLIB/ModInfo.xml`.
-- [ ] Replace the current automatic revision increment with an explicit version source:
-  - [ ] Choose a committed version file, Git tag, or release-supplied version.
-  - [ ] Ensure local Debug builds do not change the release version.
-  - [ ] Ensure assembly, package, and `ModInfo.xml` versions are generated from the same value.
-- [ ] Generate the publishable `ModInfo.xml` in the build/package output rather than editing the tracked source copy.
-- [ ] Replace the hard-coded `BaseOutputPath` and post-build destination with configurable MSBuild properties.
+- [x] Record the current build inputs, outputs, version behavior, and deployment behavior before changing them.
+- [x] Stop `AGMLIB/build.bat` from rewriting `AGMLIB.csproj` during ordinary builds.
+- [x] Stop ordinary builds from rewriting tracked `AGMLIB/ModInfo.xml`.
+- [x] Replace the current automatic revision increment with an explicit version source:
+  - [x] Choose a committed version file, Git tag, or release-supplied version.
+  - [x] Ensure local Debug builds do not change the release version.
+  - [x] Increment the local build revision only when build-relevant inputs change; reuse it for identical rebuilds.
+  - [x] Ensure assembly, package, and `ModInfo.xml` versions are generated from the same value.
+- [x] Generate the publishable `ModInfo.xml` in the build/package output rather than editing the tracked source copy.
+- [x] Replace the hard-coded `BaseOutputPath` and post-build destination with configurable MSBuild properties.
 - [ ] Add configurable `NebulousInstallDir` and `ModInstallDir` properties with documented local defaults.
-- [ ] Add a `DeployToGame` property that defaults to `false`.
-- [ ] Keep normal build output under `bin/` or a repository-local `artifacts/` directory.
-- [ ] Make local deployment an explicit command instead of an unconditional build side effect.
-- [ ] Replace Windows-only inline `call` behavior where practical with MSBuild or PowerShell that can be tested independently.
-- [ ] Add a verification command that performs a clean build and fails if tracked files change.
-- [ ] Confirm Debug and Release package layouts use the paths expected by NEBULOUS.
-- [ ] Document what happens when NEBULOUS is running and an assembly is locked.
+- [x] Add a `DeployToGame` property that defaults to `false`.
+- [x] Keep normal build output under `bin/` or a repository-local `artifacts/` directory.
+- [x] Make local deployment an explicit command instead of an unconditional build side effect.
+- [x] Replace Windows-only inline `call` behavior where practical with MSBuild or PowerShell that can be tested independently.
+- [x] Add a verification command that performs a clean build and fails if tracked files change.
+- [x] Confirm Debug and Release package layouts use the paths expected by NEBULOUS.
+- [x] Document what happens when NEBULOUS is running and an assembly is locked.
 
 ## P0 - Repair CI and Release Automation
 

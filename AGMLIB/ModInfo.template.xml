@@ -2,10 +2,10 @@
 <ModInfo>
   <ModName>AGMLIB</ModName>
   <ModDescription>By: AGM</ModDescription>
-  <ModVer></ModVer>
+  <ModVer>0.0.0</ModVer>
   <Assemblies>
     <string>Debug/net481/AGMLIB.dll</string>
     <string>Debug/net481/0Harmony.dll</string>
   </Assemblies>
-  <GameVer>0.3.2</GameVer>
+  <GameVer>0.0.0</GameVer>
 </ModInfo>
