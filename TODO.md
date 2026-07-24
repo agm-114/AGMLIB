@@ -72,6 +72,8 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
   - [ ] Treat `MonoBehaviour`, `ScriptableObject`, public enum, serialized-field, and save-key names as durable contracts.
   - [ ] Require migration or compatibility aliases for intentional breaking changes.
   - [ ] Require explicit numeric values for public serialized enums.
+  - [ ] Prohibit nested AGMLIB-defined custom classes and structs as AssetBundle-authored serialized payloads until the released bundle-load path proves them safe.
+  - [ ] Require complex authoring data to use bundle-proven Unity/native types, validated flattened lists/indices, or separately attached component references in the interim.
 - [ ] Add namespace rules for new code: use a chosen `AGMLIB.*` namespace and do not introduce new global-namespace public types.
 - [ ] Add Harmony guidance for stable IDs, small patch entrypoints, typed helpers, lifecycle/authority checks, and feature ownership.
 - [ ] Add generated-file, binary-reference, and packaging boundaries.
@@ -140,6 +142,126 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 - [ ] Add collision checks for public serialized/editor-visible simple type names where NEBULOUS or Unity resolves by simple name.
 - [ ] Publish the compatibility policy in the appropriate scoped `AGENTS.md`.
 
+## P1 - Component Documentation, Audit, and Namespace Compatibility
+
+- [ ] Create a `docs/` folder that inventories and documents every AGMLIB component.
+- [ ] Define which public and serialized types qualify as components and generate the authoritative component inventory from source or assembly metadata.
+- [ ] Create a standard component-document template and require consistent identity, compatibility, lifecycle, configuration, usage, and testing sections.
+- [ ] For each component, document its purpose, configuration, serialized fields, lifecycle, native-game dependencies, runtime behavior, known limitations, and a minimal usage example.
+- [ ] Link each component document to its source type and record whether it is a `MonoBehaviour`, `ScriptableObject`, descriptor, runtime component, editor component, or supporting type.
+- [ ] Add a CI-safe documentation coverage and freshness check so newly added, renamed, moved, or removed components cannot be omitted silently.
+- [ ] Review every component systematically for bugs, including serialization, cloning/pooling, lifecycle ordering, null handling, multiplayer authority, editor/runtime parity, and native-version compatibility.
+- [ ] Record each audit result, reproduction evidence, severity, and follow-up action; add regression coverage when a bug is fixed.
+- [ ] Inventory component dependencies, initialization order, shared native/Harmony targets, optional integrations, and known component conflicts.
+- [ ] Add authoring-time or load-time validation for missing references, invalid ranges, duplicate or missing save keys, incompatible combinations, and configuration that would otherwise fail only at runtime.
+- [ ] Define component diagnostics conventions with stable prefixes, useful identity and state context, configurable verbosity, and suppression or rate limiting for repeated messages.
+- [ ] Remove or gate noisy development logging, especially logging reachable from `Update`, `FixedUpdate`, `LateUpdate`, or other high-frequency callbacks.
+- [ ] Inventory component namespaces and identify types that are missing, inconsistent, or incorrectly placed in namespaces.
+- [ ] Determine whether each proposed namespace correction can preserve existing Unity serialization, saved content, prefab references, XML identities, and downstream binary compatibility.
+- [ ] Test namespace migrations against representative existing fleets, prefabs, save data, and third-party mod references before adopting them.
+- [ ] Use compatibility shims, migration metadata, or retained legacy type aliases where proven safe; do not move a released component type when compatibility cannot be demonstrated.
+- [ ] Define a deprecation policy for legacy component types, namespace shims, serialized fields, save keys, and public APIs, including support windows, migration notes, and removal criteria.
+- [ ] Define a component change completion checklist requiring updated documentation, compatibility review, relevant automated tests, and runtime/multiplayer evidence proportional to risk.
+
+## P1 - Native Runtime Access and Game-Update Compatibility
+
+- [ ] Inventory known native-member access through `Common.GetVal`, `Common.SetVal`, `Common.RunFunc`, local reflection bindings, `Traverse`, and repeated `FieldInfo`, `PropertyInfo`, or `MethodInfo` lookup.
+- [ ] Migrate known native members incrementally to cached typed `Internals()` accessors under `AGMLIB/Nebulous`.
+- [ ] Record the declaring native type, member name, expected member type/signature, and owning AGMLIB feature for every native accessor and Harmony target.
+- [ ] Add a verifier that reports missing or changed native accessor and Harmony targets against the currently supported NEBULOUS assemblies.
+- [ ] Fail or disable only the owning feature with an actionable diagnostic when a required native target is unavailable; avoid unrelated partial initialization.
+- [ ] Create a repeatable NEBULOUS update workflow that:
+  - [ ] Records the previous and new game versions and assembly hashes.
+  - [ ] Refreshes configured native assemblies without silently committing unrelated binaries.
+  - [ ] Compares native types, fields, methods, signatures, and relevant prefab YAML.
+  - [ ] Rebuilds AGMLIB and runs compatibility validation.
+  - [ ] Runs component smoke tests and records regressions before declaring support.
+
+## P1 - Gameplay Correctness From Native and Prefab Correlation
+
+- [ ] Make dynamic resource reduction use one typed effective-demand
+  calculation for runtime allocation and fleet-editor presentation.
+  - [ ] Remove the current double application in the replacement editor
+    resource summary.
+  - [ ] Define integer rounding and stacking order once and cover multiple
+    reductions.
+  - [ ] Migrate known ship resource pools, required values, provider/consumer
+    lists, and editor summary members to typed native accessors.
+  - [ ] Profile root-wide reduction discovery and remove unused `AmountExtra`
+    state if it has no intended role.
+- [ ] Finish power-status UX against native resource semantics.
+  - [ ] Distinguish supply coverage from demand utilization in labels and math.
+  - [ ] Label peak values as lifetime maxima and decide whether they belong in
+    the shared graph scale.
+  - [ ] Migrate known power-icon, image, tooltip, and status-display internals
+    to typed accessors.
+  - [ ] Verify ship switching, damage-control-panel close/reopen, throttle
+    changes, starvation, destruction, host, and remote-client behavior.
+- [ ] Replace the experimental craft launch limit with a server-owned command
+  channel while preserving the native launch queue.
+  - [ ] Choose player, ship, carrier, provider, group, craft, or weighted scope
+    explicitly.
+  - [ ] Define whether manned and unmanned craft share capacity.
+  - [ ] Allow queued replacements and promote them when active capacity frees.
+  - [ ] Keep command capacity independent from pad/storage reservation so
+    capped launches cannot starve landings.
+  - [ ] Cover player launches, AI sorties, cancellation, recovery, loss,
+    save/reload, and two carriers owned by the same player.
+  - [ ] Remove private traffic-order invalid-enum mutation and process-wide
+    transient counting.
+- [ ] Validate configurable hangar work-slot references and avoid repeated
+  combined-array allocation if profiling shows it is material.
+- [ ] Add prefab validation gates for authored behavior that code alone cannot
+  guarantee:
+  - [ ] directed versus omnidirectional EWAR muzzle rotation;
+  - [ ] continuous-beam effect and audio reference graphs;
+  - [ ] loitering trigger layer, communicator, antenna, network behavior, and
+    per-seeker fuse tables;
+  - [ ] socket stable keys, ordered indices, resize links, and stage references;
+  - [ ] hangar storage, work-slot, pad, resource, animation, and traversal
+    contracts.
+- [ ] Replace reflected debuff add/remove/state access with typed accessors and
+  define duplicate, multiplication, refresh, expiry, destruction, and
+  save/reload behavior.
+- [ ] Repair command-seeker state ownership, retarget math, launch/in-flight
+  mode separation, pool reset, ranged base-state drift, and native EMCON
+  `OverrideComms` integration.
+- [ ] Make ammo-mode cycle/resource application change-driven, validate unknown
+  resources, and either implement or remove authored-but-unused failure policy.
+- [ ] Align SIGINT track release, provider subscription, ownership change, and
+  teardown with the native sensor lifecycle.
+- [ ] Replace `AdvancedRadar`'s recursive track-update prefix with an
+  authoritative per-sensor ping scheduler.
+  - [ ] Prevent failed-ping recursion and successful mixed-track double updates.
+  - [ ] Make cycle time per sensor, validate positive finite values, and avoid
+    per-track reflection/LINQ allocation.
+  - [ ] Reuse typed native detection state instead of duplicating
+    `CanSeeSignature` and fix profiler-sample ownership.
+  - [ ] Verify forced burnthrough power, self-damage, resource, lock, and
+    multiplayer behavior.
+- [ ] Make Doppler settings a validated separately attached component
+  reference and remove every `new DopplerNotchSettings()` construction.
+  - [ ] Add deterministic angular, radial-floor, minimum-speed, and
+    relative-velocity boundary tests.
+  - [ ] Give the static contact registry explicit sensor/target/scene teardown.
+  - [ ] Keep the TacView overlay presentation-only and migrate its known native
+    private UI state to a typed accessor.
+- [ ] Stabilize the remaining fire-control and IFF experiments.
+  - [ ] Preserve `ActiveFireControlSensorOptions` modified-range intent with
+    typed native access and an acquisition/lock regression fixture.
+  - [ ] Determine whether `MultiSensor` and
+    `MultiActiveFireControlSensor` have serialized downstream users before
+    implementing, deprecating, or isolating their current placeholder types.
+  - [ ] Validate track-logic weights, propagate update failure, and prohibit
+    unintended true-position leakage or fire-control side effects.
+  - [ ] Replace `IFFComponent`'s inverted re-enable path, direct stat-cache
+    writes, per-tick reflection/logging, missing null cleanup, and absent
+    authority model with a native communications/sensor integration.
+- [ ] Prove charge-up beam server/client event ordering and pooled impact-effect
+  reset with structured telemetry.
+- [ ] Track the native `CraftLandingPad.SupportsLaunch` versus
+  `_supportLaunch` inconsistency in the supported-game target verifier.
+
 ## P1 - Namespace and Harmony Patch Governance
 
 - [ ] Inventory current namespaces, global public types, Harmony patches, Harmony IDs, and patched native methods.
@@ -159,6 +281,11 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 - [ ] Create a conventional test project that does not require launching Unity or NEBULOUS.
 - [ ] Add tests for socket-filter composition and lookup behavior.
 - [ ] Add tests for serialization and configuration parsing that can run without game assemblies where practical.
+- [ ] Build a minimal AssetBundle round-trip fixture that reproduces the editor-valid but bundle-loaded-null custom class/struct failure.
+- [ ] Test custom class and struct fields, arrays/lists, nested values, inheritance, `[SerializeReference]`, top-level Unity object references, assembly/type identity, stripping, and bundle build settings through the real mod load path.
+- [ ] Compare editor state, built bundle contents, post-load prefab state, instantiated state, and Player.log evidence for every fixture case.
+- [ ] Determine whether the failure is caused by type/assembly identity, Unity managed-reference metadata, build stripping, bundle dependency resolution, game/Unity version differences, or another pipeline stage.
+- [ ] Document a supported complex-data representation and migration path only after it passes the released AssetBundle build/load path and target game versions.
 - [ ] Add tests for pure targeting, scoring, geometry, and math helpers.
 - [ ] Add regression tests when extracting logic from Harmony patches into typed helpers.
 - [ ] Add public API baseline validation to CI.
@@ -170,6 +297,22 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 - [ ] Add a CI-safe PowerShell smoke test for repository scripts.
 - [ ] Keep runtime/editor reproduction in the `neb-testing` workflow and record the smallest repeatable scenarios.
 - [ ] Add log assertions for successful AGMLIB load and known high-risk Harmony patch failures.
+- [ ] Build a compatibility fixture corpus containing representative legacy prefabs, fleets, saves, and component configurations from known-good AGMLIB releases.
+- [ ] Exercise applicable fixtures through load, instantiate, clone, pool/unpool, launch, save, and reload paths.
+- [ ] Add an opt-in component smoke-test matrix covering editor construction, runtime initialization, normal operation, teardown, scene transition, and mod unload/reload where supported.
+- [ ] Add a multiplayer component matrix covering offline play, host, remote client, and dedicated server where applicable.
+- [ ] Record for each networked component which side owns state mutation, validation, spawning, damage, resource consumption, and replication.
+- [ ] Add regression fixtures for every approved namespace, type-name, serialized-field, or save-key migration.
+
+## P2 - Runtime Lifecycle, Resource Ownership, and Performance
+
+- [ ] Audit runtime sidecars for explicit ownership, one-instance-per-owner guarantees, rollout boundaries, and cleanup when the native owner is destroyed, pooled, replaced, or unloaded.
+- [ ] Audit component event subscriptions, callbacks, coroutines, delayed invocations, static registries, and caches for deterministic teardown and scene-transition safety.
+- [ ] Audit dynamically created `GameObject`, `Component`, `Material`, mesh, texture, and other Unity object ownership; destroy or transfer ownership explicitly.
+- [ ] Verify pooled and cloned components reset transient state, cached references, timers, collections, and network ownership before reuse.
+- [ ] Profile component hot paths for per-frame allocations, repeated reflection, LINQ, scene searches, redundant `GetComponent` calls, and avoidable cache rebuilds.
+- [ ] Establish representative CPU, allocation, and log-volume baselines for high-risk components and record the test scenario used.
+- [ ] Add performance regression checks where stable automation is practical, and require before/after profiles for changes to known hot paths.
 
 ## P2 - Packaging and Release Safety
 

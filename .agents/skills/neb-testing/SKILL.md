@@ -78,6 +78,16 @@ List apps after launch, then select the window titled `Nebulous`. Do not target 
 
 If window capture fails, stop automated input rather than clicking blind. Record the exact capture error and ask for a short manual navigation handoff.
 
+## Prefer keyboard macros
+
+Prefer a known keyboard shortcut or short key macro over an equivalent multi-step UI flow. Keyboard input is faster, avoids coordinate drift, and is generally more reliable once the correct game context and binding are verified.
+
+- Activate the `Nebulous` window and verify the required context before sending keys.
+- Prefer a single documented shortcut, then a short ordered macro, then UI navigation.
+- Use UI navigation when no binding exists, the shortcut is remapped or context-sensitive, or the resulting state cannot be verified.
+- When a reliable shortcut or macro is discovered, add its exact keys, required context, and observable result to this skill in the same change.
+- Record user-specific remaps in `.agents/neb-testing.local.md`, not in this shared skill.
+
 ## Reproduce editor issues
 
 1. Open the Fleet Editor.
@@ -110,6 +120,27 @@ To issue a position-targeted weapon order:
 7. Verify that the weapon-order icon appears, then allow enough time for launch, flight, end-of-path behavior, and submunition release before reading telemetry.
 
 Do not start by clicking the weapon cards in the lower ship-status panel; the reliable firing path is the right-click order menu. When Computer Use is controlling the game, have it press `Esc` itself because a physical `Esc` press stops the automation session.
+
+### Fire and count manual decoys
+
+Use the order menu for a reliable manual decoy launch:
+
+1. Select the ship.
+2. Press `Shift+Z` while no order widget is open.
+3. Verify that the decoy-order icon appears and that the focused diagnostic reports the accepted weapon groups.
+
+If the shortcut is remapped or cannot be verified, right-click open space, away from the ship cards and other UI, and click `DCY`.
+
+The `DECOY DSBL/LEAST/BEST/AUTO` control in the lower status panel configures automatic point-defense decoy policy; it is not the manual launch button.
+
+Use live ammunition counts to verify how many shots actually fired:
+
+1. Before firing, right-click open space and choose `WEP`.
+2. Read the ammunition tile beside each weapon-mount row and record its quantity.
+3. Fire one manual decoy order.
+4. Reopen `WEP` and sample the quantities more than once, allowing for turret slew and reload time.
+
+Do not treat an accepted order, the transient order icon, or an initial `event=fire` line as proof of repeated launches. Those signals can occur before the weapon bears and may only describe order acceptance. For a persistent firing cycle, require the ammunition count to continue decreasing across samples; if the count remains fixed and the weapon card reports `Idle`, the cycle stopped.
 
 ## Enter local skirmish
 

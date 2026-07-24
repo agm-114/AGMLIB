@@ -43,6 +43,11 @@ Registered content is captured from `BundleManager` after bundles load:
 - Hull and missile components
 - Munitions
 - Factions
+- Skirmish maps
+- Mission sets and scenarios
+- Codex entries and HUD themes
+- Supplementary AI role definitions
+- Component debuffs
 
 The dumper also follows legacy `SubmunitionWarhead._submunitionPrefab` references recursively and records those otherwise-unregistered GameObjects under `referenced-munitions`. This includes embedded mines such as Domos L05 that are reachable only through a dispenser.
 

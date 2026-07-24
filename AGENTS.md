@@ -25,6 +25,10 @@
 - Do not rely on `OnAdded`-assigned private fields being present on launched/pooled runtime copies unless those fields are serialized or rebuilt in `OnUnpooled`/`OnLaunched`.
 - When storing a typed descriptor field, prefer a small typed fallback helper that recovers from the base descriptor reference if the typed field is null.
 
+## AssetBundle Serialization
+
+- Read [AssetBundle custom-value serialization](knowledge/asset-bundle-serialization.md) before designing complex serialized authoring data. Nested AGMLIB-defined custom classes and structs are currently unsupported; follow that document's interim representation rules.
+
 ## Runtime Sidecars
 
 - Read `AGMLIB/Common/Sidecars.md` before adding or changing behavior attached alongside a native runtime object.

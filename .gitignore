@@ -374,5 +374,8 @@ FodyWeavers.xsd
 # Generated managed-assembly decompilation evidence
 /.agents/cache/neb-runtime-research/
 
+# Generated searchable native-code workspace
+/.native-code/
+
 # Locally installed Python modules used for asset-bundle inspection
 /.agents/cache/unitypy/
