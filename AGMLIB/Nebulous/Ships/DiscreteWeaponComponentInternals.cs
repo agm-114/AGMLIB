@@ -29,6 +29,9 @@ public readonly struct DiscreteWeaponComponentInternals
         internal static readonly AccessTools.FieldRef<DiscreteWeaponComponent, bool> RandomlyDeviateMuzzleTime =
             AccessTools.FieldRefAccess<DiscreteWeaponComponent, bool>("_randomlyDeviateMuzzleTime");
 
+        internal static readonly AccessTools.FieldRef<DiscreteWeaponComponent, StatValue> StatRecycleTime =
+            AccessTools.FieldRefAccess<DiscreteWeaponComponent, StatValue>("_statRecycleTime");
+
         internal static readonly Action<DiscreteWeaponComponent> StartReload =
             AccessTools.MethodDelegate<Action<DiscreteWeaponComponent>>(
                 AccessTools.Method(typeof(DiscreteWeaponComponent), "StartReload")
@@ -55,6 +58,8 @@ public readonly struct DiscreteWeaponComponentInternals
     public int MagazineSize => Refs.MagazineSize(_weapon);
 
     public bool RandomlyDeviateMuzzleTime => Refs.RandomlyDeviateMuzzleTime(_weapon);
+
+    public float RecycleTime => Refs.StatRecycleTime(_weapon).Value;
 
     public void StartReload() => Refs.StartReload(_weapon);
 }

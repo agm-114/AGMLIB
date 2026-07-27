@@ -15,6 +15,20 @@ public readonly struct WeaponComponentInternals
 
         internal static readonly AccessTools.FieldRef<WeaponComponent, int> CurrentMuzzle =
             AccessTools.FieldRefAccess<WeaponComponent, int>("_currentMuzzle");
+
+        internal static readonly Func<WeaponComponent, bool> OnTarget =
+            AccessTools.MethodDelegate<Func<WeaponComponent, bool>>(
+                AccessTools.PropertyGetter(typeof(WeaponComponent), "_onTarget")
+                ?? throw new MissingMemberException(
+                    typeof(WeaponComponent).FullName,
+                    "_onTarget"));
+
+        internal static readonly Func<WeaponComponent, bool> TargetBlocked =
+            AccessTools.MethodDelegate<Func<WeaponComponent, bool>>(
+                AccessTools.PropertyGetter(typeof(WeaponComponent), "_targetBlocked")
+                ?? throw new MissingMemberException(
+                    typeof(WeaponComponent).FullName,
+                    "_targetBlocked"));
     }
 
     private readonly WeaponComponent _weapon;
@@ -27,4 +41,8 @@ public readonly struct WeaponComponentInternals
     public ref Muzzle[] Muzzles => ref Refs.Muzzles(_weapon);
 
     public ref int CurrentMuzzle => ref Refs.CurrentMuzzle(_weapon);
+
+    public bool OnTarget => Refs.OnTarget(_weapon);
+
+    public bool TargetBlocked => Refs.TargetBlocked(_weapon);
 }
