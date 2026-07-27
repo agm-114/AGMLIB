@@ -13,126 +13,176 @@ namespace Lib.Generic_Gameplay;
 [DisallowMultipleComponent]
 public sealed class DecoyAmmoSettings : MonoBehaviour
 {
+    [SerializeField, Min(1)]
+    private int _maxQueuedRequests = 4;
+
+    private DiscreteWeaponComponent _weapon = null!;
     private ShipController _ship = null!;
+    private int _pendingRequests;
 
     /// <summary>
-    /// Temporary rollout switch. Once false, only ships with this component remain enabled.
+    /// Temporary rollout switch. Once false, only weapons with this component remain enabled.
     /// </summary>
-    public static bool EnableGlobally { get; set; } = true;
+    public static bool EnableGlobally { get; set; } = false;
 
-    internal static DecoyAmmoSettings? For(ShipController ship)
+    internal static IEnumerable<DecoyAmmoSettings> ForShip(ShipController ship)
     {
-        DecoyAmmoSettings? settings = ship.GetComponent<DecoyAmmoSettings>();
-        return settings != null || EnableGlobally
-            ? settings ?? ship.gameObject.AddComponent<DecoyAmmoSettings>()
-            : null;
+        if (EnableGlobally)
+        {
+            foreach (DiscreteWeaponComponent weapon in
+                     ship.GetComponentsInChildren<DiscreteWeaponComponent>(true))
+            {
+                _ = weapon.GetComponent<DecoyAmmoSettings>()
+                    ?? weapon.gameObject.AddComponent<DecoyAmmoSettings>();
+            }
+        }
+
+        foreach (DecoyAmmoSettings settings in
+                 ship.GetComponentsInChildren<DecoyAmmoSettings>(true))
+        {
+            if (settings.TryBind(ship))
+            {
+                yield return settings;
+            }
+        }
     }
 
-    private void Awake() => _ship = GetComponent<ShipController>();
-
-    internal bool HasAnyDecoys() => FindCandidates().Any();
-
-    internal bool CanFireDecoy() => FindCandidates().Any();
-
-    internal bool FireDecoy()
+    private void Awake()
     {
-        if (!_ship.isServer)
+        _weapon = GetComponent<DiscreteWeaponComponent>();
+        _ship = GetComponentInParent<ShipController>();
+    }
+
+    internal void TryDrainQueue()
+    {
+        if (_pendingRequests == 0 ||
+            _ship == null ||
+            !_ship.isServer ||
+            !_weapon.IsFunctional)
+        {
+            return;
+        }
+
+        DiscreteWeaponComponentInternals internals = _weapon.Internals();
+        if (internals.Reloading || internals.WaitingForMuzzle)
+        {
+            return;
+        }
+
+        if (!TryGetChaffSource(out IMagazine? source) ||
+            !TryGetNextMuzzle(out Muzzle? muzzle))
+        {
+            return;
+        }
+
+        Muzzle selectedMuzzle = muzzle!;
+        IMagazine previousSource = selectedMuzzle.Internals().AmmoSource;
+        try
+        {
+            selectedMuzzle.SetAmmoSource(source);
+            selectedMuzzle.Fire();
+        }
+        finally
+        {
+            selectedMuzzle.SetAmmoSource(previousSource);
+        }
+
+        _pendingRequests--;
+        internals.MagazineFired++;
+        if (internals.MagazineFired >= internals.MagazineSize)
+        {
+            internals.StartReload();
+        }
+        else
+        {
+            internals.WaitingForMuzzle = true;
+            internals.MuzzleAccum = internals.RandomlyDeviateMuzzleTime
+                ? UnityEngine.Random.Range(-0.5f, 0.5f)
+                : 0f;
+        }
+
+        UnityEngine.Debug.Log(
+            $"AGMLIB DecoyAmmoSettings: event=buffered-fire weapon={_weapon.name} ammo={source!.AmmoType.SaveKey} pending={_pendingRequests}");
+    }
+
+    internal bool HasAnyDecoys() =>
+        _weapon.IsFunctional &&
+        TryGetChaffSource(out _) &&
+        HasMuzzles();
+
+    internal bool CanQueueRequest()
+    {
+        if (!_weapon.IsFunctional ||
+            !HasMuzzles() ||
+            !TryGetChaffSource(out IMagazine? source))
         {
             return false;
         }
 
-        bool fired = false;
-        foreach ((WeaponGroup group, IMagazine source) in FindCandidates())
-        {
-            int firedByGroup = SpawnChaff(group, source);
-            if (firedByGroup <= 0)
-            {
-                continue;
-            }
-
-            fired = true;
-            UnityEngine.Debug.Log(
-                $"AGMLIB DecoyAmmoSettings: event=forced-fire ship={_ship.name} group={group.GroupKey} ammo={source.AmmoType.SaveKey} count={firedByGroup}");
-        }
-
-        return fired;
+        return _pendingRequests < GetQueueCapacity(source!);
     }
 
-    private IEnumerable<(WeaponGroup Group, IMagazine Source)> FindCandidates()
+    internal bool QueueRequest()
     {
-        foreach (IWeaponGroup candidate in _ship.WeaponGroups)
+        if (!_ship.isServer ||
+            !_weapon.IsFunctional ||
+            !HasMuzzles() ||
+            !TryGetChaffSource(out IMagazine? source))
         {
-            if (candidate is not WeaponGroup group ||
-                group.WepType == WeaponType.Decoy ||
-                group.FunctioningMemberCount == 0 ||
-                group.MixedAmmo ||
-                !CanSpawnChaff(group))
-            {
-                continue;
-            }
-
-            IMagazine? source = group.GetAvailableAmmoSources()
-                .FirstOrDefault(source =>
-                    source.QuantityAvailable > 0 &&
-                    IsChaff(source.AmmoType));
-            if (source != null)
-            {
-                yield return (group, source);
-            }
-        }
-    }
-
-    private static bool IsChaff(IMunition? ammo) =>
-        ammo is IMissile { IsDecoy: true };
-
-    private static bool CanSpawnChaff(WeaponGroup group) =>
-        group.Members.Any(member =>
-            member is WeaponComponent { IsFunctional: true } weapon &&
-            GetCurrentMuzzle(weapon) != null);
-
-    private static int SpawnChaff(WeaponGroup group, IMagazine source)
-    {
-        int spawned = 0;
-        foreach (IWeapon member in group.Members)
-        {
-            if (source.QuantityAvailable <= 0)
-            {
-                break;
-            }
-
-            if (member is not WeaponComponent { IsFunctional: true } weapon ||
-                GetCurrentMuzzle(weapon) is not Muzzle muzzle)
-            {
-                continue;
-            }
-
-            IMunition chaff = source.AmmoType;
-            Vector3 direction = muzzle.transform.forward;
-            source.Withdraw(1u);
-            NetworkPoolable spawnedChaff = chaff.InstantiateSelf(
-                muzzle.transform.position,
-                Quaternion.LookRotation(direction),
-                direction * chaff.FlightSpeed);
-            if (spawnedChaff is ILocalImbued localChaff)
-            {
-                localChaff.ImbueLocal(((IMuzzleWeapon)weapon).Platform);
-                localChaff.SetWeaponReportPath(weapon);
-            }
-
-            spawned++;
+            return false;
         }
 
-        return spawned;
+        if (_pendingRequests < GetQueueCapacity(source!))
+        {
+            _pendingRequests++;
+        }
+
+        return true;
     }
 
-    private static Muzzle? GetCurrentMuzzle(WeaponComponent weapon)
+    private bool TryBind(ShipController ship)
     {
-        WeaponComponentInternals internals = weapon.Internals();
+        _weapon ??= GetComponent<DiscreteWeaponComponent>();
+        _ship ??= ship;
+        return _weapon != null && _ship == ship;
+    }
+
+    private int GetQueueCapacity(IMagazine source) =>
+        Mathf.Min(Mathf.Max(1, _maxQueuedRequests), source.QuantityAvailable);
+
+    private bool TryGetChaffSource(out IMagazine? source)
+    {
+        WeaponGroup? group = _weapon.Group;
+        source = group?
+            .GetAvailableAmmoSources()
+            .FirstOrDefault(candidate =>
+                candidate.QuantityAvailable > 0 &&
+                candidate.AmmoType is IMissile { IsDecoy: true });
+        return group is
+        {
+            WepType: not WeaponType.Decoy,
+            MixedAmmo: false,
+        } &&
+            source != null;
+    }
+
+    private bool HasMuzzles() =>
+        ((WeaponComponent)_weapon).Internals().Muzzles is { Length: > 0 };
+
+    private bool TryGetNextMuzzle(out Muzzle? muzzle)
+    {
+        WeaponComponentInternals internals = ((WeaponComponent)_weapon).Internals();
         Muzzle[] muzzles = internals.Muzzles;
-        int currentMuzzle = internals.CurrentMuzzle;
-        return muzzles != null && (uint)currentMuzzle < (uint)muzzles.Length
-            ? muzzles[currentMuzzle]
-            : null;
+        if (muzzles == null || muzzles.Length == 0)
+        {
+            muzzle = null;
+            return false;
+        }
+
+        int index = internals.CurrentMuzzle;
+        muzzle = muzzles[index];
+        internals.CurrentMuzzle = (index + 1) % muzzles.Length;
+        return muzzle != null;
     }
 }
 
@@ -160,7 +210,8 @@ internal static class ShipControllerHasAnyDecoysSidecarPatch
     {
         if (!__result)
         {
-            __result = DecoyAmmoSettings.For(__instance)?.HasAnyDecoys() ?? false;
+            __result = DecoyAmmoSettings.ForShip(__instance)
+                .Any(settings => settings.HasAnyDecoys());
         }
     }
 }
@@ -175,7 +226,8 @@ internal static class ShipControllerCanFireDecoySidecarPatch
     {
         if (!__result)
         {
-            __result = DecoyAmmoSettings.For(__instance)?.CanFireDecoy() ?? false;
+            __result = DecoyAmmoSettings.ForShip(__instance)
+                .Any(settings => settings.CanQueueRequest());
         }
     }
 }
@@ -190,6 +242,19 @@ internal static class ShipControllerFireDecoySidecarPatch
         ShipController __instance,
         ref bool __result)
     {
-        __result |= DecoyAmmoSettings.For(__instance)?.FireDecoy() ?? false;
+        bool queued = false;
+        foreach (DecoyAmmoSettings settings in DecoyAmmoSettings.ForShip(__instance))
+        {
+            queued |= settings.QueueRequest();
+        }
+
+        __result |= queued;
     }
+}
+
+[HarmonyPatch(typeof(DiscreteWeaponComponent), "RunTimers")]
+internal static class DiscreteWeaponComponentRunTimersDecoySidecarPatch
+{
+    private static void Postfix(DiscreteWeaponComponent __instance) =>
+        __instance.GetComponent<DecoyAmmoSettings>()?.TryDrainQueue();
 }
