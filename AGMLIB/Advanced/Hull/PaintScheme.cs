@@ -57,27 +57,28 @@ public class PaintScheme : MonoBehaviour
             Destroy(this);
             return;
         }
-        //Debug.LogError(ClassName);
-        //Debug.LogError(SegmentName);
-        if (GameSettings.Instance.EnableNameplates && targetedhullseg is HullSegmentFastNameplate fast)
+        IReadOnlyList<Material> materials = targetedhullseg.SegmentMaterials;
+        if (Index >= materials.Count)
         {
-            if (Common.GetVal<ReferenceCounted<Texture2D>>(fast, "_nameplateDecal") == null)
-            {
-                //Debug.LogError("Waiting For Nameplate Bake");
-                return;
-            }
+            Debug.LogError($"[AGMLIB Paint] Material index {Index} is out of range for segment '{SegmentName}' on hull '{ClassName}'.");
+            Destroy(this);
+            return;
         }
-        //Common.SetVal(hullSegment, "_bakedMaterials", null);
-        //Material[] mats = Common.GetVal<Material[]>(hullSegment, "_bakedMaterials", null);
-        foreach (MeshRenderer mesh in targetedhullseg.GetComponentsInChildren<MeshRenderer>())
+
+        if (CustomShaderProperty == "" && ShaderProperty != ShaderProperties.None)
         {
-            if (CustomShaderProperty == "" && ShaderProperty != ShaderProperties.None)
-            {
-                CustomShaderProperty = "_" + ShaderProperty.ToString();
-            }
-            mesh.sharedMaterials[Index].SetTexture(CustomShaderProperty, ReplacementTexture);
+            CustomShaderProperty = "_" + ShaderProperty.ToString();
         }
-        //hullSegment.BakeNameplateAsync(Ship.ShipName, Ship.HullNumber, Ship.Fleet.FleetBadge);
+
+        Material material = materials[Index];
+        if (material == null || !material.HasProperty(CustomShaderProperty))
+        {
+            Debug.LogError($"[AGMLIB Paint] Material index {Index} on segment '{SegmentName}' does not support '{CustomShaderProperty}'.");
+            Destroy(this);
+            return;
+        }
+
+        material.SetTexture(CustomShaderProperty, ReplacementTexture);
         Destroy(this);
 
     }

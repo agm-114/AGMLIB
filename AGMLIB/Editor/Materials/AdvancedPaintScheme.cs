@@ -72,110 +72,174 @@ public class AdvancedPaintScheme : MonoBehaviour
 
     }
 
-    // Update is called once per frame
     void Update()
     {
-        //Debug.LogError("Running APS Tick");
-        if (!Application.isEditor)
+        if (!Application.isEditor || (!Serialize && !AutoFill))
         {
             return;
         }
 
-        if (Serialize)
+        if (!TryGetHull(out Hull linkedHull))
         {
+            return;
+        }
 
-            SerializedClassNames = new List<string>();
-            SerializedSegmentNames = new List<string>();
-            SerializedTextures = new List<Texture2D>();
-            SerializedIndexes = new List<int>();
-            SerializedValidTargets = new List<bool>();
-            SerializedTargets = new List<FastNameplateBaker.BakeTarget>();
-
-            foreach (SegmentOverride textureOverride in HullSegmentTextures)
-            {
-                //SerializedClassNames[counttexutures] = hullScheme.ClassName;
-                //SerializedSegmentNames[counttexutures] = textureOverride.SegmentName;
-                //SerializedTextures[counttexutures] = textureOverride.ReplacementTexture;
-                void Serialize(int indexval, Texture2D texture, FastNameplateBaker.BakeTarget target, bool validtarget = false)
-                {
-                    SerializedClassNames.Add(ClassName);
-                    SerializedSegmentNames.Add(textureOverride.SegmentName);
-                    SerializedTextures.Add(texture);
-                    SerializedIndexes.Add(-1);
-                    SerializedValidTargets.Add(validtarget);
-                    SerializedTargets.Add(target);
-                }
-
-                Serialize(-1, textureOverride.ReplacementTexture, new());
-
-                int index = 0;
-
-
-                foreach (Texture2D texture in textureOverride.TextureOverrides)
-                {
-                    Serialize(index, texture, new());
-                    index++;
-                }
-                index = 0;
-
-                foreach (FastNameplateBaker.BakeTarget texture in textureOverride.Targets)
-                {
-                    Serialize(index, null, texture, true);
-                    index++;
-                }
-
-                //counttexutures = 0;
-            }
-
+        HullSegmentBasic[] paintableMeshes = GetPaintableMeshes(linkedHull);
+        if (paintableMeshes.Length == 0)
+        {
+            Debug.LogError($"AdvancedPaintScheme on '{name}' could not find any paintable hull segments.");
+            return;
         }
 
         if (AutoFill)
         {
-            Debug.LogError("Running APS Editor Tick");
-
-            if (Hull == null)
-            {
-                Debug.LogError("Hull is Null");
-                return;
-
-            }
-
-            Hull newhull = (Hull.GetComponent<Hull>() ?? Hull.GetComponentInChildren<Hull>()) ?? Hull.GetComponentInParent<Hull>();
-            if (newhull == null)
-            {
-                Debug.LogError("The linked gameobject has no HULL component");
-                return;
-            }
-            ClassName = newhull.ClassName;
-            HullSegmentBasic[] _paintableMeshes = Common.GetVal<HullSegmentBasic[]>(newhull, "_paintableMeshes");
-            if (_paintableMeshes == null || _paintableMeshes.Length <= 0)
-            {
-                Debug.LogError("No Paintable Medshes Detected, falling back on manual detection");
-                _paintableMeshes = Hull.GetComponentsInChildren<HullSegmentBasic>();
-
-            }
-            if (_paintableMeshes == null || _paintableMeshes.Length <= 0)
-            {
-                Debug.LogError("No Paintable Medshes Detected, falling back on manual detection");
-                return;
-
-            }
-
-
-            if (HullSegmentTextures == null)
-                HullSegmentTextures = new List<SegmentOverride>(1);
-            while (HullSegmentTextures.Count < _paintableMeshes.Length)
-                HullSegmentTextures.Add(new SegmentOverride());
-            while (HullSegmentTextures.Count > _paintableMeshes.Length)
-                HullSegmentTextures.RemoveAt(HullSegmentTextures.Count - 1);
-            for (int j = 0; j < _paintableMeshes.Length; j++)
-            {
-                HullSegmentTextures[j].SegmentName = _paintableMeshes[j].gameObject.name;
-            }
-
+            AutoFillSegments(linkedHull, paintableMeshes);
         }
 
+        if (Serialize)
+        {
+            SerializePaintScheme(paintableMeshes);
+        }
+    }
 
+    private bool TryGetHull(out Hull linkedHull)
+    {
+        linkedHull = null;
+        if (Hull == null)
+        {
+            Debug.LogError($"AdvancedPaintScheme on '{name}' has no hull linked.");
+            return false;
+        }
+
+        linkedHull = Hull.GetComponent<Hull>() ?? Hull.GetComponentInChildren<Hull>() ?? Hull.GetComponentInParent<Hull>();
+        if (linkedHull == null)
+        {
+            Debug.LogError($"AdvancedPaintScheme on '{name}' could not find a Hull component from '{Hull.name}'.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static HullSegmentBasic[] GetPaintableMeshes(Hull hull)
+    {
+        HullSegmentBasic[] paintableMeshes = hull.Internals().PaintableMeshes;
+        return paintableMeshes == null || paintableMeshes.Length == 0
+            ? hull.GetComponentsInChildren<HullSegmentBasic>()
+            : paintableMeshes;
+    }
+
+    private void AutoFillSegments(Hull hull, HullSegmentBasic[] paintableMeshes)
+    {
+        ClassName = hull.ClassName;
+        HullSegmentTextures ??= new List<SegmentOverride>(paintableMeshes.Length);
+
+        while (HullSegmentTextures.Count < paintableMeshes.Length)
+        {
+            HullSegmentTextures.Add(new SegmentOverride());
+        }
+        while (HullSegmentTextures.Count > paintableMeshes.Length)
+        {
+            HullSegmentTextures.RemoveAt(HullSegmentTextures.Count - 1);
+        }
+        for (int i = 0; i < paintableMeshes.Length; i++)
+        {
+            HullSegmentTextures[i].SegmentName = paintableMeshes[i].gameObject.name;
+        }
+    }
+
+    private void SerializePaintScheme(HullSegmentBasic[] paintableMeshes)
+    {
+        if (HullSegmentTextures == null)
+        {
+            Debug.LogError($"AdvancedPaintScheme on '{name}' has no segment overrides to serialize.");
+            return;
+        }
+
+        List<string> classNames = new();
+        List<string> segmentNames = new();
+        List<Texture2D> textures = new();
+        List<int> indexes = new();
+        List<bool> validTargets = new();
+        List<FastNameplateBaker.BakeTarget> targets = new();
+        string shaderPropertyName = ShaderPropertyName();
+
+        foreach (SegmentOverride textureOverride in HullSegmentTextures)
+        {
+            void Add(int materialIndex, Texture2D texture, FastNameplateBaker.BakeTarget target, bool validTarget = false)
+            {
+                classNames.Add(ClassName);
+                segmentNames.Add(textureOverride.SegmentName);
+                textures.Add(texture);
+                indexes.Add(materialIndex);
+                validTargets.Add(validTarget);
+                targets.Add(target);
+            }
+
+            Add(-1, textureOverride.ReplacementTexture, new());
+
+            IReadOnlyList<Texture2D> textureOverrides = textureOverride.TextureOverrides is null
+                ? Array.Empty<Texture2D>()
+                : textureOverride.TextureOverrides;
+            if (textureOverrides.Count > 0)
+            {
+                HullSegmentBasic[] matchingSegments = paintableMeshes
+                    .Where(segment => segment.gameObject.name == textureOverride.SegmentName)
+                    .ToArray();
+                if (matchingSegments.Length != 1)
+                {
+                    Debug.LogError($"AdvancedPaintScheme on '{name}' expected one segment named '{textureOverride.SegmentName}', but found {matchingSegments.Length}.");
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(shaderPropertyName))
+                {
+                    Debug.LogError($"AdvancedPaintScheme on '{name}' cannot map material overrides without a shader property.");
+                    return;
+                }
+
+                IReadOnlyList<Material> materials = matchingSegments[0].SegmentMaterials;
+                List<int> compatibleIndexes = new();
+                for (int materialIndex = 0; materialIndex < materials.Count; materialIndex++)
+                {
+                    Material material = materials[materialIndex];
+                    if (material != null && material.HasProperty(shaderPropertyName))
+                    {
+                        compatibleIndexes.Add(materialIndex);
+                    }
+                }
+
+                if (textureOverrides.Count > compatibleIndexes.Count)
+                {
+                    Debug.LogError($"AdvancedPaintScheme on '{name}' has {textureOverrides.Count} texture overrides for segment '{textureOverride.SegmentName}', but only {compatibleIndexes.Count} materials support '{shaderPropertyName}'.");
+                    return;
+                }
+
+                for (int i = 0; i < textureOverrides.Count; i++)
+                {
+                    Add(compatibleIndexes[i], textureOverrides[i], new());
+                }
+            }
+
+            IReadOnlyList<FastNameplateBaker.BakeTarget> nameplateTargets = textureOverride.Targets is null
+                ? Array.Empty<FastNameplateBaker.BakeTarget>()
+                : textureOverride.Targets;
+            for (int i = 0; i < nameplateTargets.Count; i++)
+            {
+                Add(i, null, nameplateTargets[i], true);
+            }
+        }
+
+        SerializedClassNames = classNames;
+        SerializedSegmentNames = segmentNames;
+        SerializedTextures = textures;
+        SerializedIndexes = indexes;
+        SerializedValidTargets = validTargets;
+        SerializedTargets = targets;
+    }
+
+    private string ShaderPropertyName()
+    {
+        return shaderproperty == ShaderProperties.None ? string.Empty : "_" + shaderproperty;
     }
 }
 
