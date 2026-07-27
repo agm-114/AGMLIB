@@ -18,6 +18,7 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
 
     private DiscreteWeaponComponent _weapon = null!;
     private ShipController _ship = null!;
+    private DecoyAmmoFibonacciSlew _fibonacciSlew = null!;
     private int _pendingRequests;
 
     /// <summary>
@@ -51,6 +52,8 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
     {
         _weapon = GetComponent<DiscreteWeaponComponent>();
         _ship = GetComponentInParent<ShipController>();
+        _fibonacciSlew = GetComponent<DecoyAmmoFibonacciSlew>()
+            ?? gameObject.AddComponent<DecoyAmmoFibonacciSlew>();
     }
 
     internal void TryDrainQueue()
@@ -65,6 +68,11 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
 
         DiscreteWeaponComponentInternals internals = _weapon.Internals();
         if (internals.Reloading || internals.WaitingForMuzzle)
+        {
+            return;
+        }
+
+        if (!_fibonacciSlew.TryPrepareShot())
         {
             return;
         }
@@ -88,6 +96,7 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
         }
 
         _pendingRequests--;
+        _fibonacciSlew.ShotFired(_pendingRequests > 0);
         internals.MagazineFired++;
         if (internals.MagazineFired >= internals.MagazineSize)
         {
@@ -135,6 +144,7 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
         if (_pendingRequests < GetQueueCapacity(source!))
         {
             _pendingRequests++;
+            _fibonacciSlew.Begin(source!.AmmoType);
         }
 
         return true;
@@ -150,6 +160,9 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
     private int GetQueueCapacity(IMagazine source) =>
         Mathf.Min(Mathf.Max(1, _maxQueuedRequests), source.QuantityAvailable);
 
+    internal static bool IsChaffAmmo(IMunition? ammo) =>
+        ammo is IMissile { IsDecoy: true };
+
     private bool TryGetChaffSource(out IMagazine? source)
     {
         WeaponGroup? group = _weapon.Group;
@@ -157,7 +170,7 @@ public sealed class DecoyAmmoSettings : MonoBehaviour
             .GetAvailableAmmoSources()
             .FirstOrDefault(candidate =>
                 candidate.QuantityAvailable > 0 &&
-                candidate.AmmoType is IMissile { IsDecoy: true });
+                IsChaffAmmo(candidate.AmmoType));
         return group is
         {
             WepType: not WeaponType.Decoy,
@@ -255,6 +268,9 @@ internal static class ShipControllerFireDecoySidecarPatch
 [HarmonyPatch(typeof(DiscreteWeaponComponent), "RunTimers")]
 internal static class DiscreteWeaponComponentRunTimersDecoySidecarPatch
 {
-    private static void Postfix(DiscreteWeaponComponent __instance) =>
+    private static void Postfix(DiscreteWeaponComponent __instance)
+    {
+        __instance.GetComponent<DecoyAmmoFibonacciSlew>()?.UpdatePositionPattern();
         __instance.GetComponent<DecoyAmmoSettings>()?.TryDrainQueue();
+    }
 }
