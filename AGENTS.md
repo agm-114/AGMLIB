@@ -32,7 +32,7 @@
 ## Runtime Sidecars
 
 - Read `AGMLIB/Common/Sidecars.md` before adding or changing behavior attached alongside a native runtime object.
-- Treat that document as living guidance. When runtime work reveals a reusable lesson about sidecar ownership, lifecycle, rollout, patch boundaries, or testing, improve the document in the same change while keeping case-specific details out of the general pattern.
+- Keep that document high-level. Update it only when runtime work reveals broadly reusable guidance about sidecar ownership, lifecycle, rollout, or patch boundaries; do not add implementation-specific discoveries or routine testing lessons.
 
 ## Local Testing Context
 

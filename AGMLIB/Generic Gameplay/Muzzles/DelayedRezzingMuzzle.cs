@@ -110,8 +110,18 @@ public class DelayedRezzingMuzzle : RezzingMuzzle
 
     private void FireDelayedShot(Vector3 shotDirection)
     {
+        if (!ParentWeaponIsOperational())
+        {
+            return;
+        }
+
         _delayedShotReady = true;// Set this flag so that the next call to Fire() will go through
         Fire(shotDirection);
+    }
+
+    private bool ParentWeaponIsOperational()
+    {
+        return _weapon is not IWeapon weapon || weapon.IsDoingWork;
     }
 
     protected virtual void Awake()
@@ -171,6 +181,15 @@ public class DelayedRezzingMuzzle : RezzingMuzzle
     private IEnumerator FireEffectAfterDelay()
     {
         yield return new WaitForSeconds(FireDelay);
+
+        if (!ParentWeaponIsOperational())
+        {
+            _inRefractoryPeriod = false;
+            _effects?.StopEffect();
+            _fullBurstAudioEffect?.Stop();
+            yield break;
+        }
+
         DelayedFireEffect();
     }
 
