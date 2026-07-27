@@ -34,3 +34,6 @@ content authors.
 - `feature-catalog.md`: the canonical feature-family guide; split a family into
   `features/` only when configuration examples and troubleshooting become too
   large for the catalog.
+- `features/turreted-discrete-modular-missiles.md`: common prefab setup,
+  runtime path, known blockers, and validation for a turreted discrete weapon
+  that consumes modular missile ammunition.

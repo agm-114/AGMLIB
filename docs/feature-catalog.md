@@ -95,6 +95,13 @@ Damage mutation must remain authoritative while charge-up, tracers, beams, audio
 and impact visuals may need client-side execution. Each custom muzzle needs a
 state-reset checklist for clone/pool/reuse.
 
+The common modular-missile turret setup has a dedicated authoring and
+troubleshooting guide:
+[`Turreted discrete weapons using modular missile ammunition`](features/turreted-discrete-modular-missiles.md).
+The launch path is source-verified but remains experimental because the current
+bridge has known serialization, validation, salvo-ID, targeting, and
+multiplayer-presentation defects.
+
 ## Sensors, EWAR, and tactical information
 
 The sensor/EWAR family contains advanced active fire control, multi-active fire
