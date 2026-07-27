@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Game.Sensors;
 using Game.UI.Chessboard;
 using Game.Units;
-using Lib.Testing;
 using Shapes;
 using Ships;
 using UnityEngine;
@@ -546,40 +545,5 @@ internal static class DopplerNotchOverlayVisibilityPatch
         bool active = Common.GetVal<bool>(detailOverlay, "_active");
         ShipController ship = detailOverlay.ForShip;
         overlay.SetVisible(ship != null && ship.OwnedBy != null && ship.OwnedBy.IsOnLocalPlayerTeam && active);
-    }
-}
-
-//[TestingComponentFactory(Order = 100)]
-public sealed class DopplerTestingComponentFactory : ITestingComponentFactory
-{
-    public void CreateTestingComponents(TestingComponentContext context)
-    {
-        context.CreateFirst(
-            component => component.GetType() == typeof(InternalActiveSensorComponent),
-            "AGMLIB/Testing/Doppler Internal Active Sensor",
-            builder =>
-            {
-                string sourceName = builder.Source.ComponentName;
-                builder.ReplaceRoot<DopplerInternalActiveSensorComponent>()
-                    .SetDisplayName($"[TEST] Doppler {sourceName}")
-                    .SetDescription($"Doppler/notch testing version of {builder.Source.SaveKey}.");
-            });
-
-        context.CreateFirst(
-            component => component.GetComponentsInChildren<ActiveFireControlSensor>(includeInactive: true)
-                .Any(sensor => sensor.GetType() == typeof(ActiveFireControlSensor)),
-            "AGMLIB/Testing/Doppler Active Fire Control",
-            builder =>
-            {
-                string sourceName = builder.Source.ComponentName;
-                int replaced = builder.ReplaceInChildren<ActiveFireControlSensor, DopplerActiveFireControlSensor>();
-                if (replaced == 0)
-                {
-                    throw new InvalidOperationException($"No exact ActiveFireControlSensor was found under {builder.Source.SaveKey}.");
-                }
-
-                builder.SetDisplayName($"[TEST] Doppler {sourceName}")
-                    .SetDescription($"Doppler/notch fire-control testing version of {builder.Source.SaveKey}; replaced {replaced} active fire-control sensor(s).");
-            });
     }
 }

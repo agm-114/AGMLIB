@@ -9,12 +9,12 @@ fixed `WeaponType` is `Decoy`; a gun does not change its fixed type when it carr
 ammunition. The sidecar supplements the command's availability and execution for those guns while
 leaving ordinary weapon fire untouched.
 
-The patches remain adapters. Candidate discovery, target filtering, and authoritative execution
-live in the typed
-[`DecoyAmmoSettings` behavior](../Generic%20Gameplay/DecoyAmmoSettings.cs). Its execution path is
-deliberately narrow: temporarily bind an eligible muzzle to a decoy magazine, call the muzzle's
-native fire method, and restore the original binding in a `finally` block. It never changes selected
-ammo and does not take ownership of the native order's lifecycle.
+The patches remain adapters. Candidate discovery and authoritative execution live in the typed
+[`DecoyAmmoSettings` behavior](../Generic%20Gameplay/DecoyAmmoSettings.cs). The command callback
+only queues work. The weapon-owned behavior drains that queue over time and advances the native
+weapon's own firing cadence. Its mutation is deliberately narrow: temporarily bind an eligible
+muzzle to a decoy magazine, call the muzzle's native fire method, restore the original binding in a
+`finally` block, and update the native shot bookkeeping.
 
 ## Ownership and lifetime
 
@@ -23,6 +23,11 @@ ammo and does not take ownership of the native order's lifecycle.
   lifetime. Attach it idempotently with `GetComponent<T>() ?? AddComponent<T>()`, and use
   `[DisallowMultipleComponent]` when duplicates are never meaningful.
 - Keep the sidecar typed after any unavoidable patch or reflection boundary.
+- When commands may arrive faster than the owner can act, acknowledge them at the enqueue boundary
+  and drain a bounded queue from the owner's normal update boundary. Reuse the owner's native
+  cooldown and cycle bookkeeping instead of maintaining a competing timer.
+- When queued work must take priority over the owner's ordinary action, drain it at the narrow
+  readiness boundary immediately before that action is evaluated.
 - Do not store authoring or prefab references that a finalized, cloned, or pooled object will lose.
   Resolve live state from the owner or serialize/rebuild the reference at the appropriate lifecycle
   point.
@@ -40,9 +45,9 @@ from its execution logic:
 - when the rollout ends, replace the global gate with an exact component, save key, feature
   registration, or configuration check without rewriting the sidecar.
 
-`DecoyAmmoSettings.EnableGlobally` is currently `true`, so eligible ships receive the sidecar at
-runtime. Once that default is false, only ships with an explicitly attached `DecoyAmmoSettings`
-participate; the execution logic does not need another rewrite.
+`DecoyAmmoSettings.EnableGlobally` is currently `false`, so only weapons with an explicitly attached
+`DecoyAmmoSettings` participate. Turning the gate on temporarily attaches the same weapon-owned
+behavior to eligible runtime weapons; the execution logic does not change.
 
 ## Safety rules
 
