@@ -1,6 +1,9 @@
 name: NEBULOUS Integration
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       timeout_seconds:
@@ -166,7 +169,7 @@ jobs:
             -ServerRoot '${{ runner.temp }}/nebulous-server' `
             -ConfigPath '${{ runner.temp }}/integration-evidence/DedicatedServerConfig.xml' `
             -OutputDirectory '${{ runner.temp }}/integration-evidence/server-smoke' `
-            -TimeoutSeconds ([int]'${{ inputs.timeout_seconds }}') `
+            -TimeoutSeconds ([int]'${{ inputs.timeout_seconds || '720' }}') `
             -HeartbeatSeconds 15 `
             -StallTimeoutSeconds 90 `
             -PhaseTimeoutSeconds 120 `
