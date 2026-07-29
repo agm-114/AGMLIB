@@ -269,8 +269,9 @@ try
         if (Test-Path -LiteralPath $prefabManifestPath -PathType Leaf)
         {
             $manifestText = Get-Content -LiteralPath $prefabManifestPath -Raw
-            $dumpIsValid = $manifestText -match '(?m)^errors:\s+0\s*$'
-            if (-not $dumpIsValid -and $manifestText -match '(?m)^errors:\s+[1-9][0-9]*\s*$')
+            $dumpIsValid = $manifestText -match '(?m)^(?:errors|error_count):\s+0\s*$'
+            if (-not $dumpIsValid -and
+                $manifestText -match '(?m)^(?:errors|error_count):\s+[1-9][0-9]*\s*$')
             {
                 throw 'Prefab dump manifest reports one or more serialization errors.'
             }

@@ -165,7 +165,7 @@ Changing server game state to Arriving
 Changing server game state to Running
 GO!
 """);
-File.WriteAllText(Path.Combine(dumpPath, "manifest.yaml"), "errors: 0\n");
+File.WriteAllText(Path.Combine(dumpPath, "manifest.yaml"), "error_count: 0\n");
 Console.WriteLine("Fake NEBULOUS dedicated server is ready.");
 Thread.Sleep(TimeSpan.FromSeconds(30));
 '@
