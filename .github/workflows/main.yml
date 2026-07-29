@@ -72,7 +72,10 @@ jobs:
       - name: Verify build isolation
         if: matrix.configuration == 'Release'
         shell: pwsh
-        run: ./scripts/Build/Test-AgmlibBuildIsolation.ps1 -Configuration Release
+        run: >-
+          ./scripts/Build/Test-AgmlibBuildIsolation.ps1
+          -Configuration Release
+          -PowerShellExecutable pwsh
 
       - name: Upload CI reports
         uses: actions/upload-artifact@v7
