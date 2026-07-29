@@ -124,7 +124,14 @@ if ($ConfigureHeadlessMatch)
 $modsElement = $config.SelectSingleNode('//Mods')
 if ($null -eq $modsElement)
 {
-    throw 'Dedicated-server config does not contain <Mods>.'
+    $configRoot = $config.DocumentElement
+    if ($null -eq $configRoot)
+    {
+        throw 'Dedicated-server config does not have a root element.'
+    }
+
+    $modsElement = $config.CreateElement('Mods')
+    [void]$configRoot.AppendChild($modsElement)
 }
 $modsElement.RemoveAll()
 foreach ($modId in $ModIds)
