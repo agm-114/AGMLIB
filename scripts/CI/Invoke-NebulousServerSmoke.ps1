@@ -75,7 +75,7 @@ if ($RequireGameplayReady)
         '\[AGMLIB CI\] waiting for bot fleet initialization',
         '\[AGMLIB CI\] suppressing bot-only return to lobby',
         'Finished spawning fleets',
-        '(?m)^GO!\r?$'
+        '(?m)(?:^| - Log - )GO!\r?$'
     )
     $ForbiddenLogPatterns = @($ForbiddenLogPatterns) + @(
         '\[AGMLIB CI\] refusing headless match launch',
@@ -161,8 +161,10 @@ $lifecycleEvents = @(
     [pscustomobject]@{ Name = 'fleets-spawning'; Pattern = 'Changing server game state to SpawningFleet' }
     [pscustomobject]@{ Name = 'bot-fleets-initializing'; Pattern = '\[AGMLIB CI\] waiting for bot fleet initialization' }
     [pscustomobject]@{ Name = 'fleets-spawned'; Pattern = 'Finished spawning fleets' }
-    [pscustomobject]@{ Name = 'deployment-started'; Pattern = 'Changing server game state to (ChooseSpawn|Arriving)' }
-    [pscustomobject]@{ Name = 'gameplay-started'; Pattern = '(?m)^GO!\r?$' }
+    [pscustomobject]@{ Name = 'spawn-selection-started'; Pattern = 'Changing server game state to ChooseSpawn' }
+    [pscustomobject]@{ Name = 'ships-arriving'; Pattern = 'Changing server game state to Arriving' }
+    [pscustomobject]@{ Name = 'gameplay-state-running'; Pattern = 'Changing server game state to Running' }
+    [pscustomobject]@{ Name = 'gameplay-started'; Pattern = '(?m)(?:^| - Log - )GO!\r?$' }
 )
 
 try

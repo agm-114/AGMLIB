@@ -161,6 +161,8 @@ Changing server game state to SpawningFleet
 [AGMLIB CI] suppressing bot-only return to lobby
 Finished spawning fleets
 Changing server game state to ChooseSpawn
+Changing server game state to Arriving
+Changing server game state to Running
 GO!
 """);
 File.WriteAllText(Path.Combine(dumpPath, "manifest.yaml"), "errors: 0\n");
@@ -215,7 +217,9 @@ Thread.Sleep(TimeSpan.FromSeconds(30));
         'fleets-spawning',
         'bot-fleets-initializing',
         'fleets-spawned',
-        'deployment-started',
+        'spawn-selection-started',
+        'ships-arriving',
+        'gameplay-state-running',
         'gameplay-started'
     )
     $missingLifecycleEvents = $expectedLifecycleEvents |
