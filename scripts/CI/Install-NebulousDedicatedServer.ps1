@@ -8,7 +8,10 @@ param(
 
     [string]$ReportPath,
 
-    [switch]$SkipValidation
+    [switch]$SkipValidation,
+
+    [ValidateRange(1, 3)]
+    [int]$MaxInstallAttempts = 2
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,9 +24,21 @@ if (-not (Test-Path -LiteralPath $SteamCmdPath -PathType Leaf))
 }
 
 New-Item -ItemType Directory -Path $InstallDirectory -Force | Out-Null
+
+Write-Host 'Refreshing SteamCMD application metadata.'
+& $SteamCmdPath `
+    '+login' 'anonymous' `
+    '+app_info_update' '1' `
+    '+quit'
+if ($LASTEXITCODE -ne 0)
+{
+    throw "SteamCMD metadata refresh failed with exit code $LASTEXITCODE."
+}
+
 $arguments = @(
     '+force_install_dir', $InstallDirectory,
     '+login', 'anonymous',
+    '+app_info_update', '1',
     '+app_update', '2353090'
 )
 if (-not $SkipValidation)
@@ -33,10 +48,34 @@ if (-not $SkipValidation)
 $arguments += '+quit'
 
 Write-Host "Installing NEBULOUS dedicated server app 2353090 into '$InstallDirectory'."
-& $SteamCmdPath @arguments
-if ($LASTEXITCODE -ne 0)
+$installExitCode = $null
+for ($attempt = 1; $attempt -le $MaxInstallAttempts; $attempt++)
 {
-    throw "SteamCMD dedicated-server install failed with exit code $LASTEXITCODE."
+    & $SteamCmdPath @arguments
+    $installExitCode = $LASTEXITCODE
+    if ($installExitCode -eq 0)
+    {
+        break
+    }
+
+    if ($attempt -lt $MaxInstallAttempts)
+    {
+        Write-Warning (
+            "SteamCMD dedicated-server install attempt $attempt failed with exit code " +
+            "$installExitCode. Refreshing metadata before the bounded retry.")
+        & $SteamCmdPath `
+            '+login' 'anonymous' `
+            '+app_info_update' '1' `
+            '+quit'
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "SteamCMD metadata refresh before retry failed with exit code $LASTEXITCODE."
+        }
+    }
+}
+if ($installExitCode -ne 0)
+{
+    throw "SteamCMD dedicated-server install failed after $MaxInstallAttempts attempt(s) with exit code $installExitCode."
 }
 
 $serverCandidates = @(

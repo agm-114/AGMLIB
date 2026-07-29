@@ -14,7 +14,9 @@ param(
 
     [int]$MaxPlayers = 2,
 
-    [UInt64[]]$ModIds = @(2960504230)
+    [UInt64[]]$ModIds = @(2960504230),
+
+    [switch]$ConfigureHeadlessMatch
 )
 
 $ErrorActionPreference = 'Stop'
@@ -65,10 +67,71 @@ Set-RequiredElementValue -Document $config -ElementName 'GamePort' -Value $GameP
 Set-RequiredElementValue -Document $config -ElementName 'QueryPort' -Value $QueryPort.ToString([Globalization.CultureInfo]::InvariantCulture)
 Set-RequiredElementValue -Document $config -ElementName 'MaxPlayers' -Value $MaxPlayers.ToString([Globalization.CultureInfo]::InvariantCulture)
 
+if ($ConfigureHeadlessMatch)
+{
+    Set-RequiredElementValue -Document $config -ElementName 'TeamSizeToStart' -Value '1'
+
+    $botsElement = $config.SelectSingleNode('//Bots')
+    if ($null -eq $botsElement)
+    {
+        $configRoot = $config.DocumentElement
+        if ($null -eq $configRoot)
+        {
+            throw 'Dedicated-server config does not have a root element.'
+        }
+
+        $botsElement = $config.CreateElement('Bots')
+        $followingElement = $configRoot.SelectSingleNode(
+            'RankRestriction | AutoBalance | AutoBalanceTriggerThreshold | Competitive | AllowModdedFleets | Mods')
+        if ($null -eq $followingElement)
+        {
+            [void]$configRoot.AppendChild($botsElement)
+        }
+        else
+        {
+            [void]$configRoot.InsertBefore($botsElement, $followingElement)
+        }
+    }
+    $botsElement.RemoveAll()
+
+    $botDefinitions = @(
+        [ordered]@{
+            Team = 'TeamA'
+            Difficulty = 'Hard'
+            Badge = 'Alliance Roundel'
+            Fleet = 'Starter Fleets - Alliance/TF Oak.fleet'
+        }
+        [ordered]@{
+            Team = 'TeamB'
+            Difficulty = 'Hard'
+            Badge = 'OSP_Roundel'
+            Fleet = 'Starter Fleets - Protectorate/Tantalum Squadron.fleet'
+        }
+    )
+    foreach ($botDefinition in $botDefinitions)
+    {
+        $botElement = $config.CreateElement('Bot')
+        foreach ($property in $botDefinition.GetEnumerator())
+        {
+            $propertyElement = $config.CreateElement($property.Key)
+            $propertyElement.InnerText = $property.Value
+            [void]$botElement.AppendChild($propertyElement)
+        }
+        [void]$botsElement.AppendChild($botElement)
+    }
+}
+
 $modsElement = $config.SelectSingleNode('//Mods')
 if ($null -eq $modsElement)
 {
-    throw 'Dedicated-server config does not contain <Mods>.'
+    $configRoot = $config.DocumentElement
+    if ($null -eq $configRoot)
+    {
+        throw 'Dedicated-server config does not have a root element.'
+    }
+
+    $modsElement = $config.CreateElement('Mods')
+    [void]$configRoot.AppendChild($modsElement)
 }
 $modsElement.RemoveAll()
 foreach ($modId in $ModIds)

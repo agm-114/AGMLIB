@@ -16,6 +16,7 @@ namespace Lib.Testing;
 public static class TestingPrefabYamlDumper
 {
     private const string DumpEnvironmentVariable = "AGMLIB_PREFAB_DUMP_DIR";
+    private const string DumpImmediateEnvironmentVariable = "AGMLIB_PREFAB_DUMP_IMMEDIATE";
     private const string DumpScheduledAppDomainKey = "AGMLIB_PREFAB_DUMP_SCHEDULED";
     private const string DumpCompletedAppDomainKey = "AGMLIB_PREFAB_DUMP_COMPLETED";
     private const int SchemaVersion = 2;
@@ -55,6 +56,17 @@ public static class TestingPrefabYamlDumper
         }
 
         appDomain.SetData(DumpScheduledAppDomainKey, true);
+        if (string.Equals(
+            Environment.GetEnvironmentVariable(DumpImmediateEnvironmentVariable),
+            "1",
+            StringComparison.Ordinal))
+        {
+            appDomain.SetData(DumpCompletedAppDomainKey, true);
+            Debug.Log("[PrefabYamlDump] Running immediate CI dump.");
+            DumpAllFromEnvironment();
+            return;
+        }
+
         BundleManager.Instance.OnLoadedModsChanged += HandleLoadedModsChanged;
         Debug.Log("[PrefabYamlDump] Scheduled for completion of all enabled mod loads.");
     }
