@@ -1,0 +1,218 @@
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [string]$ServerRoot,
+
+    [Parameter(Mandatory)]
+    [string]$ConfigPath,
+
+    [Parameter(Mandatory)]
+    [string]$OutputDirectory,
+
+    [int]$TimeoutSeconds = 720,
+
+    [string[]]$RequiredLogPatterns = @(
+        "Finished Loading Mod 'AGMLIB'. Result: Loaded",
+        '\[TestingComponents\] Discovery complete: .*failed=0\.',
+        '\[PrefabYamlDump\] Completed .*errors=0\.',
+        'Server: listening port='
+    ),
+
+    [string[]]$ForbiddenLogPatterns = @(
+        "Finished Loading Mod 'AGMLIB'. Result: Failed",
+        '\[TestingComponents\].*failed=[1-9][0-9]*',
+        '\[PrefabYamlDump\] Failed:',
+        '\bHarmonyException\b',
+        '\b(TypeLoadException|MissingMethodException|MissingFieldException)\b'
+    ),
+
+    [switch]$ValidateOnly
+)
+
+$ErrorActionPreference = 'Stop'
+$runningOnWindows = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
+$ServerRoot = [IO.Path]::GetFullPath($ServerRoot)
+$ConfigPath = [IO.Path]::GetFullPath($ConfigPath)
+$OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
+if (-not (Test-Path -LiteralPath $ServerRoot -PathType Container))
+{
+    throw "Server root was not found at '$ServerRoot'."
+}
+if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf))
+{
+    throw "Server config was not found at '$ConfigPath'."
+}
+if ($TimeoutSeconds -lt 30)
+{
+    throw 'TimeoutSeconds must be at least 30.'
+}
+
+$serverCandidates = @(
+    (Join-Path $ServerRoot 'NebulousDedicatedServer')
+    (Join-Path $ServerRoot 'NebulousDedicatedServer.x86_64')
+    (Join-Path $ServerRoot 'NebulousDedicatedServer.exe')
+)
+$serverExecutable = $serverCandidates |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+    Select-Object -First 1
+if ([string]::IsNullOrWhiteSpace($serverExecutable))
+{
+    throw "NEBULOUS dedicated-server executable was not found under '$ServerRoot'."
+}
+
+New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
+$logPath = Join-Path $OutputDirectory 'server.log'
+$stdoutPath = Join-Path $OutputDirectory 'server.stdout.log'
+$stderrPath = Join-Path $OutputDirectory 'server.stderr.log'
+$prefabDumpPath = Join-Path $OutputDirectory 'prefabs'
+$prefabManifestPath = Join-Path $prefabDumpPath 'manifest.yaml'
+$summaryPath = Join-Path $OutputDirectory 'summary.json'
+
+if ($ValidateOnly)
+{
+    [ordered]@{
+        validated_only = $true
+        server_executable = $serverExecutable
+        config_path = $ConfigPath
+        output_directory = $OutputDirectory
+        required_log_patterns = $RequiredLogPatterns
+        forbidden_log_patterns = $ForbiddenLogPatterns
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+    Write-Host 'Smoke-test inputs validated; server was not launched.'
+    return
+}
+
+$startedUtc = [DateTime]::UtcNow
+$process = $null
+$matchedPatterns = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$failureMessage = $null
+$oldDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', 'Process')
+$oldLibraryPath = [Environment]::GetEnvironmentVariable('LD_LIBRARY_PATH', 'Process')
+
+try
+{
+    [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', $prefabDumpPath, 'Process')
+    if (-not $runningOnWindows)
+    {
+        $libraryPaths = @($ServerRoot, (Join-Path $ServerRoot 'linux64'))
+        if (-not [string]::IsNullOrWhiteSpace($oldLibraryPath))
+        {
+            $libraryPaths += $oldLibraryPath
+        }
+        [Environment]::SetEnvironmentVariable(
+            'LD_LIBRARY_PATH',
+            ($libraryPaths -join [IO.Path]::PathSeparator),
+            'Process')
+    }
+    $process = Start-Process `
+        -FilePath $serverExecutable `
+        -ArgumentList @(
+            '-nographics',
+            '-batchmode',
+            '-logFile', $logPath,
+            '-serverConfig', $ConfigPath
+        ) `
+        -WorkingDirectory $ServerRoot `
+        -RedirectStandardOutput $stdoutPath `
+        -RedirectStandardError $stderrPath `
+        -PassThru
+
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    while ([DateTime]::UtcNow -lt $deadline)
+    {
+        Start-Sleep -Seconds 2
+        $logText = @(
+            if (Test-Path -LiteralPath $logPath -PathType Leaf) { Get-Content -LiteralPath $logPath -Raw }
+            if (Test-Path -LiteralPath $stdoutPath -PathType Leaf) { Get-Content -LiteralPath $stdoutPath -Raw }
+            if (Test-Path -LiteralPath $stderrPath -PathType Leaf) { Get-Content -LiteralPath $stderrPath -Raw }
+        ) -join [Environment]::NewLine
+
+        foreach ($pattern in $ForbiddenLogPatterns)
+        {
+            if ($logText -match $pattern)
+            {
+                throw "Forbidden log pattern matched: $pattern"
+            }
+        }
+        foreach ($pattern in $RequiredLogPatterns)
+        {
+            if ($logText -match $pattern)
+            {
+                [void]$matchedPatterns.Add($pattern)
+            }
+        }
+
+        $dumpIsValid = $false
+        if (Test-Path -LiteralPath $prefabManifestPath -PathType Leaf)
+        {
+            $manifestText = Get-Content -LiteralPath $prefabManifestPath -Raw
+            $dumpIsValid = $manifestText -match '(?m)^errors:\s+0\s*$'
+            if (-not $dumpIsValid -and $manifestText -match '(?m)^errors:\s+[1-9][0-9]*\s*$')
+            {
+                throw 'Prefab dump manifest reports one or more serialization errors.'
+            }
+        }
+
+        if ($matchedPatterns.Count -eq $RequiredLogPatterns.Count -and $dumpIsValid)
+        {
+            break
+        }
+        if ($process.HasExited)
+        {
+            throw "Dedicated server exited with code $($process.ExitCode) before smoke-test milestones completed."
+        }
+    }
+
+    if ($matchedPatterns.Count -ne $RequiredLogPatterns.Count)
+    {
+        $missingPatterns = $RequiredLogPatterns | Where-Object { -not $matchedPatterns.Contains($_) }
+        throw "Smoke test timed out after $TimeoutSeconds seconds. Missing log patterns: $($missingPatterns -join ', ')"
+    }
+    if (-not (Test-Path -LiteralPath $prefabManifestPath -PathType Leaf))
+    {
+        throw "Smoke test did not create '$prefabManifestPath'."
+    }
+}
+catch
+{
+    $failureMessage = $_.Exception.Message
+}
+finally
+{
+    [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', $oldDumpEnvironment, 'Process')
+    if (-not $runningOnWindows)
+    {
+        [Environment]::SetEnvironmentVariable('LD_LIBRARY_PATH', $oldLibraryPath, 'Process')
+    }
+    if ($null -ne $process -and -not $process.HasExited)
+    {
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        [void]$process.WaitForExit(10000)
+    }
+
+    $summary = [ordered]@{
+        succeeded = [string]::IsNullOrWhiteSpace($failureMessage)
+        failure = $failureMessage
+        started_utc = $startedUtc.ToString('o')
+        finished_utc = [DateTime]::UtcNow.ToString('o')
+        timeout_seconds = $TimeoutSeconds
+        server_executable = $serverExecutable
+        config_path = $ConfigPath
+        log_path = $logPath
+        stdout_path = $stdoutPath
+        stderr_path = $stderrPath
+        prefab_manifest = $prefabManifestPath
+        matched_log_patterns = @($matchedPatterns)
+        required_log_patterns = $RequiredLogPatterns
+        forbidden_log_patterns = $ForbiddenLogPatterns
+        process_exit_code = if ($null -ne $process -and $process.HasExited) { $process.ExitCode } else { $null }
+    }
+    $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+}
+
+if (-not [string]::IsNullOrWhiteSpace($failureMessage))
+{
+    throw $failureMessage
+}
+
+Write-Host "NEBULOUS dedicated-server smoke test passed. Evidence: '$OutputDirectory'."

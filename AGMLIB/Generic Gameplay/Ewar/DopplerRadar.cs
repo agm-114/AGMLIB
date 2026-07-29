@@ -533,6 +533,11 @@ internal static class DopplerNotchOverlayVisibilityPatch
 {
     private static void Postfix(ShipDetailOverlay __instance)
     {
+        if (__instance == null)
+        {
+            return;
+        }
+
         DopplerNotchOverlay overlay = __instance.GetComponent<DopplerNotchOverlay>();
         if (overlay != null)
         {

@@ -22,9 +22,15 @@ env:
 
 jobs:
   build:
-    name: Build AGMLIB
+    name: Build AGMLIB (${{ matrix.configuration }})
     runs-on: windows-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration:
+          - Debug
+          - Release
 
     steps:
       - name: Check out repository
@@ -38,31 +44,47 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore AGMLIB.sln
 
-      - name: Build release
+      - name: Build ${{ matrix.configuration }}
         run: >-
           dotnet build AGMLIB.sln
-          --configuration Release
+          --configuration ${{ matrix.configuration }}
           --no-restore
           -p:ContinuousIntegrationBuild=true
           -p:DeployToGame=false
           -p:PowerShellExecutable=pwsh
 
-      - name: Verify build outputs
+      - name: Validate package
         shell: pwsh
         run: |
-          $requiredOutputs = @(
-            "artifacts/AGMLIB/ModInfo.xml"
-            "artifacts/AGMLIB/Release/net481/AGMLIB.dll"
-            "artifacts/AGMLIB/Release/net481/0Harmony.dll"
-          )
+          ./scripts/CI/Test-AgmlibPackage.ps1 `
+            -Configuration '${{ matrix.configuration }}' `
+            -PackageRoot artifacts/AGMLIB `
+            -ReportPath 'artifacts/ci/package-${{ matrix.configuration }}.json'
 
-          foreach ($output in $requiredOutputs) {
-            if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
-              throw "Required build output was not created: $output"
-            }
-          }
+      - name: Test CI script contracts
+        shell: pwsh
+        run: |
+          ./scripts/CI/Test-CiScripts.ps1 `
+            -Configuration '${{ matrix.configuration }}' `
+            -PackageRoot artifacts/AGMLIB `
+            -ReportPath 'artifacts/ci/contracts-${{ matrix.configuration }}.json'
+
+      - name: Verify build isolation
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: ./scripts/Build/Test-AgmlibBuildIsolation.ps1 -Configuration Release
+
+      - name: Upload CI reports
+        uses: actions/upload-artifact@v7
+        with:
+          name: AGMLIB-ci-reports-${{ matrix.configuration }}-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            artifacts/ci/package-${{ matrix.configuration }}.json
+            artifacts/ci/contracts-${{ matrix.configuration }}.json
 
       - name: Upload AGMLIB artifact
+        if: matrix.configuration == 'Release'
         uses: actions/upload-artifact@v7
         with:
           name: AGMLIB-${{ github.sha }}

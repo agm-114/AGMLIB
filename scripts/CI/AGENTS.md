@@ -1,0 +1,17 @@
+# AGMLIB CI Scripts
+
+These scripts are the reusable boundary between GitHub Actions and NEBULOUS.
+Keep workflow YAML declarative and put installation, staging, validation, launch,
+timeout, and evidence-collection logic here so each step can be reproduced
+locally with PowerShell 7.
+
+- Treat Steam application `2353090` as the anonymous dedicated-server package.
+- Treat Steam application `887570` and workshop item `2960504230` as AGMLIB's
+  workshop identity.
+- Overlay repository-built binaries only inside an isolated CI download. Never
+  mutate a developer's installed game or subscribed workshop content.
+- Every launched server must have a finite timeout and be stopped in `finally`.
+- Preserve the full Unity log, stdout, stderr, prefab manifest, and JSON summary
+  on failure.
+- Integration support must be opt-in. Do not enable test transport or fixtures
+  in normal Release gameplay.

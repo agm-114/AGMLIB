@@ -178,6 +178,37 @@ Do not treat an accepted order, the transient order icon, or an initial `event=f
 
 Use local skirmish when testing the offline single-player path. It is distinct from Testing Range and from a locally hosted multiplayer server, so compare those modes when investigating lifecycle or authority differences.
 
+## Run multiple local multiplayer clients
+
+NEBULOUS normally selects the Steam transport for P2P lobbies. Multiple local
+clients then share one Steam ID and cannot connect to each other. For an
+explicitly test-only local multiplayer run, set
+`PortableNetworkManager._useSteamTransportForLobbies` to `false` before any
+client hosts or joins the lobby. This selects the TCP/Telepathy transport and
+allows clients with the same Steam ID to connect locally.
+
+Use AGMLIB's typed native-internals boundary rather than scattering reflection:
+
+```csharp
+using Mirror;
+using Networking;
+
+PortableNetworkManager networkManager =
+    NetworkManager.singleton as PortableNetworkManager
+    ?? throw new InvalidOperationException("PortableNetworkManager is not initialized.");
+
+networkManager.Internals().UseSteamTransportForLobbies = false;
+```
+
+- Apply the switch in every local test process before creating or joining the
+  lobby. Verify the log contains `Switched to Telepathy transport`.
+- Keep the switch behind an exact Debug/test-only activation gate. Never change
+  normal Release behavior or silently affect a player's multiplayer transport.
+- The local lobby host advertises `127.0.0.1:7777`; only the host owns that
+  listening port. Clients connect to it through the lobby flow.
+- Restart the clients without the test activation to restore the normal Steam
+  transport. Do not leave the switch enabled for unrelated testing.
+
 ## In-match debug console
 
 Press `F2` during a match to open the developer console.

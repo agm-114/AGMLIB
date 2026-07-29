@@ -1,0 +1,157 @@
+name: NEBULOUS Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      timeout_seconds:
+        description: Maximum dedicated-server smoke-test runtime
+        required: true
+        default: "720"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nebulous-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  build:
+    name: Build Debug integration package
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore AGMLIB.sln
+
+      - name: Build Debug
+        run: >-
+          dotnet build AGMLIB.sln
+          --configuration Debug
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+          -p:DeployToGame=false
+          -p:PowerShellExecutable=pwsh
+
+      - name: Validate Debug package
+        shell: pwsh
+        run: |
+          ./scripts/CI/Test-AgmlibPackage.ps1 `
+            -Configuration Debug `
+            -PackageRoot artifacts/AGMLIB `
+            -ReportPath artifacts/ci/package-Debug.json
+
+      - name: Upload Debug integration package
+        uses: actions/upload-artifact@v7
+        with:
+          name: AGMLIB-integration-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            artifacts/AGMLIB/ModInfo.xml
+            artifacts/AGMLIB/Debug/net481/AGMLIB.dll
+            artifacts/AGMLIB/Debug/net481/AGMLIB.pdb
+            artifacts/AGMLIB/Debug/net481/0Harmony.dll
+
+      - name: Upload integration build report
+        uses: actions/upload-artifact@v7
+        with:
+          name: AGMLIB-integration-build-report-${{ github.sha }}
+          if-no-files-found: error
+          path: artifacts/ci/package-Debug.json
+
+  server-smoke:
+    name: Dedicated-server smoke
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install SteamCMD runtime dependency
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install --yes lib32gcc-s1
+
+      - name: Download Debug integration package
+        uses: actions/download-artifact@v8
+        with:
+          name: AGMLIB-integration-${{ github.sha }}
+          path: artifacts/AGMLIB
+
+      - name: Install SteamCMD
+        id: steamcmd
+        shell: pwsh
+        run: |
+          $steamCmdPath = ./scripts/CI/Install-SteamCmd.ps1 `
+            -DestinationDirectory '${{ runner.temp }}/steamcmd'
+          "path=$steamCmdPath" >> $env:GITHUB_OUTPUT
+
+      - name: Install NEBULOUS dedicated server
+        shell: pwsh
+        run: |
+          ./scripts/CI/Install-NebulousDedicatedServer.ps1 `
+            -SteamCmdPath '${{ steps.steamcmd.outputs.path }}' `
+            -InstallDirectory '${{ runner.temp }}/nebulous-server' `
+            -ReportPath '${{ runner.temp }}/integration-evidence/server-install.json'
+
+      - name: Download AGMLIB workshop baseline
+        shell: pwsh
+        run: |
+          ./scripts/CI/Install-NebulousWorkshopItem.ps1 `
+            -SteamCmdPath '${{ steps.steamcmd.outputs.path }}' `
+            -DownloadRoot '${{ runner.temp }}/nebulous-server' `
+            -ReportPath '${{ runner.temp }}/integration-evidence/workshop-install.json'
+
+      - name: Overlay repository Debug build
+        shell: pwsh
+        run: |
+          $workshopReport = Get-Content `
+            -LiteralPath '${{ runner.temp }}/integration-evidence/workshop-install.json' `
+            -Raw | ConvertFrom-Json
+          ./scripts/CI/Stage-AgmlibIntegrationMod.ps1 `
+            -PackageRoot artifacts/AGMLIB `
+            -WorkshopItemDirectory $workshopReport.workshop_item_directory `
+            -Configuration Debug `
+            -ReportPath '${{ runner.temp }}/integration-evidence/agmlib-stage.json'
+
+      - name: Create isolated server config
+        shell: pwsh
+        run: |
+          ./scripts/CI/New-NebulousIntegrationConfig.ps1 `
+            -SourceConfigPath '${{ runner.temp }}/nebulous-server/DedicatedServerConfig.xml' `
+            -DestinationConfigPath '${{ runner.temp }}/integration-evidence/DedicatedServerConfig.xml'
+
+      - name: Run dedicated-server smoke test
+        shell: pwsh
+        run: |
+          ./scripts/CI/Invoke-NebulousServerSmoke.ps1 `
+            -ServerRoot '${{ runner.temp }}/nebulous-server' `
+            -ConfigPath '${{ runner.temp }}/integration-evidence/DedicatedServerConfig.xml' `
+            -OutputDirectory '${{ runner.temp }}/integration-evidence/server-smoke' `
+            -TimeoutSeconds ([int]'${{ inputs.timeout_seconds }}')
+
+      - name: Upload integration evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: NEBULOUS-integration-evidence-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: ${{ runner.temp }}/integration-evidence
