@@ -15,6 +15,8 @@ param(
 
     [int]$StallTimeoutSeconds = 90,
 
+    [int]$PhaseTimeoutSeconds = 120,
+
     [string[]]$RequiredLogPatterns = @(
         "Finished Loading Mod 'AGMLIB'\.\s+Result:\s+Loaded",
         '\[TestingComponents\] Discovery complete: .*failed=0\.',
@@ -59,6 +61,10 @@ if ($HeartbeatSeconds -lt 5)
 if ($StallTimeoutSeconds -lt 30)
 {
     throw 'StallTimeoutSeconds must be at least 30.'
+}
+if ($PhaseTimeoutSeconds -lt 30)
+{
+    throw 'PhaseTimeoutSeconds must be at least 30.'
 }
 if ($RequireGameplayReady)
 {
@@ -109,6 +115,7 @@ if ($ValidateOnly)
         output_directory = $OutputDirectory
         heartbeat_seconds = $HeartbeatSeconds
         stall_timeout_seconds = $StallTimeoutSeconds
+        phase_timeout_seconds = $PhaseTimeoutSeconds
         required_log_patterns = $RequiredLogPatterns
         forbidden_log_patterns = $ForbiddenLogPatterns
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $summaryPath -Encoding utf8
@@ -126,6 +133,8 @@ $lastHeartbeatUtc = [DateTime]::MinValue
 $lastObservedLogLength = 0
 $lastObservedDumpBytes = 0L
 $lastLogLine = '(no server output yet)'
+$lastLifecycleEventUtc = $startedUtc
+$lastLifecycleEventName = 'server-process-started'
 $oldDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', 'Process')
 $oldImmediateDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_IMMEDIATE', 'Process')
 $oldHeadlessMatchEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', 'Process')
@@ -223,6 +232,8 @@ try
                 $eventDetail = ($eventMatch.Value -replace '\s+', ' ').Trim()
                 $eventMessage = "$($event.Name): $eventDetail"
                 Write-Host "[NEBULOUS event] $eventMessage"
+                $lastLifecycleEventUtc = [DateTime]::UtcNow
+                $lastLifecycleEventName = $event.Name
                 if ([Environment]::GetEnvironmentVariable('GITHUB_ACTIONS', 'Process') -eq 'true')
                 {
                     Write-Host "::notice title=NEBULOUS integration event::$eventMessage"
@@ -285,8 +296,10 @@ try
             }
             $elapsedSeconds = [int]($nowUtc - $startedUtc).TotalSeconds
             $idleSeconds = [int]($nowUtc - $lastActivityUtc).TotalSeconds
+            $phaseSeconds = [int]($nowUtc - $lastLifecycleEventUtc).TotalSeconds
             Write-Host (
                 "[NEBULOUS heartbeat] elapsed=${elapsedSeconds}s idle=${idleSeconds}s " +
+                "phase=${phaseSeconds}s phaseName=$lastLifecycleEventName " +
                 "milestones=$($matchedPatterns.Count)/$($RequiredLogPatterns.Count) " +
                 "events=$($emittedLifecycleEvents.Count) " +
                 "logChars=$lastObservedLogLength dumpBytes=$lastObservedDumpBytes latest='$latest'")
@@ -307,6 +320,14 @@ try
             throw (
                 "Dedicated server produced no new log or prefab-dump output for $StallTimeoutSeconds seconds. " +
                 "Last output: '$lastLogLine'. Missing log patterns: $($missingPatterns -join ', ')")
+        }
+        if (([DateTime]::UtcNow - $lastLifecycleEventUtc).TotalSeconds -ge $PhaseTimeoutSeconds)
+        {
+            $missingPatterns = $RequiredLogPatterns | Where-Object { -not $matchedPatterns.Contains($_) }
+            throw (
+                "Dedicated server did not advance beyond lifecycle event '$lastLifecycleEventName' " +
+                "for $PhaseTimeoutSeconds seconds. Last output: '$lastLogLine'. " +
+                "Missing log patterns: $($missingPatterns -join ', ')")
         }
     }
 
@@ -347,8 +368,11 @@ finally
         timeout_seconds = $TimeoutSeconds
         heartbeat_seconds = $HeartbeatSeconds
         stall_timeout_seconds = $StallTimeoutSeconds
+        phase_timeout_seconds = $PhaseTimeoutSeconds
         last_activity_utc = $lastActivityUtc.ToString('o')
         last_log_line = $lastLogLine
+        last_lifecycle_event_utc = $lastLifecycleEventUtc.ToString('o')
+        last_lifecycle_event = $lastLifecycleEventName
         gameplay_ready_required = [bool]$RequireGameplayReady
         server_executable = $serverExecutable
         config_path = $ConfigPath

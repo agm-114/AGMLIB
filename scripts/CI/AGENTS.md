@@ -17,6 +17,8 @@ locally with PowerShell 7.
 - Stream named lifecycle events for mod download/load, dedicated-server
   readiness, match scene/map loading, fleet transfer/spawn, and gameplay start.
   Keep these operator-facing events separate from required pass/fail assertions.
+- Bound time spent in one lifecycle phase independently of raw log activity;
+  repetitive Unity output must not keep a frozen match alive.
 - On fresh runners, warm SteamCMD app metadata in a separate invocation before
   installing app `2353090`; keep install retries bounded.
 - Preserve the full Unity log, stdout, stderr, prefab manifest, and JSON summary

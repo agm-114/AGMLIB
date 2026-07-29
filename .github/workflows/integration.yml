@@ -169,6 +169,7 @@ jobs:
             -TimeoutSeconds ([int]'${{ inputs.timeout_seconds }}') `
             -HeartbeatSeconds 15 `
             -StallTimeoutSeconds 90 `
+            -PhaseTimeoutSeconds 120 `
             -RequireGameplayReady
 
       - name: Upload integration evidence
