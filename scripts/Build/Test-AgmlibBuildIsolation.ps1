@@ -1,10 +1,24 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Debug', 'Release')]
-    [string]$Configuration = 'Debug'
+    [string]$Configuration = 'Debug',
+
+    [string]$PowerShellExecutable
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($PowerShellExecutable))
+{
+    $PowerShellExecutable = if (Get-Command pwsh -ErrorAction SilentlyContinue)
+    {
+        'pwsh'
+    }
+    else
+    {
+        'powershell'
+    }
+}
+
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $projectPath = Join-Path $repositoryRoot 'AGMLIB\AGMLIB.csproj'
 $sourceManifestPath = Join-Path $repositoryRoot 'AGMLIB\ModInfo.xml'
@@ -45,13 +59,17 @@ function Get-RepositorySourceState
 
 $before = Get-RepositorySourceState
 
-& dotnet clean $projectPath -v:minimal "-p:Configuration=$Configuration"
+& dotnet clean $projectPath -v:minimal `
+    "-p:Configuration=$Configuration" `
+    "-p:PowerShellExecutable=$PowerShellExecutable"
 if ($LASTEXITCODE -ne 0)
 {
     throw "AGMLIB clean failed with exit code $LASTEXITCODE."
 }
 
-& dotnet build $projectPath --no-restore -v:minimal "-p:Configuration=$Configuration"
+& dotnet build $projectPath --no-restore -v:minimal `
+    "-p:Configuration=$Configuration" `
+    "-p:PowerShellExecutable=$PowerShellExecutable"
 if ($LASTEXITCODE -ne 0)
 {
     throw "AGMLIB build failed with exit code $LASTEXITCODE."
