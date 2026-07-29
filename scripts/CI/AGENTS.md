@@ -11,6 +11,9 @@ locally with PowerShell 7.
 - Overlay repository-built binaries only inside an isolated CI download. Never
   mutate a developer's installed game or subscribed workshop content.
 - Every launched server must have a finite timeout and be stopped in `finally`.
+- Long-running server checks must emit milestone notices and periodic
+  heartbeats, and must fail on a bounded no-output stall before the global
+  timeout.
 - On fresh runners, warm SteamCMD app metadata in a separate invocation before
   installing app `2353090`; keep install retries bounded.
 - Preserve the full Unity log, stdout, stderr, prefab manifest, and JSON summary

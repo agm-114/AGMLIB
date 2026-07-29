@@ -11,6 +11,10 @@ param(
 
     [int]$TimeoutSeconds = 720,
 
+    [int]$HeartbeatSeconds = 15,
+
+    [int]$StallTimeoutSeconds = 90,
+
     [string[]]$RequiredLogPatterns = @(
         "Finished Loading Mod 'AGMLIB'\.\s+Result:\s+Loaded",
         '\[TestingComponents\] Discovery complete: .*failed=0\.',
@@ -48,12 +52,21 @@ if ($TimeoutSeconds -lt 30)
 {
     throw 'TimeoutSeconds must be at least 30.'
 }
+if ($HeartbeatSeconds -lt 5)
+{
+    throw 'HeartbeatSeconds must be at least 5.'
+}
+if ($StallTimeoutSeconds -lt 30)
+{
+    throw 'StallTimeoutSeconds must be at least 30.'
+}
 if ($RequireGameplayReady)
 {
     $RequiredLogPatterns = @($RequiredLogPatterns) + @(
         '\[AGMLIB CI\] headless-match support enabled',
         '\[AGMLIB CI\] launching headless match players=[2-9][0-9]* bots=[2-9][0-9]*',
         '\[AGMLIB CI\] waiting for dedicated-server map instantiation',
+        '\[AGMLIB CI\] waiting for bot fleet initialization',
         '\[AGMLIB CI\] suppressing bot-only return to lobby',
         'Finished spawning fleets',
         '(?m)^GO!\r?$'
@@ -94,6 +107,8 @@ if ($ValidateOnly)
         server_executable = $serverExecutable
         config_path = $ConfigPath
         output_directory = $OutputDirectory
+        heartbeat_seconds = $HeartbeatSeconds
+        stall_timeout_seconds = $StallTimeoutSeconds
         required_log_patterns = $RequiredLogPatterns
         forbidden_log_patterns = $ForbiddenLogPatterns
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $summaryPath -Encoding utf8
@@ -105,6 +120,11 @@ $startedUtc = [DateTime]::UtcNow
 $process = $null
 $matchedPatterns = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $failureMessage = $null
+$lastActivityUtc = $startedUtc
+$lastHeartbeatUtc = [DateTime]::MinValue
+$lastObservedLogLength = 0
+$lastObservedDumpBytes = 0L
+$lastLogLine = '(no server output yet)'
 $oldDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', 'Process')
 $oldImmediateDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_IMMEDIATE', 'Process')
 $oldHeadlessMatchEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', 'Process')
@@ -156,6 +176,14 @@ try
             if (Test-Path -LiteralPath $stdoutPath -PathType Leaf) { Get-Content -LiteralPath $stdoutPath -Raw }
             if (Test-Path -LiteralPath $stderrPath -PathType Leaf) { Get-Content -LiteralPath $stderrPath -Raw }
         ) -join [Environment]::NewLine
+        if ($logText.Length -ne $lastObservedLogLength)
+        {
+            $lastObservedLogLength = $logText.Length
+            $lastActivityUtc = [DateTime]::UtcNow
+            $lastLogLine = $logText -split '\r?\n' |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                Select-Object -Last 1
+        }
 
         foreach ($pattern in $ForbiddenLogPatterns)
         {
@@ -166,9 +194,20 @@ try
         }
         foreach ($pattern in $RequiredLogPatterns)
         {
-            if ($logText -match $pattern)
+            $match = [regex]::Match($logText, $pattern)
+            if ($match.Success -and $matchedPatterns.Add($pattern))
             {
-                [void]$matchedPatterns.Add($pattern)
+                $milestone = ($match.Value -replace '\s+', ' ').Trim()
+                if ($milestone.Length -gt 240)
+                {
+                    $milestone = $milestone.Substring(0, 240) + '...'
+                }
+                $milestoneMessage = "matched $($matchedPatterns.Count)/$($RequiredLogPatterns.Count): $milestone"
+                Write-Host "[NEBULOUS milestone] $milestoneMessage"
+                if ([Environment]::GetEnvironmentVariable('GITHUB_ACTIONS', 'Process') -eq 'true')
+                {
+                    Write-Host "::notice title=NEBULOUS integration milestone::$milestoneMessage"
+                }
             }
         }
 
@@ -183,6 +222,35 @@ try
             }
         }
 
+        $nowUtc = [DateTime]::UtcNow
+        if (($nowUtc - $lastHeartbeatUtc).TotalSeconds -ge $HeartbeatSeconds)
+        {
+            $dumpBytes = 0L
+            if (Test-Path -LiteralPath $prefabDumpPath -PathType Container)
+            {
+                $dumpBytes = [long](Get-ChildItem -LiteralPath $prefabDumpPath -File -Recurse |
+                    Measure-Object -Property Length -Sum).Sum
+            }
+            if ($dumpBytes -ne $lastObservedDumpBytes)
+            {
+                $lastObservedDumpBytes = $dumpBytes
+                $lastActivityUtc = $nowUtc
+            }
+
+            $latest = ($lastLogLine -replace '\s+', ' ').Trim()
+            if ($latest.Length -gt 240)
+            {
+                $latest = $latest.Substring(0, 240) + '...'
+            }
+            $elapsedSeconds = [int]($nowUtc - $startedUtc).TotalSeconds
+            $idleSeconds = [int]($nowUtc - $lastActivityUtc).TotalSeconds
+            Write-Host (
+                "[NEBULOUS heartbeat] elapsed=${elapsedSeconds}s idle=${idleSeconds}s " +
+                "milestones=$($matchedPatterns.Count)/$($RequiredLogPatterns.Count) " +
+                "logChars=$lastObservedLogLength dumpBytes=$lastObservedDumpBytes latest='$latest'")
+            $lastHeartbeatUtc = $nowUtc
+        }
+
         if ($matchedPatterns.Count -eq $RequiredLogPatterns.Count -and $dumpIsValid)
         {
             break
@@ -190,6 +258,13 @@ try
         if ($process.HasExited)
         {
             throw "Dedicated server exited with code $($process.ExitCode) before smoke-test milestones completed."
+        }
+        if (([DateTime]::UtcNow - $lastActivityUtc).TotalSeconds -ge $StallTimeoutSeconds)
+        {
+            $missingPatterns = $RequiredLogPatterns | Where-Object { -not $matchedPatterns.Contains($_) }
+            throw (
+                "Dedicated server produced no new log or prefab-dump output for $StallTimeoutSeconds seconds. " +
+                "Last output: '$lastLogLine'. Missing log patterns: $($missingPatterns -join ', ')")
         }
     }
 
@@ -228,6 +303,10 @@ finally
         started_utc = $startedUtc.ToString('o')
         finished_utc = [DateTime]::UtcNow.ToString('o')
         timeout_seconds = $TimeoutSeconds
+        heartbeat_seconds = $HeartbeatSeconds
+        stall_timeout_seconds = $StallTimeoutSeconds
+        last_activity_utc = $lastActivityUtc.ToString('o')
+        last_log_line = $lastLogLine
         gameplay_ready_required = [bool]$RequireGameplayReady
         server_executable = $serverExecutable
         config_path = $ConfigPath

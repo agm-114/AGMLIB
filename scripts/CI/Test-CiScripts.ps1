@@ -141,6 +141,7 @@ Server: listening port=17777
 [AGMLIB CI] headless-match support enabled
 [AGMLIB CI] launching headless match players=2 bots=2
 [AGMLIB CI] waiting for dedicated-server map instantiation
+[AGMLIB CI] waiting for bot fleet initialization
 [AGMLIB CI] suppressing bot-only return to lobby
 Finished spawning fleets
 GO!

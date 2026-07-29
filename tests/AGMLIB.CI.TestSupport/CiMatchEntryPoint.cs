@@ -130,3 +130,35 @@ internal static class WaitForDedicatedServerMapPatch
         return false;
     }
 }
+
+[HarmonyPatch(typeof(SkirmishGameHost), "WaitForAllPlayersToComplete")]
+internal static class WaitForBotFleetInitializationPatch
+{
+    private static bool _waitingLogged;
+
+    private static void Postfix(
+        WaitingOperationType operation,
+        SkirmishGameManager.ISkirmishManager ____clientManager,
+        ref bool __result)
+    {
+        if (!CiMatchEntryPoint.IsEnabled ||
+            operation != WaitingOperationType.SpawnFleets ||
+            !__result)
+        {
+            return;
+        }
+
+        var botsReady = ____clientManager.Players
+            .Where(player => player.IsBot && !player.IsSpectator)
+            .Cast<SkirmishPlayer>()
+            .All(player => player.FleetSpawned);
+
+        if (!botsReady && !_waitingLogged)
+        {
+            _waitingLogged = true;
+            Debug.Log("[AGMLIB CI] waiting for bot fleet initialization");
+        }
+
+        __result = botsReady;
+    }
+}
