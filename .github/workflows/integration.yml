@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       timeout_seconds:
-        description: Maximum dedicated-server smoke-test runtime
+        description: Maximum dedicated-server headless-match runtime
         required: true
         default: "720"
         type: string
@@ -47,6 +47,12 @@ jobs:
           -p:DeployToGame=false
           -p:PowerShellExecutable=pwsh
 
+      - name: Build CI-only headless match support
+        run: >-
+          dotnet build tests/AGMLIB.CI.TestSupport/AGMLIB.CI.TestSupport.csproj
+          --configuration Debug
+          -p:ContinuousIntegrationBuild=true
+
       - name: Validate Debug package
         shell: pwsh
         run: |
@@ -73,8 +79,15 @@ jobs:
           if-no-files-found: error
           path: artifacts/ci/package-Debug.json
 
-  server-smoke:
-    name: Dedicated-server smoke
+      - name: Upload CI-only headless match support
+        uses: actions/upload-artifact@v7
+        with:
+          name: AGMLIB-CI-test-support-${{ github.sha }}
+          if-no-files-found: error
+          path: artifacts/AGMLIB.CI.TestSupport/Debug/net481/AGMLIB.CI.TestSupport.dll
+
+  server-match:
+    name: Dedicated-server headless match
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -94,6 +107,12 @@ jobs:
         with:
           name: AGMLIB-integration-${{ github.sha }}
           path: artifacts/AGMLIB
+
+      - name: Download CI-only headless match support
+        uses: actions/download-artifact@v8
+        with:
+          name: AGMLIB-CI-test-support-${{ github.sha }}
+          path: artifacts/AGMLIB.CI.TestSupport
 
       - name: Install SteamCMD
         id: steamcmd
@@ -129,23 +148,26 @@ jobs:
             -PackageRoot artifacts/AGMLIB `
             -WorkshopItemDirectory $workshopReport.workshop_item_directory `
             -Configuration Debug `
+            -CiTestSupportAssemblyPath artifacts/AGMLIB.CI.TestSupport/AGMLIB.CI.TestSupport.dll `
             -ReportPath '${{ runner.temp }}/integration-evidence/agmlib-stage.json'
 
-      - name: Create isolated server config
+      - name: Create deterministic two-bot match config
         shell: pwsh
         run: |
           ./scripts/CI/New-NebulousIntegrationConfig.ps1 `
             -SourceConfigPath '${{ runner.temp }}/nebulous-server/DedicatedServerConfig.xml' `
-            -DestinationConfigPath '${{ runner.temp }}/integration-evidence/DedicatedServerConfig.xml'
+            -DestinationConfigPath '${{ runner.temp }}/integration-evidence/DedicatedServerConfig.xml' `
+            -ConfigureHeadlessMatch
 
-      - name: Run dedicated-server smoke test
+      - name: Launch server and wait for live gameplay
         shell: pwsh
         run: |
           ./scripts/CI/Invoke-NebulousServerSmoke.ps1 `
             -ServerRoot '${{ runner.temp }}/nebulous-server' `
             -ConfigPath '${{ runner.temp }}/integration-evidence/DedicatedServerConfig.xml' `
             -OutputDirectory '${{ runner.temp }}/integration-evidence/server-smoke' `
-            -TimeoutSeconds ([int]'${{ inputs.timeout_seconds }}')
+            -TimeoutSeconds ([int]'${{ inputs.timeout_seconds }}') `
+            -RequireGameplayReady
 
       - name: Upload integration evidence
         if: always()

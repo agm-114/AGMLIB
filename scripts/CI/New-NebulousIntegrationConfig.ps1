@@ -14,7 +14,9 @@ param(
 
     [int]$MaxPlayers = 2,
 
-    [UInt64[]]$ModIds = @(2960504230)
+    [UInt64[]]$ModIds = @(2960504230),
+
+    [switch]$ConfigureHeadlessMatch
 )
 
 $ErrorActionPreference = 'Stop'
@@ -64,6 +66,44 @@ Set-RequiredElementValue -Document $config -ElementName 'ServerName' -Value $Ser
 Set-RequiredElementValue -Document $config -ElementName 'GamePort' -Value $GamePort.ToString([Globalization.CultureInfo]::InvariantCulture)
 Set-RequiredElementValue -Document $config -ElementName 'QueryPort' -Value $QueryPort.ToString([Globalization.CultureInfo]::InvariantCulture)
 Set-RequiredElementValue -Document $config -ElementName 'MaxPlayers' -Value $MaxPlayers.ToString([Globalization.CultureInfo]::InvariantCulture)
+
+if ($ConfigureHeadlessMatch)
+{
+    Set-RequiredElementValue -Document $config -ElementName 'TeamSizeToStart' -Value '1'
+
+    $botsElement = $config.SelectSingleNode('//Bots')
+    if ($null -eq $botsElement)
+    {
+        throw 'Dedicated-server config does not contain <Bots>.'
+    }
+    $botsElement.RemoveAll()
+
+    $botDefinitions = @(
+        [ordered]@{
+            Team = 'TeamA'
+            Difficulty = 'Hard'
+            Badge = 'Alliance Roundel'
+            Fleet = 'Starter Fleets - Alliance/TF Oak.fleet'
+        }
+        [ordered]@{
+            Team = 'TeamB'
+            Difficulty = 'Hard'
+            Badge = 'OSP_Roundel'
+            Fleet = 'Starter Fleets - Protectorate/Tantalum Squadron.fleet'
+        }
+    )
+    foreach ($botDefinition in $botDefinitions)
+    {
+        $botElement = $config.CreateElement('Bot')
+        foreach ($property in $botDefinition.GetEnumerator())
+        {
+            $propertyElement = $config.CreateElement($property.Key)
+            $propertyElement.InnerText = $property.Value
+            [void]$botElement.AppendChild($propertyElement)
+        }
+        [void]$botsElement.AppendChild($botElement)
+    }
+}
 
 $modsElement = $config.SelectSingleNode('//Mods')
 if ($null -eq $modsElement)

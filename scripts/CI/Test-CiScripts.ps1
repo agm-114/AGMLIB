@@ -24,6 +24,7 @@ $serverRoot = Join-Path $scratchRoot 'fake-server'
 $smokeOutput = Join-Path $scratchRoot 'smoke-output'
 $sourceConfig = Join-Path $scratchRoot 'DedicatedServerConfig.source.xml'
 $generatedConfig = Join-Path $scratchRoot 'DedicatedServerConfig.xml'
+$fakeSupportAssembly = Join-Path $scratchRoot 'AGMLIB.CI.TestSupport.dll'
 
 try
 {
@@ -39,13 +40,24 @@ try
         (Join-Path $workshopRoot 'workshop-baseline.txt'),
         'Preserved workshop content.',
         [Text.UTF8Encoding]::new($false))
+    Copy-Item `
+        -LiteralPath (Join-Path $PackageRoot "$Configuration/net481/AGMLIB.dll") `
+        -Destination $fakeSupportAssembly
     & (Join-Path $PSScriptRoot 'Stage-AgmlibIntegrationMod.ps1') `
         -Configuration $Configuration `
         -PackageRoot $PackageRoot `
-        -WorkshopItemDirectory $workshopRoot | Out-Null
+        -WorkshopItemDirectory $workshopRoot `
+        -CiTestSupportAssemblyPath $fakeSupportAssembly | Out-Null
     if (-not (Test-Path -LiteralPath (Join-Path $workshopRoot 'workshop-baseline.txt') -PathType Leaf))
     {
         throw 'Workshop overlay removed an existing workshop file.'
+    }
+    $stagedSupportAssembly = Join-Path $workshopRoot "$Configuration/net481/AGMLIB.CI.TestSupport.dll"
+    [xml]$stagedManifest = Get-Content -LiteralPath (Join-Path $workshopRoot 'ModInfo.xml') -Raw
+    if (-not (Test-Path -LiteralPath $stagedSupportAssembly -PathType Leaf) -or
+        $stagedManifest.ModInfo.Assemblies.string -notcontains "$Configuration/net481/AGMLIB.CI.TestSupport.dll")
+    {
+        throw 'Workshop overlay did not stage and register the CI test-support assembly.'
     }
 
     $configFixture = @(
@@ -55,19 +67,31 @@ try
         '  <GamePort>7777</GamePort>'
         '  <QueryPort>27016</QueryPort>'
         '  <MaxPlayers>10</MaxPlayers>'
+        '  <TeamSizeToStart>1</TeamSizeToStart>'
+        '  <Bots />'
         '  <Mods />'
         '</SkirmishDedicatedServerConfig>'
     ) -join "`r`n"
     [IO.File]::WriteAllText($sourceConfig, $configFixture, [Text.UTF8Encoding]::new($false))
     & (Join-Path $PSScriptRoot 'New-NebulousIntegrationConfig.ps1') `
         -SourceConfigPath $sourceConfig `
-        -DestinationConfigPath $generatedConfig | Out-Null
+        -DestinationConfigPath $generatedConfig `
+        -ConfigureHeadlessMatch | Out-Null
 
     [xml]$generated = Get-Content -LiteralPath $generatedConfig -Raw
     if ([string]$generated.SkirmishDedicatedServerConfig.ServerName -ne 'AGMLIB CI Smoke' -or
         [string]$generated.SkirmishDedicatedServerConfig.Mods.unsignedLong -ne '2960504230')
     {
         throw 'Generated integration config did not contain the expected server name and AGMLIB mod ID.'
+    }
+    $generatedBots = @($generated.SkirmishDedicatedServerConfig.Bots.Bot)
+    if ($generatedBots.Count -ne 2 -or
+        @($generatedBots.Team) -notcontains 'TeamA' -or
+        @($generatedBots.Team) -notcontains 'TeamB' -or
+        @($generatedBots.Fleet) -notcontains 'Starter Fleets - Alliance/TF Oak.fleet' -or
+        @($generatedBots.Fleet) -notcontains 'Starter Fleets - Protectorate/Tantalum Squadron.fleet')
+    {
+        throw 'Generated integration config did not contain the deterministic two-bot match fixture.'
     }
     if ([IO.File]::ReadAllText($generatedConfig) -match '(?<!\r)\n')
     {
@@ -98,6 +122,10 @@ string logPath = GetArgument("-logFile")
     ?? throw new InvalidOperationException("-logFile was not supplied.");
 string dumpPath = Environment.GetEnvironmentVariable("AGMLIB_PREFAB_DUMP_DIR")
     ?? throw new InvalidOperationException("AGMLIB_PREFAB_DUMP_DIR was not supplied.");
+if (Environment.GetEnvironmentVariable("AGMLIB_CI_AUTOSTART_MATCH") != "1")
+{
+    throw new InvalidOperationException("AGMLIB_CI_AUTOSTART_MATCH was not enabled.");
+}
 
 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(logPath))!);
 Directory.CreateDirectory(dumpPath);
@@ -108,6 +136,11 @@ Finished Loading Mod 'AGMLIB'. Result: Loaded
 [TestingComponents] Discovery complete: discovered=0, created=0, skipped=0, failed=0.
 [PrefabYamlDump] Completed path='fixture' prefabs=1 enabledMods=1 errors=0.
 Server: listening port=17777
+[AGMLIB CI] headless-match support enabled
+[AGMLIB CI] launching headless match players=2 bots=2
+[AGMLIB CI] suppressing bot-only return to lobby
+Finished spawning fleets
+GO!
 """);
 File.WriteAllText(Path.Combine(dumpPath, "manifest.yaml"), "errors: 0\n");
 Console.WriteLine("Fake NEBULOUS dedicated server is ready.");
@@ -130,7 +163,8 @@ Thread.Sleep(TimeSpan.FromSeconds(30));
         -ServerRoot $serverRoot `
         -ConfigPath $generatedConfig `
         -OutputDirectory $smokeOutput `
-        -TimeoutSeconds 45
+        -TimeoutSeconds 45 `
+        -RequireGameplayReady
 
     $smokeSummary = Get-Content -LiteralPath (Join-Path $smokeOutput 'summary.json') -Raw | ConvertFrom-Json
     if ($smokeSummary.succeeded -ne $true)
@@ -144,6 +178,7 @@ Thread.Sleep(TimeSpan.FromSeconds(30));
         workshop_overlay = 'passed'
         config_generation = 'passed'
         smoke_process_contract = 'passed'
+        gameplay_ready_contract = 'passed'
     }
     if (-not [string]::IsNullOrWhiteSpace($ReportPath))
     {

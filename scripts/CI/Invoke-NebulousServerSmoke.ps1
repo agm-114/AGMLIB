@@ -26,6 +26,8 @@ param(
         '\b(TypeLoadException|MissingMethodException|MissingFieldException)\b'
     ),
 
+    [switch]$RequireGameplayReady,
+
     [switch]$ValidateOnly
 )
 
@@ -45,6 +47,22 @@ if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf))
 if ($TimeoutSeconds -lt 30)
 {
     throw 'TimeoutSeconds must be at least 30.'
+}
+if ($RequireGameplayReady)
+{
+    $RequiredLogPatterns = @($RequiredLogPatterns) + @(
+        '\[AGMLIB CI\] headless-match support enabled',
+        '\[AGMLIB CI\] launching headless match players=[2-9][0-9]* bots=[2-9][0-9]*',
+        '\[AGMLIB CI\] suppressing bot-only return to lobby',
+        'Finished spawning fleets',
+        '(?m)^GO!\r?$'
+    )
+    $ForbiddenLogPatterns = @($ForbiddenLogPatterns) + @(
+        '\[AGMLIB CI\] refusing headless match launch',
+        '\[AGMLIB CI\] headless match launch timed out',
+        'Could not find fleet .* for bot',
+        'Failed to load fleet for bot'
+    )
 }
 
 $serverCandidates = @(
@@ -87,11 +105,20 @@ $process = $null
 $matchedPatterns = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $failureMessage = $null
 $oldDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', 'Process')
+$oldHeadlessMatchEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', 'Process')
 $oldLibraryPath = [Environment]::GetEnvironmentVariable('LD_LIBRARY_PATH', 'Process')
 
 try
 {
     [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', $prefabDumpPath, 'Process')
+    if ($RequireGameplayReady)
+    {
+        [Environment]::SetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', '1', 'Process')
+    }
+    else
+    {
+        [Environment]::SetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', $null, 'Process')
+    }
     if (-not $runningOnWindows)
     {
         $libraryPaths = @($ServerRoot, (Join-Path $ServerRoot 'linux64'))
@@ -180,6 +207,7 @@ catch
 finally
 {
     [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', $oldDumpEnvironment, 'Process')
+    [Environment]::SetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', $oldHeadlessMatchEnvironment, 'Process')
     if (-not $runningOnWindows)
     {
         [Environment]::SetEnvironmentVariable('LD_LIBRARY_PATH', $oldLibraryPath, 'Process')
@@ -196,6 +224,7 @@ finally
         started_utc = $startedUtc.ToString('o')
         finished_utc = [DateTime]::UtcNow.ToString('o')
         timeout_seconds = $TimeoutSeconds
+        gameplay_ready_required = [bool]$RequireGameplayReady
         server_executable = $serverExecutable
         config_path = $ConfigPath
         log_path = $logPath

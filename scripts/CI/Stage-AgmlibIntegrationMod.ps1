@@ -9,6 +9,8 @@ param(
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug',
 
+    [string]$CiTestSupportAssemblyPath,
+
     [string]$ReportPath
 )
 
@@ -47,6 +49,63 @@ if ($sourceHash -ne $stagedHash)
     throw 'Staged AGMLIB DLL does not match the CI package.'
 }
 
+$supportAssemblyTarget = $null
+$supportAssemblyHash = $null
+if (-not [string]::IsNullOrWhiteSpace($CiTestSupportAssemblyPath))
+{
+    $CiTestSupportAssemblyPath = [IO.Path]::GetFullPath($CiTestSupportAssemblyPath)
+    if (-not (Test-Path -LiteralPath $CiTestSupportAssemblyPath -PathType Leaf))
+    {
+        throw "CI test-support assembly was not found at '$CiTestSupportAssemblyPath'."
+    }
+
+    $supportAssemblyName = 'AGMLIB.CI.TestSupport.dll'
+    if ((Split-Path -Leaf $CiTestSupportAssemblyPath) -ne $supportAssemblyName)
+    {
+        throw "CI test-support assembly must be named '$supportAssemblyName'."
+    }
+
+    $supportRelativePath = "$Configuration/net481/$supportAssemblyName"
+    $supportAssemblyTarget = Join-Path $WorkshopItemDirectory $supportRelativePath
+    New-Item -ItemType Directory -Path (Split-Path -Parent $supportAssemblyTarget) -Force | Out-Null
+    Copy-Item -LiteralPath $CiTestSupportAssemblyPath -Destination $supportAssemblyTarget -Force
+
+    [xml]$manifest = Get-Content -LiteralPath $stagedManifest -Raw
+    $assembliesElement = $manifest.SelectSingleNode('/ModInfo/Assemblies')
+    if ($null -eq $assembliesElement)
+    {
+        throw "Staged AGMLIB manifest does not contain <Assemblies>."
+    }
+    $existingSupportAssembly = $assembliesElement.SelectNodes('string') |
+        Where-Object { $_.InnerText -eq $supportRelativePath }
+    if ($null -eq $existingSupportAssembly)
+    {
+        $supportElement = $manifest.CreateElement('string')
+        $supportElement.InnerText = $supportRelativePath
+        [void]$assembliesElement.AppendChild($supportElement)
+    }
+
+    $manifestSettings = [Xml.XmlWriterSettings]::new()
+    $manifestSettings.Encoding = [Text.UTF8Encoding]::new($false)
+    $manifestSettings.Indent = $true
+    $manifestSettings.NewLineChars = "`r`n"
+    $manifestSettings.NewLineHandling = [Xml.NewLineHandling]::Replace
+    try
+    {
+        $manifestWriter = [Xml.XmlWriter]::Create($stagedManifest, $manifestSettings)
+        $manifest.Save($manifestWriter)
+    }
+    finally
+    {
+        if ($null -ne $manifestWriter)
+        {
+            $manifestWriter.Dispose()
+        }
+    }
+
+    $supportAssemblyHash = (Get-FileHash -LiteralPath $supportAssemblyTarget -Algorithm SHA256).Hash
+}
+
 $report = [ordered]@{
     configuration = $Configuration
     package_root = $PackageRoot
@@ -54,6 +113,8 @@ $report = [ordered]@{
     staged_manifest = $stagedManifest
     staged_dll = $stagedDll
     staged_dll_sha256 = $stagedHash
+    ci_test_support_assembly = $supportAssemblyTarget
+    ci_test_support_sha256 = $supportAssemblyHash
 }
 
 if (-not [string]::IsNullOrWhiteSpace($ReportPath))

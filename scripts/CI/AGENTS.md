@@ -15,3 +15,7 @@ locally with PowerShell 7.
   on failure.
 - Integration support must be opt-in. Do not enable test transport or fixtures
   in normal Release gameplay.
+- The headless match test stages `AGMLIB.CI.TestSupport.dll` only into the
+  isolated workshop download and activates it only with
+  `AGMLIB_CI_AUTOSTART_MATCH=1`. A passing match test must reach the native
+  `GO!` gameplay milestone with one ready stock-fleet bot on each team.
