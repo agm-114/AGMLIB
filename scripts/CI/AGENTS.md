@@ -14,6 +14,9 @@ locally with PowerShell 7.
 - Long-running server checks must emit milestone notices and periodic
   heartbeats, and must fail on a bounded no-output stall before the global
   timeout.
+- Stream named lifecycle events for mod download/load, dedicated-server
+  readiness, match scene/map loading, fleet transfer/spawn, and gameplay start.
+  Keep these operator-facing events separate from required pass/fail assertions.
 - On fresh runners, warm SteamCMD app metadata in a separate invocation before
   installing app `2353090`; keep install retries bounded.
 - Preserve the full Unity log, stdout, stderr, prefab manifest, and JSON summary

@@ -134,16 +134,33 @@ Directory.CreateDirectory(dumpPath);
 File.WriteAllText(
     logPath,
     """
+Downloading mods
+Finished downloading mod 'AGMLIB'
+>>>>> Beginning Load of Mod 'AGMLIB' >>>>>
+Loaded assembly AGMLIB, Version=6.2.2.940, Culture=neutral, PublicKeyToken=null
+Loaded assembly AGMLIB.CI.TestSupport, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 Finished Loading Mod 'AGMLIB'. Result: Loaded
+All assets loaded. Starting dedicated server.
 [TestingComponents] Discovery complete: discovered=0, created=0, skipped=0, failed=0.
 [PrefabYamlDump] Completed path='fixture' prefabs=1 enabledMods=1 errors=0.
 Server: listening port=17777
+Dedicated server startup completed
 [AGMLIB CI] headless-match support enabled
 [AGMLIB CI] launching headless match players=2 bots=2
+Scene change start. New scene: 'SkirmishMapContainer'
+SkirmishGameManager - Host Started
+Finished loading scene in server-only mode.
+Changing server game state to WaitingForClients
+Changing server game state to LoadingMap
 [AGMLIB CI] waiting for dedicated-server map instantiation
+All clients finished loading map.
+Changing server game state to TransferringFleets
+All fleets uploaded to host
+Changing server game state to SpawningFleet
 [AGMLIB CI] waiting for bot fleet initialization
 [AGMLIB CI] suppressing bot-only return to lobby
 Finished spawning fleets
+Changing server game state to ChooseSpawn
 GO!
 """);
 File.WriteAllText(Path.Combine(dumpPath, "manifest.yaml"), "errors: 0\n");
@@ -174,6 +191,38 @@ Thread.Sleep(TimeSpan.FromSeconds(30));
     if ($smokeSummary.succeeded -ne $true)
     {
         throw 'The fake dedicated-server smoke test did not report success.'
+    }
+    $expectedLifecycleEvents = @(
+        'server-process-started',
+        'mods-download-started',
+        'mod-download-completed',
+        'mod-load-started',
+        'agmlib-assembly-loaded',
+        'ci-support-loaded',
+        'mod-load-completed',
+        'all-mod-assets-loaded',
+        'server-listening',
+        'lobby-ready',
+        'match-launch-requested',
+        'match-scene-loading',
+        'match-host-started',
+        'match-scene-loaded',
+        'waiting-for-clients',
+        'map-loading',
+        'map-loaded',
+        'fleets-transferring',
+        'fleets-uploaded',
+        'fleets-spawning',
+        'bot-fleets-initializing',
+        'fleets-spawned',
+        'deployment-started',
+        'gameplay-started'
+    )
+    $missingLifecycleEvents = $expectedLifecycleEvents |
+        Where-Object { $_ -notin $smokeSummary.lifecycle_events }
+    if ($missingLifecycleEvents.Count -gt 0)
+    {
+        throw "Smoke test did not emit lifecycle events: $($missingLifecycleEvents -join ', ')."
     }
 
     $report = [ordered]@{

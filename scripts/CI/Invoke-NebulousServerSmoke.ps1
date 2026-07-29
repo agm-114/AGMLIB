@@ -119,6 +119,7 @@ if ($ValidateOnly)
 $startedUtc = [DateTime]::UtcNow
 $process = $null
 $matchedPatterns = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$emittedLifecycleEvents = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $failureMessage = $null
 $lastActivityUtc = $startedUtc
 $lastHeartbeatUtc = [DateTime]::MinValue
@@ -129,6 +130,31 @@ $oldDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_
 $oldImmediateDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_IMMEDIATE', 'Process')
 $oldHeadlessMatchEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', 'Process')
 $oldLibraryPath = [Environment]::GetEnvironmentVariable('LD_LIBRARY_PATH', 'Process')
+$lifecycleEvents = @(
+    [pscustomobject]@{ Name = 'mods-download-started'; Pattern = '\bDownloading mods\b' }
+    [pscustomobject]@{ Name = 'mod-download-completed'; Pattern = "Finished downloading mod '[^']+'" }
+    [pscustomobject]@{ Name = 'mod-load-started'; Pattern = "Beginning Load of Mod '[^']+'" }
+    [pscustomobject]@{ Name = 'agmlib-assembly-loaded'; Pattern = 'Loaded assembly AGMLIB, Version=[^,\r\n]+' }
+    [pscustomobject]@{ Name = 'ci-support-loaded'; Pattern = 'Loaded assembly AGMLIB\.CI\.TestSupport, Version=[^,\r\n]+' }
+    [pscustomobject]@{ Name = 'mod-load-completed'; Pattern = "Finished Loading Mod '[^']+'\.\s+Result:\s+\w+" }
+    [pscustomobject]@{ Name = 'all-mod-assets-loaded'; Pattern = 'All assets loaded\.\s+Starting dedicated server\.' }
+    [pscustomobject]@{ Name = 'server-listening'; Pattern = 'Server: listening port=\d+' }
+    [pscustomobject]@{ Name = 'lobby-ready'; Pattern = 'Dedicated server startup completed' }
+    [pscustomobject]@{ Name = 'match-launch-requested'; Pattern = '\[AGMLIB CI\] launching headless match[^\r\n]*' }
+    [pscustomobject]@{ Name = 'match-scene-loading'; Pattern = "Scene change start\.\s+New scene: 'SkirmishMapContainer'" }
+    [pscustomobject]@{ Name = 'match-host-started'; Pattern = 'SkirmishGameManager - Host Started' }
+    [pscustomobject]@{ Name = 'match-scene-loaded'; Pattern = 'Finished loading scene in server-only mode\.' }
+    [pscustomobject]@{ Name = 'waiting-for-clients'; Pattern = 'Changing server game state to WaitingForClients' }
+    [pscustomobject]@{ Name = 'map-loading'; Pattern = 'Changing server game state to LoadingMap' }
+    [pscustomobject]@{ Name = 'map-loaded'; Pattern = 'All clients finished loading map\.' }
+    [pscustomobject]@{ Name = 'fleets-transferring'; Pattern = 'Changing server game state to TransferringFleets' }
+    [pscustomobject]@{ Name = 'fleets-uploaded'; Pattern = 'All fleets uploaded to host' }
+    [pscustomobject]@{ Name = 'fleets-spawning'; Pattern = 'Changing server game state to SpawningFleet' }
+    [pscustomobject]@{ Name = 'bot-fleets-initializing'; Pattern = '\[AGMLIB CI\] waiting for bot fleet initialization' }
+    [pscustomobject]@{ Name = 'fleets-spawned'; Pattern = 'Finished spawning fleets' }
+    [pscustomobject]@{ Name = 'deployment-started'; Pattern = 'Changing server game state to (ChooseSpawn|Arriving)' }
+    [pscustomobject]@{ Name = 'gameplay-started'; Pattern = '(?m)^GO!\r?$' }
+)
 
 try
 {
@@ -167,6 +193,10 @@ try
         -RedirectStandardError $stderrPath `
         -PassThru
 
+    Write-Host (
+        "[NEBULOUS event] server-process-started: pid=$($process.Id) " +
+        "executable='$serverExecutable'")
+    [void]$emittedLifecycleEvents.Add('server-process-started')
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     while ([DateTime]::UtcNow -lt $deadline)
     {
@@ -183,6 +213,21 @@ try
             $lastLogLine = $logText -split '\r?\n' |
                 Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
                 Select-Object -Last 1
+        }
+
+        foreach ($event in $lifecycleEvents)
+        {
+            $eventMatch = [regex]::Match($logText, $event.Pattern)
+            if ($eventMatch.Success -and $emittedLifecycleEvents.Add($event.Name))
+            {
+                $eventDetail = ($eventMatch.Value -replace '\s+', ' ').Trim()
+                $eventMessage = "$($event.Name): $eventDetail"
+                Write-Host "[NEBULOUS event] $eventMessage"
+                if ([Environment]::GetEnvironmentVariable('GITHUB_ACTIONS', 'Process') -eq 'true')
+                {
+                    Write-Host "::notice title=NEBULOUS integration event::$eventMessage"
+                }
+            }
         }
 
         foreach ($pattern in $ForbiddenLogPatterns)
@@ -203,11 +248,7 @@ try
                     $milestone = $milestone.Substring(0, 240) + '...'
                 }
                 $milestoneMessage = "matched $($matchedPatterns.Count)/$($RequiredLogPatterns.Count): $milestone"
-                Write-Host "[NEBULOUS milestone] $milestoneMessage"
-                if ([Environment]::GetEnvironmentVariable('GITHUB_ACTIONS', 'Process') -eq 'true')
-                {
-                    Write-Host "::notice title=NEBULOUS integration milestone::$milestoneMessage"
-                }
+                Write-Host "[NEBULOUS assertion] $milestoneMessage"
             }
         }
 
@@ -247,6 +288,7 @@ try
             Write-Host (
                 "[NEBULOUS heartbeat] elapsed=${elapsedSeconds}s idle=${idleSeconds}s " +
                 "milestones=$($matchedPatterns.Count)/$($RequiredLogPatterns.Count) " +
+                "events=$($emittedLifecycleEvents.Count) " +
                 "logChars=$lastObservedLogLength dumpBytes=$lastObservedDumpBytes latest='$latest'")
             $lastHeartbeatUtc = $nowUtc
         }
@@ -315,6 +357,7 @@ finally
         stderr_path = $stderrPath
         prefab_manifest = $prefabManifestPath
         matched_log_patterns = @($matchedPatterns)
+        lifecycle_events = @($emittedLifecycleEvents)
         required_log_patterns = $RequiredLogPatterns
         forbidden_log_patterns = $ForbiddenLogPatterns
         process_exit_code = if ($null -ne $process -and $process.HasExited) { $process.ExitCode } else { $null }
