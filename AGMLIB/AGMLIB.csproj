@@ -12,6 +12,7 @@
     <ArtifactsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\artifacts'))</ArtifactsDir>
     <BaseOutputPath>$(ArtifactsDir)\$(ModName)\</BaseOutputPath>
     <AgmlibManifestPath>$(BaseOutputPath)ModInfo.xml</AgmlibManifestPath>
+    <PowerShellExecutable Condition="'$(PowerShellExecutable)' == ''">powershell</PowerShellExecutable>
     <LangVersion>12.0</LangVersion>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-all</AnalysisLevel>
@@ -325,7 +326,7 @@
 
   <Target Name="ComputeAgmlibBuildVersion"
           BeforeTargets="GetAssemblyVersion;GenerateModInfo">
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\scripts\Build\Get-AgmlibBuildVersion.ps1&quot; -ProjectRoot &quot;$(MSBuildProjectDirectory)&quot; -StatePath &quot;$(MSBuildProjectDirectory)\..\.build-state\agmlib-version.json&quot; -BaseVersion &quot;$(AgmlibVersionPrefix)&quot; -BaseRevision $(AgmlibBuildRevision)"
+    <Exec Command="&quot;$(PowerShellExecutable)&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\scripts\Build\Get-AgmlibBuildVersion.ps1&quot; -ProjectRoot &quot;$(MSBuildProjectDirectory)&quot; -StatePath &quot;$(MSBuildProjectDirectory)\..\.build-state\agmlib-version.json&quot; -BaseVersion &quot;$(AgmlibVersionPrefix)&quot; -BaseRevision $(AgmlibBuildRevision)"
           ConsoleToMSBuild="true"
           StandardOutputImportance="Low">
       <Output TaskParameter="ConsoleOutput" ItemName="_AgmlibComputedVersionOutput" />
