@@ -12,18 +12,18 @@ param(
     [int]$TimeoutSeconds = 720,
 
     [string[]]$RequiredLogPatterns = @(
-        "Finished Loading Mod 'AGMLIB'. Result: Loaded",
+        "Finished Loading Mod 'AGMLIB'\.\s+Result:\s+Loaded",
         '\[TestingComponents\] Discovery complete: .*failed=0\.',
         '\[PrefabYamlDump\] Completed .*errors=0\.',
         'Server: listening port='
     ),
 
     [string[]]$ForbiddenLogPatterns = @(
-        "Finished Loading Mod 'AGMLIB'. Result: Failed",
+        "Finished Loading Mod 'AGMLIB'\.\s+Result:\s+Failed",
         '\[TestingComponents\].*failed=[1-9][0-9]*',
         '\[PrefabYamlDump\] Failed:',
         '\bHarmonyException\b',
-        '\b(TypeLoadException|MissingMethodException|MissingFieldException)\b'
+        '\b(TypeLoadException|MissingMethodException|MissingFieldException|NullReferenceException)\b'
     ),
 
     [switch]$RequireGameplayReady,
@@ -53,6 +53,7 @@ if ($RequireGameplayReady)
     $RequiredLogPatterns = @($RequiredLogPatterns) + @(
         '\[AGMLIB CI\] headless-match support enabled',
         '\[AGMLIB CI\] launching headless match players=[2-9][0-9]* bots=[2-9][0-9]*',
+        '\[AGMLIB CI\] waiting for dedicated-server map instantiation',
         '\[AGMLIB CI\] suppressing bot-only return to lobby',
         'Finished spawning fleets',
         '(?m)^GO!\r?$'
@@ -105,12 +106,14 @@ $process = $null
 $matchedPatterns = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $failureMessage = $null
 $oldDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', 'Process')
+$oldImmediateDumpEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_PREFAB_DUMP_IMMEDIATE', 'Process')
 $oldHeadlessMatchEnvironment = [Environment]::GetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', 'Process')
 $oldLibraryPath = [Environment]::GetEnvironmentVariable('LD_LIBRARY_PATH', 'Process')
 
 try
 {
     [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', $prefabDumpPath, 'Process')
+    [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_IMMEDIATE', '1', 'Process')
     if ($RequireGameplayReady)
     {
         [Environment]::SetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', '1', 'Process')
@@ -207,6 +210,7 @@ catch
 finally
 {
     [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_DIR', $oldDumpEnvironment, 'Process')
+    [Environment]::SetEnvironmentVariable('AGMLIB_PREFAB_DUMP_IMMEDIATE', $oldImmediateDumpEnvironment, 'Process')
     [Environment]::SetEnvironmentVariable('AGMLIB_CI_AUTOSTART_MATCH', $oldHeadlessMatchEnvironment, 'Process')
     if (-not $runningOnWindows)
     {

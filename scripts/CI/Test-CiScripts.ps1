@@ -124,6 +124,10 @@ if (Environment.GetEnvironmentVariable("AGMLIB_CI_AUTOSTART_MATCH") != "1")
 {
     throw new InvalidOperationException("AGMLIB_CI_AUTOSTART_MATCH was not enabled.");
 }
+if (Environment.GetEnvironmentVariable("AGMLIB_PREFAB_DUMP_IMMEDIATE") != "1")
+{
+    throw new InvalidOperationException("AGMLIB_PREFAB_DUMP_IMMEDIATE was not enabled.");
+}
 
 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(logPath))!);
 Directory.CreateDirectory(dumpPath);
@@ -136,6 +140,7 @@ Finished Loading Mod 'AGMLIB'. Result: Loaded
 Server: listening port=17777
 [AGMLIB CI] headless-match support enabled
 [AGMLIB CI] launching headless match players=2 bots=2
+[AGMLIB CI] waiting for dedicated-server map instantiation
 [AGMLIB CI] suppressing bot-only return to lobby
 Finished spawning fleets
 GO!

@@ -105,3 +105,28 @@ internal static class KeepHeadlessMatchRunningPatch
         return false;
     }
 }
+
+[HarmonyPatch(typeof(SkirmishGameHost), "WaitForPlayersToLoadMap")]
+internal static class WaitForDedicatedServerMapPatch
+{
+    private static bool _waitingLogged;
+
+    private static bool Prefix(
+        SkirmishGameManager.ISkirmishManager ____clientManager,
+        ref bool __result)
+    {
+        if (!CiMatchEntryPoint.IsEnabled || ____clientManager.LoadedMap != null)
+        {
+            return true;
+        }
+
+        if (!_waitingLogged)
+        {
+            _waitingLogged = true;
+            Debug.Log("[AGMLIB CI] waiting for dedicated-server map instantiation");
+        }
+
+        __result = false;
+        return false;
+    }
+}

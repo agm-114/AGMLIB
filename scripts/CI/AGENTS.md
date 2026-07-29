@@ -21,3 +21,6 @@ locally with PowerShell 7.
   isolated workshop download and activates it only with
   `AGMLIB_CI_AUTOSTART_MATCH=1`. A passing match test must reach the native
   `GO!` gameplay milestone with one ready stock-fleet bot on each team.
+- Use `AGMLIB_PREFAB_DUMP_IMMEDIATE=1` only with the isolated Debug integration
+  dump. Dedicated-server startup does not reliably raise the post-load event
+  used by interactive clients.
