@@ -1,64 +1,73 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: .NET
+name: CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    name: Build AGMLIB
+    runs-on: windows-latest
+    timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-  release:
-    needs: build  # This job depends on the successful completion of build-and-test
-    permissions: write-all
-    name: Create Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
+      - name: Check out repository
         uses: actions/checkout@v4
-      - name: Setup .NET
+
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+
       - name: Restore dependencies
-        run: dotnet restore
-      - name: Build
-        run: dotnet build --no-restore
-      - name: Get Short SHA
+        run: dotnet restore AGMLIB.sln
+
+      - name: Build release
+        run: >-
+          dotnet build AGMLIB.sln
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+          -p:DeployToGame=false
+
+      - name: Verify build outputs
+        shell: pwsh
         run: |
-          short_sha=$(echo "${{ github.sha }}" | cut -c -7)
-          echo "::set-output name=short_sha::$short_sha"
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          $requiredOutputs = @(
+            "artifacts/AGMLIB/ModInfo.xml"
+            "artifacts/AGMLIB/Release/net481/AGMLIB.dll"
+            "artifacts/AGMLIB/Release/net481/0Harmony.dll"
+          )
+
+          foreach ($output in $requiredOutputs) {
+            if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
+              throw "Required build output was not created: $output"
+            }
+          }
+
+      - name: Upload AGMLIB artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: Automatic
-          release_name: Release ${{ steps.get_short_sha.outputs.short_sha }}
-          body: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-      - name: Upload DLL
-        uses: actions/upload-artifact@v3
-        with:
-          name: AGMLIB.dll
-          path: C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Mods\AGMLIB\Debug\net481\AGMLIB.dll
+          name: AGMLIB-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            artifacts/AGMLIB/ModInfo.xml
+            artifacts/AGMLIB/Release/net481/AGMLIB.dll
+            artifacts/AGMLIB/Release/net481/AGMLIB.pdb
+            artifacts/AGMLIB/Release/net481/0Harmony.dll
