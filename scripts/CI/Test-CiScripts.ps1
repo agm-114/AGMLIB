@@ -68,7 +68,6 @@ try
         '  <QueryPort>27016</QueryPort>'
         '  <MaxPlayers>10</MaxPlayers>'
         '  <TeamSizeToStart>1</TeamSizeToStart>'
-        '  <Bots />'
         '  <Mods />'
         '</SkirmishDedicatedServerConfig>'
     ) -join "`r`n"

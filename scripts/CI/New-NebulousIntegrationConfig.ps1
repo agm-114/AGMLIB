@@ -74,7 +74,23 @@ if ($ConfigureHeadlessMatch)
     $botsElement = $config.SelectSingleNode('//Bots')
     if ($null -eq $botsElement)
     {
-        throw 'Dedicated-server config does not contain <Bots>.'
+        $configRoot = $config.DocumentElement
+        if ($null -eq $configRoot)
+        {
+            throw 'Dedicated-server config does not have a root element.'
+        }
+
+        $botsElement = $config.CreateElement('Bots')
+        $followingElement = $configRoot.SelectSingleNode(
+            'RankRestriction | AutoBalance | AutoBalanceTriggerThreshold | Competitive | AllowModdedFleets | Mods')
+        if ($null -eq $followingElement)
+        {
+            [void]$configRoot.AppendChild($botsElement)
+        }
+        else
+        {
+            [void]$configRoot.InsertBefore($botsElement, $followingElement)
+        }
     }
     $botsElement.RemoveAll()
 
