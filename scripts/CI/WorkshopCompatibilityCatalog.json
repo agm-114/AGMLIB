@@ -90,6 +90,19 @@
       "id": "2869734654",
       "name": "Solarian Federation Navy - Ares Drive Yard",
       "slug": "solarian-federation-navy",
+      "default_enabled": false,
+      "ci_priority": "low",
+      "support_status": "out-of-support",
+      "known_failure": {
+        "code": "legacy-ares-illuminator-hook",
+        "assembly": "Ares.dll",
+        "entry_point": "VAEAmmo.PostLoad",
+        "exception": "NullReferenceException",
+        "stack_contains": [
+          "VAEAmmo.GetPrivateField",
+          "VAEAmmo.GetIlluminator"
+        ]
+      },
       "dependencies": []
     },
     {

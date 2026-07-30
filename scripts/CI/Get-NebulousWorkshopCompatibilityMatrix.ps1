@@ -60,6 +60,38 @@ foreach ($mod in $catalogMods)
         throw "Catalog artifact slug '$slug' is duplicated."
     }
 
+    $ciPriority = if ($null -eq $mod.ci_priority)
+    {
+        'normal'
+    }
+    else
+    {
+        [string]$mod.ci_priority
+    }
+    if ($ciPriority -notin @('normal', 'low'))
+    {
+        throw "Catalog mod '$id' has unsupported CI priority '$ciPriority'."
+    }
+
+    $supportStatus = if ($null -eq $mod.support_status)
+    {
+        'compatibility-tested'
+    }
+    else
+    {
+        [string]$mod.support_status
+    }
+    if ($supportStatus -notin @('compatibility-tested', 'out-of-support'))
+    {
+        throw "Catalog mod '$id' has unsupported support status '$supportStatus'."
+    }
+
+    $defaultEnabled = $null -eq $mod.default_enabled -or [bool]$mod.default_enabled
+    if ($supportStatus -eq 'out-of-support' -and $defaultEnabled)
+    {
+        throw "Out-of-support catalog mod '$id' must be disabled in the default matrix."
+    }
+
     foreach ($dependency in @($mod.dependencies))
     {
         $dependencyId = [string]$dependency
@@ -97,7 +129,13 @@ if (-not [string]::IsNullOrWhiteSpace($ModIds))
 
 $selectedMods = @(
     $catalogMods |
-        Where-Object { $selectedIds.Count -eq 0 -or [string]$_.id -in $selectedIds }
+        Where-Object {
+            if ($selectedIds.Count -gt 0)
+            {
+                return [string]$_.id -in $selectedIds
+            }
+            return $null -eq $_.default_enabled -or [bool]$_.default_enabled
+        }
 )
 if ($selectedMods.Count -eq 0)
 {
@@ -125,6 +163,23 @@ $matrixEntries = foreach ($mod in $selectedMods)
         name = [string]$mod.name
         slug = [string]$mod.slug
         install_ids = $installIds -join ','
+        ci_priority = if ($null -eq $mod.ci_priority) { 'normal' } else { [string]$mod.ci_priority }
+        support_status = if ($null -eq $mod.support_status)
+        {
+            'compatibility-tested'
+        }
+        else
+        {
+            [string]$mod.support_status
+        }
+        known_failure_code = if ($null -eq $mod.known_failure)
+        {
+            ''
+        }
+        else
+        {
+            [string]$mod.known_failure.code
+        }
     }
 }
 

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mod_ids:
-        description: Comma-separated catalog mod IDs; leave blank to test all major mods
+        description: Comma-separated catalog mod IDs; leave blank to test the default supported set
         required: false
         default: ""
         type: string
@@ -121,6 +121,9 @@ jobs:
       TARGET_NAME: ${{ matrix.name }}
       TARGET_SLUG: ${{ matrix.slug }}
       INSTALL_WORKSHOP_IDS: ${{ matrix.install_ids }}
+      CI_PRIORITY: ${{ matrix.ci_priority }}
+      SUPPORT_STATUS: ${{ matrix.support_status }}
+      KNOWN_FAILURE_CODE: ${{ matrix.known_failure_code }}
       MATCH_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
     strategy:
       fail-fast: false
@@ -278,6 +281,9 @@ jobs:
             target_workshop_item_id = $env:TARGET_WORKSHOP_ID
             target_name = $env:TARGET_NAME
             target_slug = $env:TARGET_SLUG
+            ci_priority = $env:CI_PRIORITY
+            support_status = $env:SUPPORT_STATUS
+            known_failure_code = $env:KNOWN_FAILURE_CODE
             workshop_item_ids = @($env:INSTALL_WORKSHOP_IDS -split ',')
             server_install = '${{ steps.server.outcome }}'
             download = '${{ steps.download.outcome }}'

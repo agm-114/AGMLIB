@@ -49,6 +49,8 @@ Fleet Command works and how AGMLIB integrates with it.
 - `networking-authority.md`: server/client ownership and replication questions.
 - `native-boundaries.md`: Harmony, reflection, typed accessors, and target
   verification.
+- `workshop-compatibility.md`: public Workshop support classifications, known
+  third-party failures, and observed AGMLIB script-usage boundaries.
 - `generated/native-subsystem-inventory.md`: deterministic area, subsystem,
   namespace, and hotspot counts from the pinned decompile.
 - `generated/native-source-file-atlas.md`: one structural record for every

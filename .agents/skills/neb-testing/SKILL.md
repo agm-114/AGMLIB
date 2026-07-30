@@ -87,13 +87,16 @@ Preserve CRLF in modified C# files.
 ## Run the major-mod compatibility CI
 
 Use the manual-only Workshop compatibility workflow to test the current AGMLIB
-build against every curated major non-fleet mod:
+build against the default supported set of curated major non-fleet mods:
 
 ```powershell
 gh workflow run workshop-compatibility.yml --ref master
 ```
 
-To rerun only selected catalog entries, pass comma-separated Workshop IDs:
+Entries marked `default_enabled: false` are retained for historical evidence
+but omitted when `mod_ids` is blank. To rerun selected catalog entries,
+including an out-of-support entry for diagnosis, pass comma-separated Workshop
+IDs:
 
 ```powershell
 gh workflow run workshop-compatibility.yml --ref master `
@@ -115,6 +118,21 @@ files, assembly metadata, the generated server config, full server logs,
 contain inspection metadata and YAML, not the downloaded mod payloads. Use the
 summary artifact for the pass/fail index and the per-mod artifact for runtime
 structure investigation.
+
+Treat the public `Ares.dll` failure identified by
+`VAEAmmo.PostLoad` -> `VAEAmmo.GetIlluminator` ->
+`VAEAmmo.GetPrivateField` as an unsupported legacy native-API failure when it
+ends in `NullReferenceException`. The script expects
+`Ships.RezFollowingMuzzle._followingPrefab` on the stock E57 Floodlight, while
+the current prefab uses the separate `Ships.EWarFollowingMuzzle` type. Apply
+the same classification only when both the assembly and stack signature match;
+the filename alone is insufficient.
+
+This Ares script has no assembly reference to AGMLIB and no AGMLIB-defined
+component was found in its post-load prefab snapshot. AGMLIB is present only
+because the compatibility harness stages the current AGMLIB Workshop baseline.
+See `knowledge/workshop-compatibility.md` for the dependency boundary and
+modernization guidance.
 
 Nebulous loads mod assemblies only during startup. After any DLL rebuild, fully close and restart the game before testing; returning to the main menu or starting another match does not load the new DLL.
 

@@ -36,6 +36,16 @@ locally with PowerShell 7.
   `push`, `pull_request`, or scheduled triggers. Its checked-in
   `WorkshopCompatibilityCatalog.json` is the reviewed set of major non-fleet
   mods and their additional declared Workshop dependencies.
+- The default Workshop matrix must omit entries with
+  `default_enabled: false`. Keep known incompatible entries in the catalog for
+  evidence and explicit diagnostic reruns, but do not spend the default
+  compatibility budget on deterministic failures.
+- Classify a public mod as `out-of-support`, `ci_priority: low`, and
+  `default_enabled: false` after confirming the exact
+  `Ares.dll`/`VAEAmmo.PostLoad` failure signature recorded in the catalog:
+  `NullReferenceException` through `VAEAmmo.GetPrivateField` and
+  `VAEAmmo.GetIlluminator`. Do not classify a mod from the `Ares.dll` filename
+  alone; the assembly and stack signature must both match.
 - Run one Workshop compatibility target per isolated matrix job. Require every
   downloaded mod manifest to report a successful load, require the stock
   two-bot match to reach native `GO!`, and keep matrix fail-fast disabled so

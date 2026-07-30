@@ -106,9 +106,10 @@ try
         -CatalogPath $catalogPath `
         -ReportPath $catalogSelectionReport
     $allMatrix = $allMatrixJson | ConvertFrom-Json
-    if (@($allMatrix.include).Count -ne 21)
+    if (@($allMatrix.include).Count -ne 20 -or
+        @($allMatrix.include.id) -contains '2869734654')
     {
-        throw 'Workshop compatibility catalog did not resolve all 21 major mods.'
+        throw 'Workshop compatibility default matrix did not exclude the known unsupported mod.'
     }
     $subsetMatrixJson = & (Join-Path $PSScriptRoot 'Get-NebulousWorkshopCompatibilityMatrix.ps1') `
         -CatalogPath $catalogPath `
@@ -120,6 +121,19 @@ try
         [string]$subsetMatrix.include[1].install_ids -notmatch '3251743994')
     {
         throw 'Workshop compatibility subset did not preserve the selected mods and dependencies.'
+    }
+    $unsupportedMatrixJson = & (
+        Join-Path $PSScriptRoot 'Get-NebulousWorkshopCompatibilityMatrix.ps1') `
+        -CatalogPath $catalogPath `
+        -ModIds '2869734654'
+    $unsupportedMatrix = $unsupportedMatrixJson | ConvertFrom-Json
+    if (@($unsupportedMatrix.include).Count -ne 1 -or
+        [string]$unsupportedMatrix.include[0].support_status -ne 'out-of-support' -or
+        [string]$unsupportedMatrix.include[0].ci_priority -ne 'low' -or
+        [string]$unsupportedMatrix.include[0].known_failure_code -ne
+            'legacy-ares-illuminator-hook')
+    {
+        throw 'Explicit Workshop compatibility selection did not preserve unsupported metadata.'
     }
 
     $fixtureWorkshopIds = @([UInt64]2960504230, [UInt64]1234567890)
