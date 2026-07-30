@@ -4,6 +4,13 @@
 
 - Always prefer `AGENTS.md` over `README.md` for new documentation files and documentation edits.
 
+## Private Mod Data
+
+- Never commit information about private, unreleased, access-restricted, or locally shared mods.
+- This prohibition includes mod names and identifiers when sensitive, manifests, file trees, hashes, logs, prefab or YAML dumps, decompiled output, screenshots, and derived implementation details.
+- Keep private-mod investigation material only in git-ignored local notes, local caches, or temporary access-controlled CI artifacts, and sanitize any public report or commit.
+- Only add a mod to checked-in CI catalogs or fixtures after verifying that its Workshop page or source is public. Treat uncertain visibility as private.
+
 ## Code Style
 
 - Prefer concrete game/domain types over `object` where possible.
