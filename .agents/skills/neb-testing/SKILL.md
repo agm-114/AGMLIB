@@ -131,6 +131,10 @@ the filename alone is insufficient.
 This Ares script has no assembly reference to AGMLIB and no AGMLIB-defined
 component was found in its post-load prefab snapshot. AGMLIB is present only
 because the compatibility harness stages the current AGMLIB Workshop baseline.
+The preferred author repair is script-free: reauthor the Artemis modular
+missile support as a current native `JammerSupportDescriptor` with
+`_effectType: SensorIllumination`. Use `EWarFollowingMuzzle` with the same
+effect type only for hull-weapon muzzle objects, not missile support assets.
 See `knowledge/workshop-compatibility.md` for the dependency boundary and
 modernization guidance.
 

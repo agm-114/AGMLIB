@@ -80,29 +80,43 @@ item by the compatibility harness. Its presence in the test does not mean
 
 ## Modernization guidance for the mod author
 
-The old lookup should not traverse the E57 prefab or reflect
-`RezFollowingMuzzle._followingPrefab`. Current NEBULOUS exposes the shared
-sensor-illumination prefab through `Game.EWar.EWarPrefabCollection`:
+The preferred fix is to reauthor the Artemis missile component with the current
+native EWAR support descriptor and remove the illumination setup script:
 
-```csharp
-using Game.EWar;
-using Utility;
+1. Create or update the missile support asset as
+   `Munitions.ModularMissiles.Descriptors.Support.JammerSupportDescriptor`
+   (`Nebulous/Missiles/Support/Jammer` in Unity's asset menu).
+2. Set its serialized `_effectType` to
+   `EWarPrefabCollection.EwarType.SensorIllumination`.
+3. Author `_sigType`, beam shape, range, power, gain, and aiming angle directly
+   on that descriptor.
+4. Rebuild the bundle against the current NEBULOUS managed assemblies.
+5. Delete `GetIlluminator`, `SetEffectPrefab`, and the corresponding call from
+   `VAEAmmo.PostLoad`.
 
-SensorIlluminator GetIlluminator()
-{
-    NetworkPoolable prefab =
-        SingletonMonobehaviour<EWarPrefabCollection>.Instance
-            .SensorIlluminatorPrefab;
+Current `JammerSupportDescriptor.SpawnJammingEffect()` resolves the configured
+effect through `EWarPrefabCollection` itself. It no longer has the old private
+`_effectPrefab` field, so a replacement script that merely finds a modern
+`SensorIlluminator` and reflects `_effectPrefab` would still do nothing.
 
-    return prefab.GetComponent<SensorIlluminator>()
-        ?? throw new InvalidOperationException(
-            "The native sensor-illumination prefab has no SensorIlluminator.");
-}
-```
+For a hull weapon rather than a modular-missile support component, use
+`Ships.EWarFollowingMuzzle`, set its serialized `_type` to
+`SensorIllumination`, and set `_matchRotation: true` for a directed beam. That
+is the modern script-free replacement for a `RezFollowingMuzzle` that manually
+holds an EWAR prefab. It is not the correct component type for the Artemis
+missile support asset.
 
-The remaining write to the custom component's private `_effectPrefab` field is
-still a third-party reflection boundary. The mod should replace it with a
-typed serialized field or public setter on its own component. If legacy
-reflection must remain temporarily, validate the destination object, field,
-and assigned type and throw a descriptive compatibility exception rather than
-dereferencing null.
+AGMLIB contains an optional
+`ModularJammerSupportDescriptor` in
+`AGMLIB/Munitions/ModularMissile/ModularDescriptors/Basic/ModularJammerSupportDescriptor.cs`
+for AGMLIB-specific modular or conical-scan behavior. It inherits the native
+descriptor, so its inherited `_effectType` should likewise be authored as
+`SensorIllumination`. Ares does not currently reference that AGMLIB type.
+
+The related legacy prototype in
+`AGMLIB/Munitions/ModularMissile/Illum.cs` is not used by Ares, and its Harmony
+patch attribute is disabled. Do not use it as the modernization path.
+
+The illumination feature can therefore be entirely script-free. Removing
+`Ares.dll` itself is a separate decision because that assembly also contains
+munition-copying and faction-availability patches unrelated to illumination.
