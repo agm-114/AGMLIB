@@ -1,0 +1,343 @@
+name: NEBULOUS Workshop Compatibility
+
+on:
+  workflow_dispatch:
+    inputs:
+      mod_ids:
+        description: Comma-separated catalog mod IDs; leave blank to test all major mods
+        required: false
+        default: ""
+        type: string
+      timeout_seconds:
+        description: Maximum dedicated-server runtime for each mod
+        required: true
+        default: "720"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nebulous-workshop-compatibility-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  build:
+    name: Build compatibility package and matrix
+    runs-on: windows-latest
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.catalog.outputs.matrix }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Resolve Workshop compatibility catalog
+        id: catalog
+        shell: pwsh
+        env:
+          SELECTED_MOD_IDS: ${{ inputs.mod_ids }}
+        run: |
+          $matrix = ./scripts/CI/Get-NebulousWorkshopCompatibilityMatrix.ps1 `
+            -CatalogPath scripts/CI/WorkshopCompatibilityCatalog.json `
+            -ModIds $env:SELECTED_MOD_IDS `
+            -ReportPath artifacts/ci/workshop-compatibility-selection.json
+          "matrix=$matrix" >> $env:GITHUB_OUTPUT
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore AGMLIB.sln
+
+      - name: Build Debug
+        run: >-
+          dotnet build AGMLIB.sln
+          --configuration Debug
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+          -p:DeployToGame=false
+          -p:PowerShellExecutable=pwsh
+
+      - name: Build CI-only headless match support
+        run: >-
+          dotnet build tests/AGMLIB.CI.TestSupport/AGMLIB.CI.TestSupport.csproj
+          --configuration Debug
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Validate Debug package
+        shell: pwsh
+        run: |
+          ./scripts/CI/Test-AgmlibPackage.ps1 `
+            -Configuration Debug `
+            -PackageRoot artifacts/AGMLIB `
+            -ReportPath artifacts/ci/package-Debug.json
+
+      - name: Upload Debug compatibility package
+        uses: actions/upload-artifact@v7
+        with:
+          name: AGMLIB-workshop-compatibility-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            artifacts/AGMLIB/ModInfo.xml
+            artifacts/AGMLIB/Debug/net481/AGMLIB.dll
+            artifacts/AGMLIB/Debug/net481/AGMLIB.pdb
+            artifacts/AGMLIB/Debug/net481/0Harmony.dll
+
+      - name: Upload CI-only headless match support
+        uses: actions/upload-artifact@v7
+        with:
+          name: AGMLIB-workshop-test-support-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 7
+          path: artifacts/AGMLIB.CI.TestSupport/Debug/net481/AGMLIB.CI.TestSupport.dll
+
+      - name: Upload selected compatibility catalog
+        uses: actions/upload-artifact@v7
+        with:
+          name: workshop-compatibility-selection-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            scripts/CI/WorkshopCompatibilityCatalog.json
+            artifacts/ci/workshop-compatibility-selection.json
+            artifacts/ci/package-Debug.json
+
+  compatibility:
+    name: ${{ matrix.name }} (${{ matrix.id }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET_WORKSHOP_ID: ${{ matrix.id }}
+      TARGET_NAME: ${{ matrix.name }}
+      TARGET_SLUG: ${{ matrix.slug }}
+      INSTALL_WORKSHOP_IDS: ${{ matrix.install_ids }}
+      MATCH_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJSON(needs.build.outputs.matrix) }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install SteamCMD runtime dependency
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install --yes lib32gcc-s1
+
+      - name: Download Debug compatibility package
+        uses: actions/download-artifact@v8
+        with:
+          name: AGMLIB-workshop-compatibility-${{ github.sha }}
+          path: artifacts/AGMLIB
+
+      - name: Download CI-only headless match support
+        uses: actions/download-artifact@v8
+        with:
+          name: AGMLIB-workshop-test-support-${{ github.sha }}
+          path: artifacts/AGMLIB.CI.TestSupport
+
+      - name: Install SteamCMD
+        id: steamcmd
+        shell: pwsh
+        run: |
+          $steamCmdPath = ./scripts/CI/Install-SteamCmd.ps1 `
+            -DestinationDirectory '${{ runner.temp }}/steamcmd'
+          "path=$steamCmdPath" >> $env:GITHUB_OUTPUT
+
+      - name: Install NEBULOUS dedicated server
+        id: server
+        shell: pwsh
+        run: |
+          ./scripts/CI/Install-NebulousDedicatedServer.ps1 `
+            -SteamCmdPath '${{ steps.steamcmd.outputs.path }}' `
+            -InstallDirectory '${{ runner.temp }}/nebulous-server' `
+            -ReportPath '${{ runner.temp }}/workshop-evidence/server-install.json'
+
+      - name: Download target mod and declared dependencies
+        id: download
+        shell: pwsh
+        run: |
+          [UInt64[]]$installIds = $env:INSTALL_WORKSHOP_IDS -split ','
+          ./scripts/CI/Install-NebulousWorkshopSet.ps1 `
+            -SteamCmdPath '${{ steps.steamcmd.outputs.path }}' `
+            -DownloadRoot '${{ runner.temp }}/nebulous-server' `
+            -WorkshopItemIds $installIds `
+            -ReportPath '${{ runner.temp }}/workshop-evidence/workshop-install.json'
+
+      - name: Export pristine Workshop structures
+        id: structure
+        shell: pwsh
+        run: |
+          [UInt64[]]$installIds = $env:INSTALL_WORKSHOP_IDS -split ','
+          ./scripts/CI/Export-NebulousWorkshopStructure.ps1 `
+            -DownloadRoot '${{ runner.temp }}/nebulous-server' `
+            -WorkshopItemIds $installIds `
+            -TargetWorkshopItemId ([UInt64]$env:TARGET_WORKSHOP_ID) `
+            -OutputDirectory '${{ runner.temp }}/workshop-evidence/workshop-structure'
+
+      - name: Overlay repository Debug build
+        id: stage
+        shell: pwsh
+        run: |
+          $workshopReport = Get-Content `
+            -LiteralPath '${{ runner.temp }}/workshop-evidence/workshop-install.json' `
+            -Raw | ConvertFrom-Json
+          $agmlib = $workshopReport.items |
+            Where-Object { [string]$_.workshop_item_id -eq '2960504230' } |
+            Select-Object -First 1
+          if ($null -eq $agmlib)
+          {
+            throw 'The Workshop set does not contain the AGMLIB baseline.'
+          }
+          ./scripts/CI/Stage-AgmlibIntegrationMod.ps1 `
+            -PackageRoot artifacts/AGMLIB `
+            -WorkshopItemDirectory $agmlib.workshop_item_directory `
+            -Configuration Debug `
+            -CiTestSupportAssemblyPath artifacts/AGMLIB.CI.TestSupport/AGMLIB.CI.TestSupport.dll `
+            -ReportPath '${{ runner.temp }}/workshop-evidence/agmlib-stage.json'
+
+      - name: Create deterministic compatibility match config
+        id: config
+        shell: pwsh
+        run: |
+          [UInt64[]]$installIds = $env:INSTALL_WORKSHOP_IDS -split ','
+          ./scripts/CI/New-NebulousIntegrationConfig.ps1 `
+            -SourceConfigPath '${{ runner.temp }}/nebulous-server/DedicatedServerConfig.xml' `
+            -DestinationConfigPath '${{ runner.temp }}/workshop-evidence/DedicatedServerConfig.xml' `
+            -ServerName "AGMLIB CI $env:TARGET_SLUG" `
+            -ModIds $installIds `
+            -ConfigureHeadlessMatch
+
+      - name: Launch server and require every mod plus live gameplay
+        id: match
+        shell: pwsh
+        run: |
+          $structure = Get-Content `
+            -LiteralPath '${{ runner.temp }}/workshop-evidence/workshop-structure/structure.json' `
+            -Raw | ConvertFrom-Json
+          $modNames = @(
+            $structure.items.manifests.mod_name |
+              Where-Object { $_ -ne 'AGMLIB' } |
+              Sort-Object -Unique
+          )
+          if ($modNames.Count -eq 0)
+          {
+            throw 'No non-AGMLIB mod names were discovered in the Workshop structures.'
+          }
+          $requiredPatterns = @(
+            $modNames | ForEach-Object {
+              "Finished Loading Mod '$([regex]::Escape($_))'\.\s+Result:\s+Loaded"
+            }
+          )
+          $forbiddenPatterns = @(
+            $modNames | ForEach-Object {
+              "Finished Loading Mod '$([regex]::Escape($_))'\.\s+Result:\s+Failed"
+            }
+          )
+          [ordered]@{
+            target_workshop_item_id = $env:TARGET_WORKSHOP_ID
+            workshop_item_ids = @($env:INSTALL_WORKSHOP_IDS -split ',')
+            required_mod_names = $modNames
+            required_log_patterns = $requiredPatterns
+            forbidden_log_patterns = $forbiddenPatterns
+          } | ConvertTo-Json -Depth 5 |
+            Set-Content `
+              -LiteralPath '${{ runner.temp }}/workshop-evidence/mod-load-assertions.json' `
+              -Encoding utf8
+
+          ./scripts/CI/Invoke-NebulousServerSmoke.ps1 `
+            -ServerRoot '${{ runner.temp }}/nebulous-server' `
+            -ConfigPath '${{ runner.temp }}/workshop-evidence/DedicatedServerConfig.xml' `
+            -OutputDirectory '${{ runner.temp }}/workshop-evidence/server-smoke' `
+            -TimeoutSeconds ([int]$env:MATCH_TIMEOUT_SECONDS) `
+            -HeartbeatSeconds 15 `
+            -StallTimeoutSeconds 90 `
+            -PhaseTimeoutSeconds 120 `
+            -AdditionalRequiredLogPatterns $requiredPatterns `
+            -AdditionalForbiddenLogPatterns $forbiddenPatterns `
+            -RequireGameplayReady
+
+      - name: Record compatibility result
+        if: always()
+        shell: pwsh
+        run: |
+          $result = [ordered]@{
+            target_workshop_item_id = $env:TARGET_WORKSHOP_ID
+            target_name = $env:TARGET_NAME
+            target_slug = $env:TARGET_SLUG
+            workshop_item_ids = @($env:INSTALL_WORKSHOP_IDS -split ',')
+            server_install = '${{ steps.server.outcome }}'
+            download = '${{ steps.download.outcome }}'
+            structure = '${{ steps.structure.outcome }}'
+            stage = '${{ steps.stage.outcome }}'
+            config = '${{ steps.config.outcome }}'
+            match = '${{ steps.match.outcome }}'
+            succeeded = '${{ steps.match.outcome }}' -eq 'success'
+            run_id = '${{ github.run_id }}'
+            commit = '${{ github.sha }}'
+          }
+          $outputDirectory = '${{ runner.temp }}/workshop-evidence'
+          New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+          $result | ConvertTo-Json -Depth 5 |
+            Set-Content `
+              -LiteralPath (Join-Path $outputDirectory 'compatibility-result.json') `
+              -Encoding utf8
+
+      - name: Upload compatibility structures and evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: workshop-compatibility-${{ matrix.slug }}-${{ matrix.id }}-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: ${{ runner.temp }}/workshop-evidence
+
+  summary:
+    name: Compatibility summary
+    needs:
+      - build
+      - compatibility
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Download compatibility artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: workshop-compatibility-*-${{ github.run_id }}
+          path: ${{ runner.temp }}/workshop-results
+
+      - name: Merge compatibility results
+        shell: pwsh
+        run: |
+          ./scripts/CI/Merge-NebulousWorkshopCompatibilityResults.ps1 `
+            -ResultsRoot '${{ runner.temp }}/workshop-results' `
+            -OutputDirectory '${{ runner.temp }}/workshop-summary'
+          Get-Content `
+            -LiteralPath '${{ runner.temp }}/workshop-summary/summary.md' `
+            -Raw >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload compatibility summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: workshop-compatibility-summary-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: ${{ runner.temp }}/workshop-summary

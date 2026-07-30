@@ -32,6 +32,10 @@ param(
         '\b(TypeLoadException|MissingMethodException|MissingFieldException|NullReferenceException)\b'
     ),
 
+    [string[]]$AdditionalRequiredLogPatterns = @(),
+
+    [string[]]$AdditionalForbiddenLogPatterns = @(),
+
     [switch]$RequireGameplayReady,
 
     [switch]$ValidateOnly
@@ -84,6 +88,8 @@ if ($RequireGameplayReady)
         'Failed to load fleet for bot'
     )
 }
+$RequiredLogPatterns = @($RequiredLogPatterns) + @($AdditionalRequiredLogPatterns)
+$ForbiddenLogPatterns = @($ForbiddenLogPatterns) + @($AdditionalForbiddenLogPatterns)
 
 $serverCandidates = @(
     (Join-Path $ServerRoot 'NebulousDedicatedServer')

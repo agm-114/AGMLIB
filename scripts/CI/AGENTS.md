@@ -32,3 +32,16 @@ locally with PowerShell 7.
 - Use `AGMLIB_PREFAB_DUMP_IMMEDIATE=1` only with the isolated Debug integration
   dump. Dedicated-server startup does not reliably raise the post-load event
   used by interactive clients.
+- Keep `.github/workflows/workshop-compatibility.yml` manual-only. Do not add
+  `push`, `pull_request`, or scheduled triggers. Its checked-in
+  `WorkshopCompatibilityCatalog.json` is the reviewed set of major non-fleet
+  mods and their additional declared Workshop dependencies.
+- Run one Workshop compatibility target per isolated matrix job. Require every
+  downloaded mod manifest to report a successful load, require the stock
+  two-bot match to reach native `GO!`, and keep matrix fail-fast disabled so
+  one incompatible mod does not hide the remaining results.
+- Export the pristine Workshop file inventory, SHA-256 hashes, assemblies, and
+  copied `ModInfo.xml` files before overlaying the repository AGMLIB build.
+  Upload those structures together with the post-load prefab YAML, `mods.yaml`,
+  lifecycle logs, match summary, and generated server config as seven-day
+  artifacts. Do not upload the downloaded mod payloads themselves.

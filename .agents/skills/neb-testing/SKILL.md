@@ -84,6 +84,38 @@ An ordinary build is safe while Nebulous is running because it no longer writes
 to the game installation. Close Nebulous only before explicit deployment.
 Preserve CRLF in modified C# files.
 
+## Run the major-mod compatibility CI
+
+Use the manual-only Workshop compatibility workflow to test the current AGMLIB
+build against every curated major non-fleet mod:
+
+```powershell
+gh workflow run workshop-compatibility.yml --ref master
+```
+
+To rerun only selected catalog entries, pass comma-separated Workshop IDs:
+
+```powershell
+gh workflow run workshop-compatibility.yml --ref master `
+    -f mod_ids=2977225446,3443802597 `
+    -f timeout_seconds=720
+```
+
+The workflow installs the dedicated server and Workshop content only on
+ephemeral CI runners. Each mod gets an isolated matrix job with all additional
+declared dependencies from
+`scripts/CI/WorkshopCompatibilityCatalog.json`. A passing job requires every
+downloaded manifest to load successfully, a zero-error prefab dump, and the
+deterministic two-bot match to reach native `GO!`.
+
+Compatibility artifacts expire after seven days. Each per-mod artifact contains
+the pristine Workshop file tree, sizes and SHA-256 hashes, copied `ModInfo.xml`
+files, assembly metadata, the generated server config, full server logs,
+`mods.yaml`, and the complete post-load prefab YAML snapshot. The artifacts
+contain inspection metadata and YAML, not the downloaded mod payloads. Use the
+summary artifact for the pass/fail index and the per-mod artifact for runtime
+structure investigation.
+
 Nebulous loads mod assemblies only during startup. After any DLL rebuild, fully close and restart the game before testing; returning to the main menu or starting another match does not load the new DLL.
 
 ## Launch

@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "game_app_id": "887570",
+  "agmlib_workshop_id": "2960504230",
+  "mods": [
+    {
+      "id": "2977225446",
+      "name": "Aegir Fleet",
+      "slug": "aegir-fleet",
+      "dependencies": [
+        "2980752865",
+        "3020850255"
+      ]
+    },
+    {
+      "id": "3688270728",
+      "name": "Arkon Fleet Tender",
+      "slug": "arkon-fleet-tender",
+      "dependencies": [
+        "2962228992"
+      ]
+    },
+    {
+      "id": "3442949243",
+      "name": "Avalon Experimentals",
+      "slug": "avalon-experimentals",
+      "dependencies": [
+        "2980752865"
+      ]
+    },
+    {
+      "id": "3045321247",
+      "name": "Centurian Protectorate",
+      "slug": "centurian-protectorate",
+      "dependencies": []
+    },
+    {
+      "id": "3726703516",
+      "name": "Damen Shipyards Group",
+      "slug": "damen-shipyards-group",
+      "dependencies": []
+    },
+    {
+      "id": "3719671725",
+      "name": "Imperial Navy",
+      "slug": "imperial-navy",
+      "dependencies": []
+    },
+    {
+      "id": "3649434947",
+      "name": "Kuiper Shipworks: Refit",
+      "slug": "kuiper-shipworks-refit",
+      "dependencies": [
+        "3740665857"
+      ]
+    },
+    {
+      "id": "2831277422",
+      "name": "Nationless Yards (Formerly: State Yards Surplus)",
+      "slug": "nationless-yards",
+      "dependencies": []
+    },
+    {
+      "id": "3740665857",
+      "name": "One More Jump: Toolkit",
+      "slug": "one-more-jump-toolkit",
+      "dependencies": []
+    },
+    {
+      "id": "2789730936",
+      "name": "PRISM Aerospace International",
+      "slug": "prism-aerospace-international",
+      "dependencies": []
+    },
+    {
+      "id": "3442524031",
+      "name": "Republic of Coelia",
+      "slug": "republic-of-coelia",
+      "dependencies": [
+        "2980752865"
+      ]
+    },
+    {
+      "id": "3172459235",
+      "name": "Silent Thunder",
+      "slug": "silent-thunder",
+      "dependencies": []
+    },
+    {
+      "id": "2869734654",
+      "name": "Solarian Federation Navy - Ares Drive Yard",
+      "slug": "solarian-federation-navy",
+      "dependencies": []
+    },
+    {
+      "id": "3443802597",
+      "name": "Star Wars: Armada Command - Extra Content",
+      "slug": "star-wars-armada-extra-content",
+      "dependencies": [
+        "3238472240",
+        "3317379666",
+        "3251743994",
+        "2877518235"
+      ]
+    },
+    {
+      "id": "3251743994",
+      "name": "Star Wars: Armada Command - The Clone Wars",
+      "slug": "star-wars-armada-clone-wars",
+      "dependencies": [
+        "3317379666",
+        "3238472240"
+      ]
+    },
+    {
+      "id": "3003184409",
+      "name": "Starshield Trade Conglomerate",
+      "slug": "starshield-trade-conglomerate",
+      "dependencies": [
+        "2962228992"
+      ]
+    },
+    {
+      "id": "2898182868",
+      "name": "The Empire of Windsor",
+      "slug": "empire-of-windsor",
+      "dependencies": []
+    },
+    {
+      "id": "2955932316",
+      "name": "The Free Traders",
+      "slug": "free-traders",
+      "dependencies": []
+    },
+    {
+      "id": "3266771350",
+      "name": "The Sovereign Incident",
+      "slug": "sovereign-incident",
+      "dependencies": []
+    },
+    {
+      "id": "3460788064",
+      "name": "Trader Emergency Coalition",
+      "slug": "trader-emergency-coalition",
+      "dependencies": []
+    },
+    {
+      "id": "3446468426",
+      "name": "Vanilla Plus: Refit",
+      "slug": "vanilla-plus-refit",
+      "dependencies": []
+    }
+  ]
+}

@@ -25,6 +25,11 @@ $smokeOutput = Join-Path $scratchRoot 'smoke-output'
 $sourceConfig = Join-Path $scratchRoot 'DedicatedServerConfig.source.xml'
 $generatedConfig = Join-Path $scratchRoot 'DedicatedServerConfig.xml'
 $fakeSupportAssembly = Join-Path $scratchRoot 'AGMLIB.CI.TestSupport.dll'
+$catalogSelectionReport = Join-Path $scratchRoot 'workshop-catalog-selection.json'
+$workshopDownloadRoot = Join-Path $scratchRoot 'workshop-download'
+$workshopStructureOutput = Join-Path $scratchRoot 'workshop-structure'
+$compatibilityResultsRoot = Join-Path $scratchRoot 'compatibility-results'
+$compatibilitySummaryOutput = Join-Path $scratchRoot 'compatibility-summary'
 
 try
 {
@@ -96,6 +101,118 @@ try
         throw 'Generated integration config contains an LF line ending without CR.'
     }
 
+    $catalogPath = Join-Path $PSScriptRoot 'WorkshopCompatibilityCatalog.json'
+    $allMatrixJson = & (Join-Path $PSScriptRoot 'Get-NebulousWorkshopCompatibilityMatrix.ps1') `
+        -CatalogPath $catalogPath `
+        -ReportPath $catalogSelectionReport
+    $allMatrix = $allMatrixJson | ConvertFrom-Json
+    if (@($allMatrix.include).Count -ne 21)
+    {
+        throw 'Workshop compatibility catalog did not resolve all 21 major mods.'
+    }
+    $subsetMatrixJson = & (Join-Path $PSScriptRoot 'Get-NebulousWorkshopCompatibilityMatrix.ps1') `
+        -CatalogPath $catalogPath `
+        -ModIds '2977225446,3443802597'
+    $subsetMatrix = $subsetMatrixJson | ConvertFrom-Json
+    if (@($subsetMatrix.include).Count -ne 2 -or
+        @($subsetMatrix.include.id) -notcontains '2977225446' -or
+        @($subsetMatrix.include.id) -notcontains '3443802597' -or
+        [string]$subsetMatrix.include[1].install_ids -notmatch '3251743994')
+    {
+        throw 'Workshop compatibility subset did not preserve the selected mods and dependencies.'
+    }
+
+    $fixtureWorkshopIds = @([UInt64]2960504230, [UInt64]1234567890)
+    $fixtureWorkshopRoot = Join-Path $workshopDownloadRoot 'steamapps\workshop\content\887570'
+    foreach ($fixtureWorkshopId in $fixtureWorkshopIds)
+    {
+        $fixtureItemRoot = Join-Path $fixtureWorkshopRoot ([string]$fixtureWorkshopId)
+        $fixtureAssemblyDirectory = Join-Path $fixtureItemRoot 'Debug\net481'
+        New-Item -ItemType Directory -Path $fixtureAssemblyDirectory -Force | Out-Null
+        $fixtureModName = if ($fixtureWorkshopId -eq 2960504230)
+        {
+            'AGMLIB'
+        }
+        else
+        {
+            'Fixture Mod'
+        }
+        $fixtureManifest = @(
+            '<ModInfo>'
+            "  <ModName>$fixtureModName</ModName>"
+            '  <ModVer>1.2.3</ModVer>'
+            '  <GameVer>0.6.2</GameVer>'
+            '  <Assemblies>'
+            '    <string>Debug/net481/Fixture.dll</string>'
+            '  </Assemblies>'
+            '</ModInfo>'
+        ) -join "`r`n"
+        [IO.File]::WriteAllText(
+            (Join-Path $fixtureItemRoot 'ModInfo.xml'),
+            $fixtureManifest,
+            [Text.UTF8Encoding]::new($false))
+        [IO.File]::WriteAllBytes(
+            (Join-Path $fixtureAssemblyDirectory 'Fixture.dll'),
+            [byte[]](1, 2, 3, 4))
+    }
+
+    $structureReport = & (Join-Path $PSScriptRoot 'Export-NebulousWorkshopStructure.ps1') `
+        -DownloadRoot $workshopDownloadRoot `
+        -WorkshopItemIds $fixtureWorkshopIds `
+        -TargetWorkshopItemId 1234567890 `
+        -OutputDirectory $workshopStructureOutput
+    $targetStructure = @($structureReport.items | Where-Object { $_.is_target }) |
+        Select-Object -First 1
+    if ($structureReport.item_count -ne 2 -or
+        [string]$targetStructure.manifests[0].mod_name -ne 'Fixture Mod' -or
+        -not (Test-Path -LiteralPath (Join-Path $workshopStructureOutput 'tree.txt') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (
+            Join-Path $workshopStructureOutput 'manifests\1234567890\ModInfo.xml') -PathType Leaf))
+    {
+        throw 'Workshop structure export did not preserve the fixture inventory and manifests.'
+    }
+
+    foreach ($fixtureResult in @(
+        [ordered]@{
+            target_workshop_item_id = '1234567890'
+            target_name = 'Fixture Pass'
+            download = 'success'
+            structure = 'success'
+            match = 'success'
+            succeeded = $true
+        }
+        [ordered]@{
+            target_workshop_item_id = '1234567891'
+            target_name = 'Fixture Fail'
+            download = 'success'
+            structure = 'success'
+            match = 'failure'
+            succeeded = $false
+        }
+    ))
+    {
+        $resultDirectory = Join-Path `
+            $compatibilityResultsRoot `
+            ([string]$fixtureResult.target_workshop_item_id)
+        New-Item -ItemType Directory -Path $resultDirectory -Force | Out-Null
+        $fixtureResult | ConvertTo-Json -Depth 4 |
+            Set-Content `
+                -LiteralPath (Join-Path $resultDirectory 'compatibility-result.json') `
+                -Encoding utf8
+    }
+    $compatibilitySummary = & (
+        Join-Path $PSScriptRoot 'Merge-NebulousWorkshopCompatibilityResults.ps1') `
+        -ResultsRoot $compatibilityResultsRoot `
+        -OutputDirectory $compatibilitySummaryOutput
+    if ($compatibilitySummary.result_count -ne 2 -or
+        $compatibilitySummary.passed -ne 1 -or
+        $compatibilitySummary.failed -ne 1 -or
+        -not (Test-Path -LiteralPath (
+            Join-Path $compatibilitySummaryOutput 'summary.md') -PathType Leaf))
+    {
+        throw 'Workshop compatibility summary did not merge the fixture results.'
+    }
+
     $fakeProjectPath = Join-Path $fakeSourceRoot 'FakeNebulousDedicatedServer.csproj'
     $fakeProgramPath = Join-Path $fakeSourceRoot 'Program.cs'
     $fakeProject = @'
@@ -140,6 +257,9 @@ Finished downloading mod 'AGMLIB'
 Loaded assembly AGMLIB, Version=6.2.2.940, Culture=neutral, PublicKeyToken=null
 Loaded assembly AGMLIB.CI.TestSupport, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 Finished Loading Mod 'AGMLIB'. Result: Loaded
+Finished downloading mod 'Fixture Mod'
+>>>>> Beginning Load of Mod 'Fixture Mod' >>>>>
+Finished Loading Mod 'Fixture Mod'. Result: Loaded
 All assets loaded. Starting dedicated server.
 [TestingComponents] Discovery complete: discovered=0, created=0, skipped=0, failed=0.
 [PrefabYamlDump] Completed path='fixture' prefabs=1 enabledMods=1 errors=0.
@@ -187,6 +307,8 @@ Thread.Sleep(TimeSpan.FromSeconds(30));
         -ConfigPath $generatedConfig `
         -OutputDirectory $smokeOutput `
         -TimeoutSeconds 45 `
+        -AdditionalRequiredLogPatterns "Finished Loading Mod 'Fixture Mod'\.\s+Result:\s+Loaded" `
+        -AdditionalForbiddenLogPatterns "Finished Loading Mod 'Fixture Mod'\.\s+Result:\s+Failed" `
         -RequireGameplayReady
 
     $smokeSummary = Get-Content -LiteralPath (Join-Path $smokeOutput 'summary.json') -Raw | ConvertFrom-Json
@@ -236,6 +358,9 @@ Thread.Sleep(TimeSpan.FromSeconds(30));
         config_generation = 'passed'
         smoke_process_contract = 'passed'
         gameplay_ready_contract = 'passed'
+        workshop_compatibility_catalog = 'passed'
+        workshop_structure_export = 'passed'
+        workshop_compatibility_summary = 'passed'
     }
     if (-not [string]::IsNullOrWhiteSpace($ReportPath))
     {
