@@ -50,7 +50,7 @@ public class MultiTarget : MonoComponent
     {
         get
         {
-            List<Muzzle> activeMuzzles =SingleTargetMuzzles;
+            List<Muzzle> activeMuzzles = SingleTargetMuzzles;
             if (AssignedTrack.IsPointDefenseTarget)
             {
                 Trace("SimBeam multitarget point defense");
@@ -116,10 +116,19 @@ public class MultiTarget : MonoComponent
 
         }
         //  Time.timeScale = 0.1f;
-        Muzzles[muzzle].transform.rotation = Quaternion.LookRotation(pos - Muzzles[muzzle].transform.position);
+        Muzzle selectedMuzzle = Muzzles[muzzle];
+        selectedMuzzle.transform.rotation = Quaternion.LookRotation(pos - selectedMuzzle.transform.position);
         if (fire)
-            Muzzles[muzzle].Fire();
-        Muzzles[muzzle].FireEffect();
+        {
+            if (!_baseRpcProvider.IsHost)
+                return;
+
+            selectedMuzzle.Fire();
+            Weapon.Internals().RpcProvider.RpcFireMuzzleEffect(Weapon.RpcKey, muzzle);
+            return;
+        }
+
+        selectedMuzzle.FireEffect();
 
     }
 
@@ -202,7 +211,7 @@ public class MultiTarget : MonoComponent
         int targetindex = 0;
         for (int i = 0; i < Muzzles.Count; i++)
         {
-            
+
 
             if (targetindex >= tracks.Count || !ActiveMuzzles.Contains(Muzzles[i]))
             {

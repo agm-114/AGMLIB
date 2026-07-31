@@ -1,6 +1,7 @@
 ﻿using Lib.Generic_Gameplay.Discrete;
 
 using Object = System.Object;
+using static Ships.HullPart;
 
 [HarmonyPatch(typeof(Muzzle), nameof(Muzzle.StopFireEffect))]
 class MuzzleStopFireEffect
@@ -84,6 +85,34 @@ class SinglePulseRaycastMuzzleFireEffect
     }
 }
 
+[HarmonyPatch(typeof(SinglePulseRaycastMuzzle), nameof(SinglePulseRaycastMuzzle.TriggerHitEffect))]
+class SinglePulseRaycastMuzzleTriggerHitEffect
+{
+    static bool Prefix(
+        SinglePulseRaycastMuzzle __instance,
+        HitResult hit,
+        Vector3 position)
+    {
+        if (hit != HitResult.None ||
+            __instance.GetComponentInParent<MultiTarget>() == null ||
+            __instance.GetComponentInParent<IHullPartRPC>() is not IHullPartRPC rpcProvider)
+        {
+            return Common.RunFunction;
+        }
+
+        if (!rpcProvider.IsHost)
+        {
+            Vector3 direction = position - __instance.transform.position;
+            if (direction.sqrMagnitude > 0f)
+                __instance.transform.rotation = Quaternion.LookRotation(direction);
+
+            MuzzleEffects.SpawnReplicatedImpacts(__instance, position);
+        }
+
+        return Common.SkipFunction;
+    }
+}
+
 
 
 
@@ -91,11 +120,31 @@ class SinglePulseRaycastMuzzleFireEffect
 [HarmonyPatch(typeof(RaycastMuzzle), "DoRaycast")]
 class RaycastMuzzleDoRaycast
 {
-    static void Postfix(RaycastMuzzle __instance, MunitionHitInfo __result)
+    static void Postfix(
+        RaycastMuzzle __instance,
+        MunitionHitInfo __result,
+        Vector3 position,
+        Vector3 direction,
+        float length)
     {
         Common.LogPatch();
         MuzzleEffects.SpawnImpacts(__instance, __result);
 
+        if (__instance is not SinglePulseRaycastMuzzle ||
+            __instance.GetComponentInParent<MultiTarget>() == null ||
+            __instance.GetComponentInParent<IHullPartRPC>() is not IHullPartRPC rpcProvider ||
+            !rpcProvider.IsHost)
+        {
+            return;
+        }
+
+        Vector3 effectPosition = __result?.Point ?? position + direction.normalized * length;
+        MuzzleInternals internals = __instance.Internals();
+        internals.Weapon.TriggerHitEffect(
+            internals.MuzzleIndex,
+            HitResult.None,
+            effectPosition,
+            Quaternion.LookRotation(direction));
     }
 }
 

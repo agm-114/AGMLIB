@@ -49,6 +49,12 @@
                 effect.TrySpawnHit(hit);
             }
         }
+
+        public static void SpawnReplicatedImpacts(Muzzle muzzle, Vector3 position)
+        {
+            foreach (BaseMuzzleEffects effect in muzzle.gameObject.GetComponentsInChildren<BaseMuzzleEffects>())
+                effect.SpawnReplicatedHit(position);
+        }
     }
 
     public abstract class BaseMuzzleEffects : MonoBehaviour, IMuzzleEffect
@@ -78,6 +84,10 @@
         public virtual void SpawnHit(MunitionHitInfo? rayHit)
         {
 
+        }
+
+        public virtual void SpawnReplicatedHit(Vector3 position)
+        {
         }
     }
 
@@ -212,8 +222,8 @@
 
         public override void FireEffect()
         {
-
-
+            if (_timer <= 0f && GetComponentInParent<MultiTarget>() != null)
+                ShowBeam(_maxDisplayedLength);
         }
         public void Reset()
         {
@@ -239,16 +249,28 @@
         public override void SpawnHit(MunitionHitInfo? rayHit)
         {
 
-            _currentlen = _maxDisplayedLength;
+            float length = _maxDisplayedLength;
             if (rayHit != null)
             {
-                _currentlen = Vector3.Distance(rayHit.Point, transform.position);
-                Common.Trace($"hit {_currentlen}");
+                length = Vector3.Distance(rayHit.Point, transform.position);
+                Common.Trace($"hit {length}");
             }
             else
             {
-                Common.Trace($"miss {_currentlen}");
+                Common.Trace($"miss {length}");
             }
+
+            ShowBeam(length);
+        }
+
+        public override void SpawnReplicatedHit(Vector3 position)
+        {
+            ShowBeam(Vector3.Distance(position, transform.position));
+        }
+
+        private void ShowBeam(float length)
+        {
+            _currentlen = length;
             _muzzleeffect.StartEffect();
             _muzzleeffect.SetBeamLength(_currentlen);
             _timer = _effectDuration;

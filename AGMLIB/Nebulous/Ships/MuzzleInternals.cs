@@ -15,6 +15,12 @@ public readonly struct MuzzleInternals
             AccessTools.MethodDelegate<Func<Muzzle, IMagazine>>(
                 AccessTools.PropertyGetter(typeof(Muzzle), "_ammoSource")
                 ?? throw new MissingMemberException(typeof(Muzzle).FullName, "_ammoSource"));
+
+        internal static readonly AccessTools.FieldRef<Muzzle, IMuzzleWeapon> Weapon =
+            AccessTools.FieldRefAccess<Muzzle, IMuzzleWeapon>("_weapon");
+
+        internal static readonly AccessTools.FieldRef<Muzzle, int> MuzzleIndex =
+            AccessTools.FieldRefAccess<Muzzle, int>("_muzzleIndex");
     }
 
     private readonly Muzzle _muzzle;
@@ -25,4 +31,8 @@ public readonly struct MuzzleInternals
     }
 
     public IMagazine AmmoSource => Refs.AmmoSource(_muzzle);
+
+    public IMuzzleWeapon Weapon => Refs.Weapon(_muzzle);
+
+    public int MuzzleIndex => Refs.MuzzleIndex(_muzzle);
 }
