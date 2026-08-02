@@ -1,5 +1,9 @@
 # Runtime POC shim
 
+> Status (2026-08-02): historical validation source only. The project is disabled by default,
+> marked non-packable, and requires `-p:BuildHaloShim=true` for an intentional local build. All
+> generated and locally deployed shim DLLs have been removed; do not distribute this assembly.
+
 ## Purpose and boundary
 
 The local `HaloShim` project proves that the public 0.3.2-era bundles can be made usable on

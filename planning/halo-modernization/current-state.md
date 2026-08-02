@@ -146,11 +146,14 @@ Halo remains `LoadedWithMinorErrors` for the known old-assembly and missing-prim
 failures. That unchanged result is expected: compile-ready replacement types do not rewrite the
 assembly-qualified `MonoScript` references already serialized into the old bundles.
 
-## Runtime-shim update
+## Historical runtime-shim validation
 
-The later local POC shim supersedes the unmodified-legacy-assembly result above without changing
-the frozen evidence. It supplies the exact serialized `halo.dll` identity, restores all 52 façade
-types, and reaches `PostLoad` on the current game.
+The later local POC shim superseded the unmodified-legacy-assembly result above for validation
+without changing the frozen evidence. It supplied the exact serialized `halo.dll` identity,
+restored all 52 façade types, and reached `PostLoad` on the current game. The shim is now disabled
+by default, marked non-packable, and its generated and locally deployed DLLs were removed on
+2026-08-02. The results below are retained as historical modernization evidence, not as a current
+distribution component.
 
 AGMLIB 6.2.2.971 plus the current shim reports:
 

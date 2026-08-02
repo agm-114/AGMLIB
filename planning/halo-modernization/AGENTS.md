@@ -11,9 +11,11 @@ This folder is the implementation handoff for modernizing the public Workshop pa
 - Test AGMLIB: 6.2.2.971 for the local runtime-shim validation; the initial prefab snapshot used
   6.2.2.942 and the compile-only deep pass used 6.2.2.953.
 - Original load result: `LoadedWithMinorErrors`; the assembly failed type enumeration and nine
-  serialized runtime families failed to instantiate. The local POC shim now reaches `PostLoad`
-  with all 52 identities present, loads saved Halo ships in the Fleet Editor, and reaches a live
+  serialized runtime families failed to instantiate. The local POC shim historically demonstrated
+  `PostLoad` with all 52 identities present, saved Halo ships in the Fleet Editor, and a live
   Testing Range with the documented compatibility repairs.
+- POC distribution status: source-only and disabled by default as of 2026-08-02. Its generated and
+  locally deployed `halo.dll` were removed. Never include the shim in an AGMLIB distribution.
 - Target dependency model: rebuilt content bundles plus the centralized AGMLIB Workshop dependency;
   no bundled `0Harmony.dll`, `halo.dll`, or private AGMLIB copy.
 
