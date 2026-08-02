@@ -119,24 +119,8 @@ contain inspection metadata and YAML, not the downloaded mod payloads. Use the
 summary artifact for the pass/fail index and the per-mod artifact for runtime
 structure investigation.
 
-Treat the public `Ares.dll` failure identified by
-`VAEAmmo.PostLoad` -> `VAEAmmo.GetIlluminator` ->
-`VAEAmmo.GetPrivateField` as an unsupported legacy native-API failure when it
-ends in `NullReferenceException`. The script expects
-`Ships.RezFollowingMuzzle._followingPrefab` on the stock E57 Floodlight, while
-the current prefab uses the separate `Ships.EWarFollowingMuzzle` type. Apply
-the same classification only when both the assembly and stack signature match;
-the filename alone is insufficient.
-
-This Ares script has no assembly reference to AGMLIB and no AGMLIB-defined
-component was found in its post-load prefab snapshot. AGMLIB is present only
-because the compatibility harness stages the current AGMLIB Workshop baseline.
-The preferred author repair is script-free: reauthor the Artemis modular
-missile support as a current native `JammerSupportDescriptor` with
-`_effectType: SensorIllumination`. Use `EWarFollowingMuzzle` with the same
-effect type only for hull-weapon muzzle objects, not missile support assets.
-See `knowledge/workshop-compatibility.md` for the dependency boundary and
-modernization guidance.
+For third-party dependency boundaries, known compatibility signatures, and
+author-modernization guidance, read `knowledge/workshop-compatibility.md`.
 
 Nebulous loads mod assemblies only during startup. After any DLL rebuild, fully close and restart the game before testing; returning to the main menu or starting another match does not load the new DLL.
 
@@ -371,14 +355,6 @@ log or dump before another launch.
 5. Extract only the relevant prefixed lines plus nearby exceptions.
 6. Explain the observed rule path before changing behavior.
 7. Apply the smallest fix, remove or reduce noisy diagnostics, rebuild, and repeat the same reproduction.
-
-When a runtime scene emits `GroupedAudioSource.CoroutineFadeIn` or
-`CoroutineCrossfade` NREs, inspect the prefab's `_simpleSource`,
-`_simpleSoundEffect`, and `_bookendSource` together. Current vanilla uses either
-a populated simple source plus sound effect, or a bookended-only group with both
-simple fields null. A legacy group with `_simpleSource` populated and
-`_simpleSoundEffect` null violates that invariant and should be normalized before
-runtime spawning.
 
 When an editor-render or per-frame Harmony prefix receives a cached array of
 Unity components, treat Unity-destroyed references as an expected lifecycle

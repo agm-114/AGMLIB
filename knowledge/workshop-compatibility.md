@@ -19,6 +19,16 @@ An out-of-support entry can still be selected explicitly with the workflow's
 `mod_ids` input. This path is for occasional diagnosis after a game or mod
 update, not routine full-matrix coverage.
 
+## Legacy grouped-audio prefabs
+
+When a runtime scene emits `GroupedAudioSource.CoroutineFadeIn` or
+`CoroutineCrossfade` `NullReferenceException`s, inspect `_simpleSource`,
+`_simpleSoundEffect`, and `_bookendSource` together. Current vanilla uses either
+a populated simple source plus sound effect, or a bookended-only group with both
+simple fields null. A legacy group with `_simpleSource` populated and
+`_simpleSoundEffect` null violates that invariant and should be normalized before
+runtime spawning.
+
 For public mods containing `Ares.dll`, apply the legacy Ares classification
 only when the log also contains the exact `VAEAmmo.PostLoad` failure chain:
 

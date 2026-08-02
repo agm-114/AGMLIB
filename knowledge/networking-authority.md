@@ -63,3 +63,15 @@ server for gameplay-mutating features.
 For pooled objects, add a second-use case to every applicable row. A first
 launch can pass while the reused instance retains stale owner, target, timer, or
 subscription state.
+
+## Custom munition detonation effects
+
+Custom munition detonation frequently runs under a server guard. A direct
+`ObjectPooler` spawn in that path is therefore host-only even when the spawned
+prefab is purely visual.
+
+Keep prefabs containing `IDamageDealer` components on the server. Deliver
+presentation-only prefabs through a client RPC so every peer renders them
+without repeating gameplay mutation. When a custom warhead explicitly sends
+the native impact RPC, set its `noVfx` result so the collision caller does not
+send the same impact event a second time.
