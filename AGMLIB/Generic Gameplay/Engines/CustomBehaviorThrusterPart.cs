@@ -28,6 +28,7 @@ namespace Ships
         private float _currentParticlePower = 0.0f;
         private Sides _lastLateral = Sides.None;
         private AttitudeControl _lastAngular = AttitudeControl.None;
+        private bool _providingLateralThrust = false;
         private bool _effectPlaying = false;
         private bool _afterburnerEffectPlaying = false;
         private float _flankDamageAccumulator = 0.0f;
@@ -42,7 +43,7 @@ namespace Ships
 
         AttitudeControl IThruster.AttitudeDirections => this._behavior.attitudeInfluence;
 
-        public bool MainEngine => throw new NotImplementedException();
+        bool IThruster.MainEngine => this._mainEngine;
 
         private void OnValidate()
         {
@@ -56,6 +57,24 @@ namespace Ships
             base.Awake();
             this.InitCustomBehaviorThrusterPartConfig();
             this.StopEffect();
+        }
+
+        protected override void OnDestroy()
+        {
+            this.UnbindThrustController();
+            base.OnDestroy();
+        }
+
+        private void OnDisable()
+        {
+            this._currentThrottle = Throttle.Idle;
+            this._currentParticlePower = 0f;
+            this._lastLateral = Sides.None;
+            this._lastAngular = AttitudeControl.None;
+            this._providingLateralThrust = false;
+            this._effectPlaying = false;
+            this._afterburnerEffectPlaying = false;
+            this._flankDamageAccumulator = 0f;
         }
 
         private void InitCustomBehaviorThrusterPartConfig()
@@ -83,16 +102,16 @@ namespace Ships
                     {
                         if (!_afterburnerEffectPlaying)
                         {
-                            _particles.SetBool("Afterburner", value: true);
-                            _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
+                            this._particles?.SetBool(_paramWarpOn, value: true);
+                            this._particles?.SetFloat(_paramWarpPercent, this._thrustController.AfterburnerPercent);
                             _afterburnerEffectPlaying = true;
                         }
-                        _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
+                        this._particles?.SetFloat(_paramWarpPercent, this._thrustController.AfterburnerPercent);
                     }
                     else if (_afterburnerEffectPlaying)
                     {
-                        _particles.SetBool("Afterburner", value: false);
-                        _particles.SetFloat("Afterburner Power", 0f);
+                        this._particles?.SetBool(_paramWarpOn, value: false);
+                        this._particles?.SetFloat(_paramWarpPercent, 0f);
                         _afterburnerEffectPlaying = false;
                     }
                 }
@@ -125,6 +144,7 @@ namespace Ships
                     bool flag2 = this._lastLateral.IsSet(((IThruster)this).LateralDirection.Flip());
                     bool flag3 = (this._lastAngular & ((IThruster)this).AttitudeDirections) != 0;
                     bool flag4 = (this._lastAngular & ((IThruster)this).AttitudeDirections.Invert()) != 0;
+                    this._providingLateralThrust = flag1;
                     if (!this._thrustController.AfterburnerEffect)
                         this._currentThrottle = !flag1 || flag3 ? (!flag3 ? CustomBehaviorThrusterPart.Throttle.Idle : (!flag2 ? CustomBehaviorThrusterPart.Throttle.Full : CustomBehaviorThrusterPart.Throttle.Idle)) : (!flag4 ? CustomBehaviorThrusterPart.Throttle.Full : CustomBehaviorThrusterPart.Throttle.Half);
                     if (!this._tweenParticlePower)
@@ -132,7 +152,7 @@ namespace Ships
                         if (this._currentThrottle != 0 && this._behavior.playsEffects)
                         {
                             this.StartEffect();
-                            this._particles.SetFloat("Power", this.GetParticlePower());
+                            this._particles?.SetFloat(_paramPower, this.GetParticlePower());
                         }
                         else
                             this.StopEffect();
@@ -145,7 +165,7 @@ namespace Ships
                         this._currentParticlePower = Mathf.Clamp(this._currentParticlePower + this._particleThrottleRate * Time.deltaTime, 0.0f, particlePower);
                     else if ((double)particlePower < (double)this._currentParticlePower)
                         this._currentParticlePower = Mathf.Clamp(this._currentParticlePower - this._particleThrottleRate * Time.deltaTime, particlePower, 1f);
-                    this._particles.SetFloat("Power", this._currentParticlePower);
+                    this._particles?.SetFloat(_paramPower, this._currentParticlePower);
                     if (!this._behavior.playsEffects || (this._effectPlaying && this._currentThrottle == CustomBehaviorThrusterPart.Throttle.Idle && (double)this._currentParticlePower == 0.0))
                         this.StopEffect();
                     else if (!this._effectPlaying && this._currentThrottle != 0 && this._behavior.playsEffects)
@@ -172,7 +192,7 @@ namespace Ships
 
         private void FixedUpdate()
         {
-            if (!this._baseRpcProvider.IsHost || this._thrustController == null || !this._thrustController.Overdrive || this._currentThrottle <= CustomBehaviorThrusterPart.Throttle.Idle)
+            if (!this._baseRpcProvider.IsHost || this._thrustController == null || !this._thrustController.Overdrive || this._currentThrottle <= CustomBehaviorThrusterPart.Throttle.Idle || !this._providingLateralThrust)
                 return;
             this._flankDamageAccumulator += Time.fixedDeltaTime;
             if ((double)this._flankDamageAccumulator >= 1.0)
@@ -208,13 +228,30 @@ namespace Ships
         protected override void PartFunctionalChangedInternal(bool newFunctional)
         {
             base.PartFunctionalChangedInternal(newFunctional);
-            this.UpdateDamageEffects(this._thrustController.Visible, this.IsFunctional);
+            if (this._thrustController != null)
+                this.UpdateDamageEffects(this._thrustController.Visible, this.IsFunctional);
         }
 
         void IThruster.SetThrustController(IThrustController controller)
         {
+            if (ReferenceEquals(this._thrustController, controller))
+                return;
+            this.UnbindThrustController();
             this._thrustController = controller;
-            this._thrustController.OnVisibilityChanged += (VisibleObject.VisibilityChanged)(visible => this.UpdateDamageEffects(visible, this.IsFunctional));
+            if (this._thrustController != null)
+                this._thrustController.OnVisibilityChanged += this.HandleVisibilityChanged;
+        }
+
+        private void HandleVisibilityChanged(bool visible)
+        {
+            this.UpdateDamageEffects(visible, this.IsFunctional);
+        }
+
+        private void UnbindThrustController()
+        {
+            if (this._thrustController != null)
+                this._thrustController.OnVisibilityChanged -= this.HandleVisibilityChanged;
+            this._thrustController = null;
         }
 
         private void UpdateDamageEffects(bool visible, bool functional)

@@ -11,6 +11,13 @@
 - Keep private-mod investigation material only in git-ignored local notes, local caches, or temporary access-controlled CI artifacts, and sanitize any public report or commit.
 - Only add a mod to checked-in CI catalogs or fixtures after verifying that its Workshop page or source is public. Treat uncertain visibility as private.
 
+## Shared AGMLIB Dependencies
+
+- Public Workshop mods that depend on AGMLIB should declare the centralized AGMLIB Workshop mod as a dependency. Treat that shared dependency as the runtime AGMLIB implementation.
+- Do not inspect an AGMLIB DLL bundled inside an individual mod for ordinary runtime diagnosis. Verify the enabled centralized AGMLIB assembly instead.
+- Inspect a mod-bundled AGMLIB DLL only when class identity, serialized fields, namespace moves, or other serialization changes make the mod's likely authoring version relevant.
+- Treat a bundled DLL as evidence of the AGMLIB version the mod was likely serialized against, not as proof of the assembly loaded at runtime.
+
 ## Code Style
 
 - Prefer concrete game/domain types over `object` where possible.
@@ -46,3 +53,4 @@
 - Before Nebulous testing, read `.agents/neb-testing.local.md` for machine-, mod-, and fleet-specific paths and reproduction notes.
 - `.agents/neb-testing.local.md` is intentionally git-ignored. Keep useful local testing discoveries there so future sessions do not have to rediscover them.
 - Keep reusable testing procedures in `.agents/skills/neb-testing/SKILL.md`; keep installation-specific details in the local notes file.
+- Improve the relevant testing skill during the same task whenever testing reveals a reusable procedure, diagnostic distinction, or reliable interaction. Do not defer useful workflow knowledge to the final report alone.

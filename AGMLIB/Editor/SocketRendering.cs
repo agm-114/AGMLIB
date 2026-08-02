@@ -92,7 +92,10 @@ class SocketOutlineManagerDrawShapes
 
         HullSocket _selectedSocket = ____selectedSocket;
 
-        if (!_visible || _sockets == null)
+        if (!_visible || _sockets == null || _camera == null || cam == null)
+            return false;
+        _sockets = _sockets.Where(socket => socket != null).ToArray();
+        if (_sockets.Length == 0)
             return false;
         foreach (HullSocket socket in _sockets.OrderByDescending((x) => Vector3.Distance(x.transform.position, _camera.transform.position)))
         {
