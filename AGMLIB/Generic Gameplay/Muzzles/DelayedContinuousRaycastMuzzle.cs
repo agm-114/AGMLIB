@@ -155,11 +155,12 @@ namespace Lib.Generic_Gameplay.Muzzles
             }
 
             _delayedFireEffectCoroutine = null;
+            /*
             if (!_fireRequested)
             {
                 yield break;
             }
-
+            */
             BeamLength = 0f;
             Effects?.StartEffect();
             _flashDelayed?.Play();
