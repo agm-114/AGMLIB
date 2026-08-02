@@ -55,6 +55,9 @@ namespace AGMLIB.Dynamic_Systems.Area
 
         public override void FixedUpdate()
         {
+            if (!Mirror.NetworkServer.active)
+                return;
+
             //
             _accum += Time.fixedDeltaTime;
             if (_accum < 1)
@@ -96,10 +99,10 @@ namespace AGMLIB.Dynamic_Systems.Area
 
                     foreach (HullPart hullPart in repairparts)
                     {
-                        float actualrepair = Math.Min(hullPart.MaxHealth - hullPart.CurrentHealth, repairsperpart); 
-                        if (RestoreAmmoFilter != null)
+                        float actualrepair = Math.Min(hullPart.MaxHealth - hullPart.CurrentHealth, repairsperpart);
+                        if (RepairAmmoFilter != null)
                         {
-                            IMagazine? repairmag = GetAmmoSource(RestoreAmmoFilter);
+                            IMagazine? repairmag = GetAmmoSource(RepairAmmoFilter);
                             if (repairmag == null || repairmag.QuantityAvailable < 1)
                                 continue;
                             DiscreteReload(actualrepair * RepairAmmoMultiplier, repairmag);
@@ -107,17 +110,17 @@ namespace AGMLIB.Dynamic_Systems.Area
                         }
                         hullPart.DoHeal(actualrepair);
                     }
-                        
+
                 }
                 float restoresperlocker = RestoresPerSecond / (lockers.Count());
 
                 foreach (RestoreStatus status in lockers)
                 {
-                    
-                    if (RepairAmmoFilter != null)
+
+                    if (RestoreAmmoFilter != null)
                     {
-                        IMagazine? restoremagazine = GetAmmoSource(RepairAmmoFilter);
-                        if(restoremagazine == null || restoremagazine.QuantityAvailable < 1)
+                        IMagazine? restoremagazine = GetAmmoSource(RestoreAmmoFilter);
+                        if (restoremagazine == null || restoremagazine.QuantityAvailable < 1)
                             continue;
                         DiscreteReload(restoresperlocker * RestoreAmmoMultiplier, restoremagazine);
                     }

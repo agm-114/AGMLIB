@@ -171,7 +171,10 @@ Prefer a known keyboard shortcut or short key macro over an equivalent multi-ste
 1. Open the Fleet Editor.
 2. Create or select a fleet for the requested faction.
 3. Enter the relevant ship, missile, or spacecraft designer.
-4. Navigate to the exact component/socket described by the bug.
+4. Navigate to the exact component/socket described by the bug. For restricted or
+   whitelisted equipment, verify the socket key and authored restrictor on the current
+   prefab dump before classifying a missing palette item; similarly sized general and
+   special-purpose sockets can expose different equipment by design.
 5. Perform the smallest interaction that triggers the issue.
 6. Read the focused diagnostic lines from `Player.log`.
 7. Capture the component save key, socket index/type, missile designation, rule branch, native result, and patched result.
@@ -185,6 +188,15 @@ Prefer Testing Range for rapid fleet, weapon, missile, mine, and fighter iterati
 3. Press `Esc` after the fleet is open, then choose the testing-range action from the pause/menu screen.
 4. Complete deployment if prompted, then select the relevant ship or object before reproducing the issue.
 
+Testing Range can end immediately when the player fleet has no offensive capability. For long-running
+noncombat tests, include one minimally supplied weapon in a weapon group so the range remains active.
+
+To reproduce damage, setting the throttle to `FLANK` and then issue a position move; repeat short moves as
+needed because the damage roll is probabilistic.
+
+Testing range matches can be saved an reloaded. 
+This can help speed up testing.
+
 ### Fire a weapon in Testing Range
 
 To issue a position-targeted weapon order:
@@ -197,7 +209,8 @@ To issue a position-targeted weapon order:
 6. Left-click the desired target position to confirm and fire.
 7. Verify that the weapon-order icon appears, then allow enough time for launch, flight, end-of-path behavior, and submunition release before reading telemetry.
 
-Do not start by clicking the weapon cards in the lower ship-status panel; the reliable firing path is the right-click order menu. When Computer Use is controlling the game, have it press `Esc` itself because a physical `Esc` press stops the automation session.
+The weapon cards in the lower ship-status panel are status only and cannot be used to fire weapons.
+When Computer Use is controlling the game, have it press `Esc` itself because a physical `Esc` press stops the automation session.
 
 ### Fire and count manual decoys
 
@@ -230,18 +243,17 @@ Do not treat an accepted order, the transient order icon, or an initial `event=f
 5. Click the separate `Deploy` button to begin the simulation.
 6. Select the relevant ship or object before reproducing the issue.
 
-Use local skirmish when testing the offline single-player path. It is distinct from Testing Range and from a locally hosted multiplayer server, so compare those modes when investigating lifecycle or authority differences.
+Use local skirmish when testing the offline. It is distinct from Testing Range and from a locally hosted multiplayer server, so compare those modes when investigating lifecycle or authority differences.
 
 ## Run multiple local multiplayer clients
 
 NEBULOUS normally selects the Steam transport for P2P lobbies. Multiple local
 clients then share one Steam ID and cannot connect to each other. For an
-explicitly test-only local multiplayer run, set
-`PortableNetworkManager._useSteamTransportForLobbies` to `false` before any
+explicitly test-only local multiplayer run, UseSteamTransportForLobbies to `false` before any
 client hosts or joins the lobby. This selects the TCP/Telepathy transport and
 allows clients with the same Steam ID to connect locally.
 
-Use AGMLIB's typed native-internals boundary rather than scattering reflection:
+Use this code:
 
 ```csharp
 using Mirror;
@@ -262,6 +274,15 @@ networkManager.Internals().UseSteamTransportForLobbies = false;
   listening port. Clients connect to it through the lobby flow.
 - Restart the clients without the test activation to restore the normal Steam
   transport. Do not leave the switch enabled for unrelated testing.
+
+When driving two identical local windows, map each launched process ID to its
+`MainWindowHandle` and dedicated `-logFile` before labeling a window as host or
+client. Window enumeration order is not launch order. In authority-sensitive
+tests, require role-tagged evidence from both logs: verify that the server owns
+the spawned object's nonzero network ID and performs the mutation, while the
+client only observes the replicated result. Test networked activation controls
+separately from the gameplay mutation, because a default-active component can
+appear functional even when its client command never reaches the server.
 
 ## In-match debug console
 
@@ -304,6 +325,30 @@ The active Unity log uses Unity's standard per-user location:
 %USERPROFILE%\AppData\LocalLow\Eridanus Industries\Nebulous\Player.log
 ```
 
+Unity rotates the immediately preceding session to:
+
+```text
+%USERPROFILE%\AppData\LocalLow\Eridanus Industries\Nebulous\Player-prev.log
+```
+
+Inspect or preserve `Player-prev.log` before launching again. A new startup
+rotates `Player.log` and can overwrite the only retained previous-session log.
+
+For a native crash or abrupt process exit, also check these locations:
+
+```text
+%LOCALAPPDATA%\Temp\Eridanus Industries\Nebulous\Crashes\Crash_<timestamp>\Player.log
+%LOCALAPPDATA%\Temp\Eridanus Industries\Nebulous\Crashes\Crash_<timestamp>\crash.dmp
+%LOCALAPPDATA%\CrashDumps\Nebulous.exe.<pid>.dmp
+```
+
+Unity creates the timestamped `Crashes` directory only when its crash handler
+captures the failure. Windows Error Reporting or a configured LocalDumps policy
+may instead create the `CrashDumps` file. A hang that is terminated manually
+may create neither, so correlate the last lines of `Player.log` or
+`Player-prev.log` with Windows Application events from providers `Application
+Error` and `Windows Error Reporting`.
+
 `BepInEx\LogOutput.log` under the game root may be stale; use `Player.log` unless its timestamp proves otherwise.
 
 Use the bundled script for focused output:
@@ -312,7 +357,10 @@ Use the bundled script for focused output:
 powershell -ExecutionPolicy Bypass -File .agents\skills\neb-testing\scripts\read-neb-log.ps1 -Pattern '<diagnostic-prefix>' -Tail 500
 ```
 
-Before launching, record the log length or last-write time. Nebulous recreates or truncates `Player.log` on startup, so do not rely only on the previous byte offset.
+Before launching, record the log length or last-write time. Nebulous recreates
+or truncates `Player.log` on startup, so do not rely only on the previous byte
+offset. For hard-crash diagnosis, record timestamps and preserve the relevant
+log or dump before another launch.
 
 ## Iteration loop
 
@@ -323,6 +371,20 @@ Before launching, record the log length or last-write time. Nebulous recreates o
 5. Extract only the relevant prefixed lines plus nearby exceptions.
 6. Explain the observed rule path before changing behavior.
 7. Apply the smallest fix, remove or reduce noisy diagnostics, rebuild, and repeat the same reproduction.
+
+When a runtime scene emits `GroupedAudioSource.CoroutineFadeIn` or
+`CoroutineCrossfade` NREs, inspect the prefab's `_simpleSource`,
+`_simpleSoundEffect`, and `_bookendSource` together. Current vanilla uses either
+a populated simple source plus sound effect, or a bookended-only group with both
+simple fields null. A legacy group with `_simpleSource` populated and
+`_simpleSoundEffect` null violates that invariant and should be normalized before
+runtime spawning.
+
+When an editor-render or per-frame Harmony prefix receives a cached array of
+Unity components, treat Unity-destroyed references as an expected lifecycle
+state. Filter entries with Unity's `component != null` semantics before sorting,
+reading `transform`, or entering any later render pass. One invalid reference
+can create a significant number of NREs.
 
 ## Maintain testing knowledge
 

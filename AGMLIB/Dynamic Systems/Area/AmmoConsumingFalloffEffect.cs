@@ -12,7 +12,7 @@ namespace Lib.Dynamic_Systems.Area
 
         public AmmoFeeder AmmoFeed => AreaEffect.Hull.MyShip.AmmoFeed;
         protected Dictionary<string, float> _residuals = new();
-        public virtual List<BaseFilter> ValidAmmo => new ();
+        public virtual List<BaseFilter> ValidAmmo => new();
 
         public uint DiscreteReload(float truereloadamount, IMagazine source)
         {
@@ -23,7 +23,7 @@ namespace Lib.Dynamic_Systems.Area
                 //Common.Hint($"including residual {residual} new total {truereloadamount}");
             }
             _residuals.Remove(source.AmmoType.SaveKey);
-            
+
 
 
             uint reloadamount = (uint)truereloadamount;
@@ -42,18 +42,18 @@ namespace Lib.Dynamic_Systems.Area
 
             if (SourceAmmoFilter == null)
             {
-                
+
                 return null;
             }
             //Common.Hint(this, $"total possible ammo {possibleammos.Count()}");
             possibleammos = possibleammos.Where(ammo => SourceAmmoFilter.IsAmmoCompatible(ammo));
             //Common.Hint(this, $"total compatible ammo {possibleammos.Count()}");
-            possibleammos = possibleammos.Where(ammo => AmmoFeed.GetAmmoSource(ammo).QuantityAvailable > 1);
+            possibleammos = possibleammos.Where(ammo => AmmoFeed.GetAmmoSource(ammo).QuantityAvailable > 0);
             //Common.Hint(this, $"total real ammo {possibleammos.Count()}");
             if (possibleammos.Any())
             {
                 return AmmoFeed.GetAmmoSource(possibleammos.First());
-                
+
             }
             return null;
 

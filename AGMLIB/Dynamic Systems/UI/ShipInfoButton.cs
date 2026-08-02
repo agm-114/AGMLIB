@@ -43,30 +43,27 @@ public class ShipInfoButton : ShipState
     public override void Awake()
     {
         base.Awake();
-        if (netIdentity == null)
+        NetworkIdentity? shipIdentity = Ship?.netIdentity ?? transform.root.GetComponent<NetworkIdentity>();
+        if (shipIdentity != null && netIdentity != shipIdentity)
         {
-            NetworkIdentity identity = GetComponentInParent<NetworkIdentity>();
-            if (identity != null)
+            NetworkBehaviour[] allBehaviours = shipIdentity.GetComponentsInChildren<NetworkBehaviour>();
+            Common.SetVal(shipIdentity, "NetworkBehaviours", allBehaviours, typeof(NetworkIdentity));
+            for (int i = 0; i < allBehaviours.Length; i++)
             {
-                NetworkBehaviour[] allBehaviours = identity.GetComponentsInChildren<NetworkBehaviour>();
-                Common.SetVal(identity, "NetworkBehaviours", allBehaviours, typeof(NetworkIdentity));
-                for (int i = 0; i < allBehaviours.Length; i++)
-                {
-                    Common.SetVal(allBehaviours[i], "netIdentity", identity, typeof(NetworkBehaviour));
-                    Common.SetVal(allBehaviours[i], "ComponentIndex", i, typeof(NetworkBehaviour));
-                }
+                Common.SetVal(allBehaviours[i], "netIdentity", shipIdentity, typeof(NetworkBehaviour));
+                Common.SetVal(allBehaviours[i], "ComponentIndex", i, typeof(NetworkBehaviour));
             }
         }
     }
     public void SetPlayer(HumanSkirmishPlayer player)
     {
-        if(player != null)
+        if (player != null)
         {
             //Common.Hint("Player is set");
             _player = player;
         }
-           
-        
+
+
     }
     public static ShipInfoButton FindButton(ShipController shipController, string buttonname)
     {
@@ -386,7 +383,7 @@ class HumanSkirmishPlayerQueueOrder
     static void Prefix(PlayerOrder order)
     {
         //Common.Hint("Queueing Order: " + order);
-        foreach(OrderTask suborder in order.Tasks)
+        foreach (OrderTask suborder in order.Tasks)
         {
             //Common.Hint("Suborder: " + suborder);
         }
