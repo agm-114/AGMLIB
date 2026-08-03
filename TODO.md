@@ -363,6 +363,7 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 
 ## P3 - Optional Documentation Generation
 
+- [ ] Pilot Graphify against the tracked AGMLIB source and the current hash-pinned decompiled NEBULOUS C# near the end of the week of 2026-08-03, before the next quota reset; keep all outputs Git-ignored, compare representative architecture and native-call queries against `rg`, ILSpy, and runtime evidence, and adopt an always-on workflow only if it proves accurate and useful.
 - [ ] Reassess documentation discovery after the scoped agent map, API policy, and release documentation exist.
 - [ ] If navigation becomes difficult, add a small curated `llms.txt` or structured index generated from canonical metadata.
 - [ ] Keep generated documentation reproducible and add a `-Check` mode to CI.

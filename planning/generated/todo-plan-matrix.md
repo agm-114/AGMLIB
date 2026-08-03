@@ -1,6 +1,6 @@
 ﻿# Exhaustive TODO execution matrix
 
-This generated matrix assigns all 266 unchecked items in TODO.md to a work package and completion-evidence rule. IDs are positional and should be regenerated when the source TODO changes.
+This generated matrix assigns all 267 unchecked items in TODO.md to a work package and completion-evidence rule. IDs are positional and should be regenerated when the source TODO changes.
 
 Run `.\scripts\Documentation\Export-TodoPlan.ps1 -Check` to detect drift.
 
@@ -342,20 +342,21 @@ Run `.\scripts\Documentation\Export-TodoPlan.ps1 -Check` to detect drift.
 
 | ID | Depth | TODO | Work package | Required completion evidence |
 |---|---:|---|---|---|
-| T255 | 0 | Reassess documentation discovery after the scoped agent map, API policy, and release documentation exist. | D3 generated navigation review | Documented clean command succeeds and `git status --porcelain` is unchanged. |
-| T256 | 0 | If navigation becomes difficult, add a small curated `llms.txt` or structured index generated from canonical metadata. | D3 generated navigation review | Task-routed document is linked, checked for freshness, and does not duplicate canonical detail. |
-| T257 | 0 | Keep generated documentation reproducible and add a `-Check` mode to CI. | D3 generated navigation review | Task-routed document is linked, checked for freshness, and does not duplicate canonical detail. |
-| T258 | 0 | Avoid committing duplicated full-context documents that materially inflate repository context. | D3 generated navigation review | The owning work-package checklist records an artifact, command/result, reviewer, and rollback or follow-up. |
-| T259 | 0 | Prefer task-first indexes and concise routing over loading every historical note into agent context. | D3 generated navigation review | The owning work-package checklist records an artifact, command/result, reviewer, and rollback or follow-up. |
+| T255 | 0 | Pilot Graphify against the tracked AGMLIB source and the current hash-pinned decompiled NEBULOUS C# near the end of the week of 2026-08-03, before the next quota reset; keep all outputs Git-ignored, compare representative architecture and native-call queries against `rg`, ILSpy, and runtime evidence, and adopt an always-on workflow only if it proves accurate and useful. | D3 generated navigation review | Workflow dry run or Actions run proves permissions, trigger, artifact, failure, and concurrency behavior. |
+| T256 | 0 | Reassess documentation discovery after the scoped agent map, API policy, and release documentation exist. | D3 generated navigation review | Documented clean command succeeds and `git status --porcelain` is unchanged. |
+| T257 | 0 | If navigation becomes difficult, add a small curated `llms.txt` or structured index generated from canonical metadata. | D3 generated navigation review | Task-routed document is linked, checked for freshness, and does not duplicate canonical detail. |
+| T258 | 0 | Keep generated documentation reproducible and add a `-Check` mode to CI. | D3 generated navigation review | Task-routed document is linked, checked for freshness, and does not duplicate canonical detail. |
+| T259 | 0 | Avoid committing duplicated full-context documents that materially inflate repository context. | D3 generated navigation review | The owning work-package checklist records an artifact, command/result, reviewer, and rollback or follow-up. |
+| T260 | 0 | Prefer task-first indexes and concise routing over loading every historical note into agent context. | D3 generated navigation review | The owning work-package checklist records an artifact, command/result, reviewer, and rollback or follow-up. |
 
 ## Completion Definition
 
 | ID | Depth | TODO | Work package | Required completion evidence |
 |---|---:|---|---|---|
-| T260 | 0 | A clean checkout can build and package AGMLIB without editing tracked files. | G1 final release-readiness gate | Documented clean command succeeds and `git status --porcelain` is unchanged. |
-| T261 | 0 | Pull requests receive a reliable build and compatibility result. | G1 final release-readiness gate | Documented clean command succeeds and `git status --porcelain` is unchanged. |
-| T262 | 0 | Releases are intentional, versioned, validated, and reproducible. | G1 final release-readiness gate | One explicit version is shown to match assembly, manifest, package, and release metadata. |
-| T263 | 0 | Workshop updates use a dedicated skill with explicit authorization and safety checks. | G1 final release-readiness gate | Non-publishing test covers validation; authorized publish evidence records sanitized manifest and post-publish verification. |
-| T264 | 0 | Public and serialized contracts are protected by an authoritative baseline. | G1 final release-readiness gate | Known-good assembly/fixture baseline diff is clean or an explicit migration record and fixture proves the change. |
-| T265 | 0 | New contributors and agents can find the correct build, test, deploy, and debugging paths quickly. | G1 final release-readiness gate | Documented clean command succeeds and `git status --porcelain` is unchanged. |
-| T266 | 0 | Existing downstream mods retain compatibility or receive an explicit migration path. | G1 final release-readiness gate | Known-good assembly/fixture baseline diff is clean or an explicit migration record and fixture proves the change. |
+| T261 | 0 | A clean checkout can build and package AGMLIB without editing tracked files. | G1 final release-readiness gate | Documented clean command succeeds and `git status --porcelain` is unchanged. |
+| T262 | 0 | Pull requests receive a reliable build and compatibility result. | G1 final release-readiness gate | Documented clean command succeeds and `git status --porcelain` is unchanged. |
+| T263 | 0 | Releases are intentional, versioned, validated, and reproducible. | G1 final release-readiness gate | One explicit version is shown to match assembly, manifest, package, and release metadata. |
+| T264 | 0 | Workshop updates use a dedicated skill with explicit authorization and safety checks. | G1 final release-readiness gate | Non-publishing test covers validation; authorized publish evidence records sanitized manifest and post-publish verification. |
+| T265 | 0 | Public and serialized contracts are protected by an authoritative baseline. | G1 final release-readiness gate | Known-good assembly/fixture baseline diff is clean or an explicit migration record and fixture proves the change. |
+| T266 | 0 | New contributors and agents can find the correct build, test, deploy, and debugging paths quickly. | G1 final release-readiness gate | Documented clean command succeeds and `git status --porcelain` is unchanged. |
+| T267 | 0 | Existing downstream mods retain compatibility or receive an explicit migration path. | G1 final release-readiness gate | Known-good assembly/fixture baseline diff is clean or an explicit migration record and fixture proves the change. |

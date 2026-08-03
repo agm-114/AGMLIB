@@ -117,9 +117,10 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
         //cubes.transform.position = runtime.transform.position;
         //GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         //cube.transform.position = hitInfo.Point;
-        noVfx = false;
-        foreach (GameObject ExplosionPrefab in ExplosionPrefabs)
-            SpawnEffect(ExplosionPrefab, runtime.transform.position, runtime.transform.rotation, runtime);
+        // Detonation runs on the server. Keep damage dealers authoritative here; presentation-only
+        // effects are spawned on every client by AngleWarheadNetworkEffectsPatch.
+        noVfx = true;
+        SpawnExplosionEffects(runtime.transform.position, runtime.transform.rotation, runtime, true);
         HitResult finalresult = Explode(runtime, hitObject, hitInfo);
         for (int i = 0; i < EffectiveBeamCount; i++)
         {
@@ -129,7 +130,9 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
             if (finalresult < hitRes)
                 finalresult = hitRes;
         }
-        runtime.Missile.DoImpactEffect(finalresult, runtime.transform.position, Quaternion.LookRotation(hitInfo.HitNormal), null);
+        // This is also the network event used to deliver the custom presentation effects. Setting
+        // noVfx above prevents ProcessCollision from sending a second impact event.
+        runtime.Missile.DoImpactEffect(finalresult, runtime.transform.position, runtime.transform.rotation, null);
         return finalresult;
 
         /*
@@ -151,6 +154,37 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
         }
         */
 
+    }
+
+    internal void SpawnPresentationExplosionEffects(Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime)
+    {
+        SpawnExplosionEffects(position, rotation, runtime, false);
+    }
+
+    private void SpawnExplosionEffects(
+        Vector3 position,
+        Quaternion rotation,
+        RuntimeMissileWarhead runtime,
+        bool damageDealers)
+    {
+        if (ExplosionPrefabs == null)
+            return;
+
+        foreach (GameObject explosionPrefab in ExplosionPrefabs)
+        {
+            if (explosionPrefab == null ||
+                HasDamageDealer(explosionPrefab) != damageDealers)
+            {
+                continue;
+            }
+
+            SpawnEffect(explosionPrefab, position, rotation, runtime);
+        }
+    }
+
+    private static bool HasDamageDealer(GameObject prefab)
+    {
+        return prefab.GetComponentsInChildren<IDamageDealer>(true).Length > 0;
     }
 
     public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)

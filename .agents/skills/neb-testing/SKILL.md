@@ -356,6 +356,13 @@ log or dump before another launch.
 6. Explain the observed rule path before changing behavior.
 7. Apply the smallest fix, remove or reduce noisy diagnostics, rebuild, and repeat the same reproduction.
 
+When a presentation or replication Harmony postfix runs inside an authoritative
+method, do not treat visible VFX as proof that the authoritative action
+completed. A postfix exception propagates back into the patched method's caller
+and can prevent later damage, ammo, or replication work. Capture the full stack,
+then verify both the next authoritative mutation and continued events
+after the fix.
+
 When an editor-render or per-frame Harmony prefix receives a cached array of
 Unity components, treat Unity-destroyed references as an expected lifecycle
 state. Filter entries with Unity's `component != null` semantics before sorting,
