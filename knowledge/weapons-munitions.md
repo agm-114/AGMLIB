@@ -165,7 +165,8 @@ track/comms ownership instead of extending one state owner. Treat both as
 research/testing features until the focused matrix passes.
 
 The modular loitering missile is server-authoritative for target selection and
-uses bundle-safe primitive/list authoring data. Its seeker-fuse query is
+uses primitive/list authoring data that follows the interim AssetBundle rule.
+Its seeker-fuse query is
 stateful, however, and its per-socket table, pooled phase state, manual
 engagement RPC, and idle network cost need explicit validation.
 

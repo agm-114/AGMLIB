@@ -59,11 +59,10 @@ be trapped in a patch class or central registry when it can live beside its
 owner.
 
 AGMLIB's flattened lists, zipped parallel collections, and component-reference
-graphs are also a response to an observed AssetBundle boundary: nested custom
-classes and structs can serialize correctly in the Unity editor and then load as
-null or invalid from the built bundle. Short-term cleanup must preserve that
-constraint. Complex trees should use validated indices or component graphs until
-the actual release pipeline proves a safer representation.
+graphs are also a response to a [reported AssetBundle boundary](../../knowledge/asset-bundle-serialization.md).
+Short-term cleanup must preserve the [interim production rule](../../.agents/guides/asset-bundle-authoring.md).
+Complex trees should use validated indices or component graphs until the actual
+release pipeline proves a safer representation.
 
 ### Thin compatibility boundaries
 

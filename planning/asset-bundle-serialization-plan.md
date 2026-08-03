@@ -2,21 +2,21 @@
 
 ## Problem statement
 
-AGMLIB-defined nested custom classes and structs can serialize visibly and
-correctly in the Unity editor but become null or otherwise invalid when the
-built AssetBundle is loaded by NEBULOUS. This blocks conventional nested DTOs,
-trees, and other complex authoring models.
+Maintainer experience reports that AGMLIB-defined nested custom classes and
+structs can serialize visibly in the Unity editor but become null or otherwise
+invalid when NEBULOUS loads the built AssetBundle. The focused fixture has not
+yet reproduced or isolated that report.
 
-The current evidence and production rule are maintained in
-`knowledge/asset-bundle-serialization.md`. This page defines how to investigate
-the failure rather than duplicating that guidance.
+The [evidence status](../knowledge/asset-bundle-serialization.md) and
+[interim production rule](../.agents/guides/asset-bundle-authoring.md) are
+maintained separately. This page defines how to investigate the report.
 
 ## Governing constraint
 
-Do not relax the interim rules in
-`knowledge/asset-bundle-serialization.md` while running experiments. A
-successful editor inspection or domain reload is not a passing result; a case
-must survive the released AssetBundle build and in-game load path.
+Do not relax the [interim production rule](../.agents/guides/asset-bundle-authoring.md)
+while running experiments. A successful editor inspection or domain reload is
+not a passing result; a case must survive the released AssetBundle build and
+in-game load path.
 
 ## Questions to answer
 

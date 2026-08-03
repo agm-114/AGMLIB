@@ -29,8 +29,9 @@ For every prefab in both source bundles:
 7. apply the prefab and reopen it to prove serialization survived;
 8. validate the prefab before building the bundle.
 
-Do not use nested AGMLIB-defined serialized classes/structs for authoring data. The new scripts use
-flat serialized fields for this reason.
+Under the repository's interim [AssetBundle production rule](../../.agents/guides/asset-bundle-authoring.md),
+do not use nested AGMLIB-defined serialized classes or structs for authoring data. The new scripts
+use flat serialized fields for this reason.
 
 ## High-risk asset migrations
 

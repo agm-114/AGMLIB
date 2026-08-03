@@ -1,95 +1,30 @@
-# AssetBundle custom-value serialization
+# AssetBundle custom-value serialization evidence
 
-## Status
+## Evidence status
 
-**Maintainer-observed, not yet reproduced by the research fixture.**
+**Unverified maintainer report.**
 
-Nested AGMLIB-defined custom classes and structs can display, edit, and retain
-their data correctly inside the Unity editor, then become null or otherwise
-invalid when the built AssetBundle is loaded by NEBULOUS.
+The focused AssetBundle round-trip fixture has not yet reproduced this behavior. The exact failing stage and root cause are unknown, so do not present the report or current hypotheses as established Unity or NEBULOUS behavior.
 
-The exact failing stage and root cause are unknown. Do not present the current
-hypotheses as established Unity behavior until the focused bundle round-trip
-research reproduces and isolates the failure.
+## Reported behavior
 
-## Current authoring rule
+Maintainer experience reports that nested AGMLIB-defined custom classes and structs can display, edit, and retain data inside the Unity editor, then become null or otherwise invalid after NEBULOUS loads the built AssetBundle.
 
-Do not use an AGMLIB-defined nested custom class or struct as a serialized field
-payload for AssetBundle-authored production content.
+Avoiding those payloads in favor of already supported Unity or native types, flattened data, or component references is reported to avoid the failure. That workaround is a production precaution, not proof of the cause.
 
-Until a built-bundle round-trip test proves a specific alternative safe,
-represent complex authoring data with:
+## Open questions
 
-- fields and lists of already proven Unity or native-game serializable types;
-- flattened parallel lists plus stable IDs or indices; or
-- separately attached components and serialized references.
+The following remain unestablished:
 
-This is why some AGMLIB configuration forms look more like zipped lists or a
-spiderweb of components than a conventional nested object tree. Those shapes
-are compatibility workarounds, not evidence that a nested DTO was overlooked.
-
-## Required validation for flattened data
-
-Flattening moves structural guarantees out of the type system. Validate:
-
-- equal lengths for related parallel lists;
-- stable, unique IDs and duplicate keys;
-- index ranges and missing targets;
-- exactly one valid root where the model requires one;
-- missing component or object references;
-- cycles where the model requires a tree or DAG;
-- unreachable nodes and conflicting ownership.
-
-Prefer an actionable authoring/load error over silently truncating mismatched
-lists or substituting defaults.
-
-## Refactoring boundary
-
-Do not replace an existing flattened or component-graph representation with a
-custom serializable class/struct tree merely because the replacement:
-
-- renders correctly in the inspector;
-- survives an editor domain reload;
-- works when the prefab is instantiated directly in-editor; or
-- is accepted by Unity's normal serialization API.
-
-Those checks do not exercise the failing boundary. A supported replacement must
-survive the same AssetBundle build, mod load, prefab lookup, and runtime
-instantiation path used by released AGMLIB content.
-
-## Known versus unknown
-
-Known from maintainer experience:
-
-- the editor can make the custom payload appear valid;
-- the value can be null or invalid after the game loads the built bundle;
-- avoiding nested custom class/struct payloads and using existing supported
-  types or components is the current practical workaround;
-- this makes trees and other complex authoring data substantially harder to
-  represent.
-
-Not yet established:
-
-- whether class and struct failures have exactly the same cause;
-- whether the failure is limited to nested non-`UnityEngine.Object` values;
-- whether arrays, `List<T>`, inheritance, or `[SerializeReference]` change it;
-- whether custom top-level `MonoBehaviour` or `ScriptableObject` references have
-  a different safety boundary;
-- whether assembly/type identity, managed-reference metadata, stripping, bundle
-  dependencies, compilation order, or Unity/game version causes the loss;
+- whether classes and structs fail for the same reason;
+- whether the issue is limited to nested non-`UnityEngine.Object` values;
+- whether direct fields, arrays, `List<T>`, inheritance, or `[SerializeReference]` differ;
+- whether custom top-level `MonoBehaviour` or `ScriptableObject` references have a different boundary;
+- whether assembly or type identity, managed-reference metadata, stripping, bundle dependencies, compilation order, or Unity/game version causes the loss; and
 - the first lifecycle stage at which the serialized value disappears.
 
-## Research and relaxation gate
+## Evidence required
 
-The controlled fixture matrix and investigation sequence live in
-`planning/asset-bundle-serialization-plan.md`.
+The [controlled fixture matrix and investigation sequence](../planning/asset-bundle-serialization-plan.md) must distinguish editor state, built-bundle contents, game load, prefab lookup, instantiation, finalization, cloning, and pooling. Record the first stage where each sentinel changes or disappears.
 
-Relax this rule only when the candidate representation:
-
-1. survives a clean AssetBundle build;
-2. loads correctly through NEBULOUS's real mod path;
-3. retains its data after prefab lookup and instantiation;
-4. survives any applicable finalization, clone, and pool lifecycle;
-5. produces a detectable diagnostic rather than silent null data when its
-   requirements are absent; and
-6. is repeatable across the game/Unity versions AGMLIB intends to support.
+Until that research passes its acceptance gate, follow the separate [AssetBundle production authoring guide](../.agents/guides/asset-bundle-authoring.md). User-facing component guidance lives in [component authoring](../docs/component-authoring.md).

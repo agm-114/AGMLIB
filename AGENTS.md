@@ -1,56 +1,33 @@
-# AGMLIB Agent Notes
+# AGMLIB agent guide
 
-## Documentation Files
+AGMLIB is a .NET Framework modding library and gameplay extension for NEBULOUS: Fleet Command, providing reusable runtime components and editor integrations for downstream mods.
 
-- Always prefer `AGENTS.md` over `README.md` for new documentation files and documentation edits.
+## Essentials
 
-## Private Mod Data
+- Build and type-check with `dotnet build AGMLIB.sln --configuration Debug --no-restore -p:DeployToGame=false -p:PowerShellExecutable=powershell`. There is no separate type-check command.
+- Never commit information about private, unreleased, access-restricted, or locally shared mods. Treat uncertain visibility as private; see [private mod data and Workshop dependencies](.agents/guides/mod-data-and-workshop.md).
 
-- Never commit information about private, unreleased, access-restricted, or locally shared mods.
-- This prohibition includes mod names and identifiers when sensitive, manifests, file trees, hashes, logs, prefab or YAML dumps, decompiled output, screenshots, and derived implementation details.
-- Keep private-mod investigation material only in git-ignored local notes, local caches, or temporary access-controlled CI artifacts, and sanitize any public report or commit.
-- Only add a mod to checked-in CI catalogs or fixtures after verifying that its Workshop page or source is public. Treat uncertain visibility as private.
-
-## Shared AGMLIB Dependencies
-
-- Public Workshop mods that depend on AGMLIB should declare the centralized AGMLIB Workshop mod as a dependency. Treat that shared dependency as the runtime AGMLIB implementation.
-- Do not inspect an AGMLIB DLL bundled inside an individual mod for ordinary runtime diagnosis. Verify the enabled centralized AGMLIB assembly instead.
-- Inspect a mod-bundled AGMLIB DLL only when class identity, serialized fields, namespace moves, or other serialization changes make the mod's likely authoring version relevant.
-- Treat a bundled DLL as evidence of the AGMLIB version the mod was likely serialized against, not as proof of the assembly loaded at runtime.
-
-## Code Style
-
-- Prefer concrete game/domain types over `object` where possible.
-- Use `object` only at unavoidable reflection, Harmony, serialization, or unknown nested-type boundaries. Convert back to typed helpers immediately after that boundary.
+- Use concrete game or domain types except at unavoidable reflection, Harmony, serialization, or unknown nested-type boundaries. Convert values back to concrete types immediately after crossing such a boundary.
 - Keep Harmony patch entry points small and put reusable behavior in typed helper methods.
+# Documentation guidance
 
-## Native Internals
+- Put agent-facing repository instructions in the nearest applicable `AGENTS.md`, not in a new `README.md`.
+- Keep user-facing released behavior and configuration under [`docs/`](docs/), following [`docs/AGENTS.md`](docs/AGENTS.md).
+- Keep native-game research under [`knowledge/`](knowledge/), implementation plans under [`planning/`](planning/), and machine-specific notes in git-ignored local files.
+- Prefer links to canonical detail over copying it into higher-level guidance.
 
-- Read [Native internals accessors](AGMLIB/Nebulous/AGENTS.md) before accessing a known non-public member on a native game type.
-- Put typed `Internals()` accessors under `AGMLIB/Nebulous`, using subfolders that mirror the declaring type's namespace.
-- Prefer these cached, typed accessors over `Common.GetVal`, `Common.SetVal`, `Common.RunFunc`, local `AccessTools` bindings, `Traverse`, or repeated `FieldInfo`/`PropertyInfo`/`MethodInfo` reflection for known native members.
-- When modifying a function that already uses one of those older reflection approaches, migrate the known native-member accesses in that function to the `Internals()` pattern as part of the same change. 
-- This is an incremental migration rule, not a requirement for unrelated repository-wide cleanup.
-- Keep dynamic reflection only where the member or runtime type cannot be known in advance, and convert its result back to a concrete type immediately.
+## Task-routed guidance
+# NEBULOUS testing guidance
 
-## Unity Runtime Components
+- Before NEBULOUS testing, read the git-ignored [`.agents/neb-testing.local.md`](.agents/neb-testing.local.md) for machine-, mod-, and fleet-specific paths and reproduction notes.
+- Follow the [`neb-testing` skill](.agents/skills/neb-testing/SKILL.md) for reusable build, deployment, launch, prefab-dump, and log-inspection procedures.
+- Keep installation-specific discoveries in `.agents/neb-testing.local.md`; keep reusable procedures, diagnostic distinctions, and reliable interactions in the relevant skill.
+- When testing reveals reusable workflow knowledge, update the relevant testing skill during the same task.
 
-- Runtime missile/component behaviours are often created on a finalized pattern and then cloned or pooled for live instances. Private runtime fields that must survive into the spawned instance, especially descriptor references and bound component references, should follow the vanilla pattern and be marked `[SerializeField]`.
-- Do not rely on `OnAdded`-assigned private fields being present on launched/pooled runtime copies unless those fields are serialized or rebuilt in `OnUnpooled`/`OnLaunched`.
-- When storing a typed descriptor field, prefer a small typed fallback helper that recovers from the base descriptor reference if the typed field is null.
 
-## AssetBundle Serialization
+Read only the guides relevant to the current task:
 
-- Read [AssetBundle custom-value serialization](knowledge/asset-bundle-serialization.md) before designing complex serialized authoring data. Nested AGMLIB-defined custom classes and structs are currently unsupported; follow that document's interim representation rules.
-
-## Runtime Sidecars
-
-- Read `AGMLIB/Common/Sidecars.md` before adding or changing behavior attached alongside a native runtime object.
-- Keep that document high-level. Update it only when runtime work reveals broadly reusable guidance about sidecar ownership, lifecycle, rollout, or patch boundaries; do not add implementation-specific discoveries or routine testing lessons.
-
-## Local Testing Context
-
-- Before Nebulous testing, read `.agents/neb-testing.local.md` for machine-, mod-, and fleet-specific paths and reproduction notes.
-- `.agents/neb-testing.local.md` is intentionally git-ignored. Keep useful local testing discoveries there so future sessions do not have to rediscover them.
-- Keep reusable testing procedures in `.agents/skills/neb-testing/SKILL.md`; keep installation-specific details in the local notes file.
-- Improve the relevant testing skill during the same task whenever testing reveals a reusable procedure, diagnostic distinction, or reliable interaction. Do not defer useful workflow knowledge to the final report alone.
+- [Native interop](.agents/guides/native-interop.md)
+- [Unity runtime authoring](.agents/guides/unity-runtime-authoring.md)
+- [Private mod data and Workshop dependencies](.agents/guides/mod-data-and-workshop.md)
+- [Guide, skill, and scoped-instruction index](.agents/AGENTS.md)

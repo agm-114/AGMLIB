@@ -12,8 +12,8 @@ assembly.
 Keep this folder limited to behavior that remains genuinely custom:
 
 - prefer a current native component or descriptor whenever it supplies the required behavior;
-- keep serialized authoring fields flat because nested AGMLIB-defined custom values are not
-  supported by the current bundle serializer;
+- keep serialized authoring fields flat under the repository's interim
+  [AssetBundle production rule](../../../.agents/guides/asset-bundle-authoring.md);
 - serialize runtime references that must survive finalized-pattern cloning or pooling;
 - make authoritative gameplay decisions on the host and use native RPC/state machinery;
 - keep version-sensitive native access behind typed `Internals()` accessors.

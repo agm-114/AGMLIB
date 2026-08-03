@@ -20,8 +20,8 @@ evidence-backed plans.
 - `roadmap.md`: phased execution order across the full backlog.
 - `build-release-plan.md`, `component-audit-plan.md`, and
   `native-update-plan.md`: detailed plans expanding the root TODO.
-- `asset-bundle-serialization-plan.md`: reproduction and research plan for
-  custom nested value types that fail across the released bundle-load path.
+- `asset-bundle-serialization-plan.md`: reproduction and research plan for the
+  reported custom nested-value bundle-load failure.
 - `consolidation-plan.md`: target boundaries and extraction proposals.
 - `feature-validation-plan.md`: source-derived runtime, multiplayer, save/load,
   and pooling validation matrices for the current gameplay feature set.

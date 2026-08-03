@@ -86,7 +86,7 @@
   construction paths exist.
 - **Impact:** bundle-authored content can truncate rules, throw on duplicates,
   share mutable lists unexpectedly, or fail during child setup.
-- **Mitigation:** preserve the bundle-safe flat representation, validate it at
+- **Mitigation:** preserve the interim flat representation, validate it at
   authoring/load boundaries, and build a typed non-Unity runtime view.
 
 ## Serialized prefab contracts can be mistaken for code defaults

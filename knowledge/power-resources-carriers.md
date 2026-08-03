@@ -219,9 +219,9 @@ current implementation is in:
 - [`FighterLimit.cs`](../AGMLIB/Generic%20Gameplay/Craft/FighterLimit.cs).
 
 `ConfigurableBulkCraftHangarComponent` preserves native bulk storage and adds a
-flattened list of separately attached work-slot providers. This is compatible
-with the current AssetBundle serialization constraint: it stores Unity
-component references rather than a nested AGMLIB-defined value tree. At
+flattened list of separately attached work-slot providers. This follows the
+interim AssetBundle production rule: it stores Unity component references
+rather than a nested AGMLIB-defined value tree. At
 runtime it allocates a new combined array each time the native
 `ICraftWorkSlotProvider.WorkSlots` property is read; cache/invalidation behavior
 needs a measured decision rather than an assumed optimization.
@@ -249,4 +249,3 @@ full behavior and test matrix is in
 [small craft, carriers, orders, and tactical AI](small-craft-carriers-orders-ai.md#command-channel-design-consequence)
 and the
 [runtime feature validation plan](../planning/feature-validation-plan.md#drone-command-channel).
-

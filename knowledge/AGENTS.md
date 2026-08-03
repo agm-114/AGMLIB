@@ -7,6 +7,8 @@ Fleet Command works and how AGMLIB integrates with it.
 
 - **Verified** means supported by the current managed assembly, prefab snapshot,
   or focused runtime log.
+- **Unverified** means a maintainer or user report without a pinned artifact or
+  focused reproduction; preserve it as a hypothesis, not established behavior.
 - **Inferred** means supported by AGMLIB call sites or decompiled control flow
   but not yet reproduced live.
 - **Historical** means valid for an identified older game, mod, or assembly
@@ -21,8 +23,8 @@ Fleet Command works and how AGMLIB integrates with it.
 - `evidence-ledger.md`: current assembly and snapshot identities.
 - `runtime-lifecycle.md`: finalization, cloning, pooling, launch, teardown, and
   sidecar lifecycles.
-- `asset-bundle-serialization.md`: observed custom class/struct bundle-load
-  failure, current authoring constraint, and research boundary.
+- `asset-bundle-serialization.md`: unverified custom-value bundle-load report,
+  open questions, and required evidence.
 - `game-architecture.md`: ship, weapon, missile, sensor, craft, and editor roots.
 - `research-coverage.md`: exact distinction between exhaustive indexing,
   semantic traces, AGMLIB correlation, prefab evidence, and runtime evidence.

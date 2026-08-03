@@ -26,13 +26,12 @@ Editor history is submode-owned. A custom socket edit must participate in the
 same history and serialized design transaction or clearly document that it is
 not undoable.
 
-## Observed AssetBundle serialization boundary
+## Reported AssetBundle serialization boundary
 
-Nested AGMLIB-defined custom classes and structs currently have a known
-editor-versus-loaded-bundle failure. The evidence status, interim authoring
-rules, and unknowns are maintained in
-`knowledge/asset-bundle-serialization.md`; the reproduction plan is
-`planning/asset-bundle-serialization-plan.md`.
+Nested AGMLIB-defined custom classes and structs have an unverified reported
+editor-versus-loaded-bundle failure. See the [evidence status and unknowns](asset-bundle-serialization.md),
+the [interim production rule](../.agents/guides/asset-bundle-authoring.md), and
+the [reproduction plan](../planning/asset-bundle-serialization-plan.md).
 
 ## Socket model
 
@@ -70,9 +69,8 @@ validation must evaluate the same core.
 
 ## Current filter-core audit
 
-The flattened key/filter/name/color lists in `KeyBasedFilterLookup` are
-intentional bundle-safe authoring data under the current serialization rule.
-They still need structural validation:
+The flattened key/filter/name/color lists in `KeyBasedFilterLookup` follow the
+interim AssetBundle production rule. They still need structural validation:
 
 - all parallel lists must have a defined length relationship;
 - keys must be non-empty and unique;

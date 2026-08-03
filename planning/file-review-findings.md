@@ -168,8 +168,8 @@ by reading the AGMLIB implementation beside the pinned native control flow.
   or default filter.
 - `Copy` aliases the source whitelist/blacklist lists and does not copy
   `AllowNullComponent`, `AllowIllegalSize`, or `CustomType`.
-- Key/filter/name/color tables are flattened parallel lists, which is the
-  required short-term bundle-safe representation, but they currently lack
+- Key/filter/name/color tables are flattened parallel lists, which follows the
+  required short-term AssetBundle precaution, but they currently lack
   equal-length and duplicate-key validation.
 - Dictionary properties allocate on every access, duplicate keys throw, and
   `Zip` silently truncates mismatched lists.

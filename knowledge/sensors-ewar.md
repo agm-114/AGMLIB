@@ -178,9 +178,9 @@ current source gives them multi-sensor behavior. Treat the types as serialized
 compatibility placeholders until content/API usage is established; do not
 describe them as a working feature.
 
-[`TrackLogic.cs`](../AGMLIB/Generic%20Gameplay/Ewar/TrackLogic.cs) uses
-bundle-safe parallel classification and component-reference lists, but its
-runtime policies are experimental:
+[`TrackLogic.cs`](../AGMLIB/Generic%20Gameplay/Ewar/TrackLogic.cs) uses parallel
+classification and component-reference lists that follow the interim
+AssetBundle rule, but its runtime policies are experimental:
 
 - `RatioTrackLogic` permits a zero weight sum, which produces invalid vector
   values, and deliberately blends authoritative true position into known

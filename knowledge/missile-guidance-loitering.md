@@ -150,9 +150,9 @@ transition. `RpcBeginEngagement` projects the chosen attack direction to
 clients. The component resets phase, timers, push-off state, effects, contacts,
 trigger state, and drag on both unpool and repool.
 
-The authoring representation is bundle-safe: seeker-fuse selection is a
-`List<bool>` indexed by socket index, while other settings are individual
-native/Unity fields. The tooltip currently says one entry per runtime seeker,
+The authoring representation follows the interim AssetBundle rule: seeker-fuse
+selection is a `List<bool>` indexed by socket index, while other settings are
+individual native/Unity fields. The tooltip currently says one entry per runtime seeker,
 but the implementation uses `seeker.Descriptor.Socket.Index` and extends the
 list to `Sockets.Count`; document and validate it as a per-socket table.
 

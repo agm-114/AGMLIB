@@ -25,12 +25,17 @@ before becoming the compatibility baseline.
 
 ## Serialization and cloning
 
+The nested-custom-value restriction below is precautionary. Its current
+[evidence status](../knowledge/asset-bundle-serialization.md) is an unverified
+maintainer report, and the [research plan](../planning/asset-bundle-serialization-plan.md)
+defines what must pass before the restriction can be relaxed.
+
 - Treat public type names, namespaces, serialized fields, save keys, enum numeric
   values, and XML identities as compatibility contracts.
 - Give public serialized enums explicit numeric values.
 - Do not serialize nested AGMLIB-defined custom classes or structs as authoring
-  payloads. They can appear valid in Unity's editor but have been observed to
-  become null or invalid after loading the built AssetBundle.
+  payloads. A maintainer report indicates that they can appear valid in Unity's
+  editor but become null or invalid after loading the built AssetBundle.
 - For complex data, use fields or lists of already proven Unity/native
   serializable types, flattened node/edge data with stable integer indices, or
   separately attached components and references. Validate list alignment,
