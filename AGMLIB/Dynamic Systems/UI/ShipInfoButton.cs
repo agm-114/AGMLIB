@@ -46,12 +46,16 @@ public class ShipInfoButton : ShipState
         NetworkIdentity? shipIdentity = Ship?.netIdentity ?? transform.root.GetComponent<NetworkIdentity>();
         if (shipIdentity != null && netIdentity != shipIdentity)
         {
-            NetworkBehaviour[] allBehaviours = shipIdentity.GetComponentsInChildren<NetworkBehaviour>();
-            Common.SetVal(shipIdentity, "NetworkBehaviours", allBehaviours, typeof(NetworkIdentity));
-            for (int i = 0; i < allBehaviours.Length; i++)
+            // Buttons need the spawned ship identity for commands, but nested identities retain their own behaviours.
+            NetworkBehaviour[] shipBehaviours = shipIdentity.GetComponentsInChildren<NetworkBehaviour>()
+                .Where(behaviour => behaviour is ShipInfoButton ||
+                    behaviour.GetComponentInParent<NetworkIdentity>() == shipIdentity)
+                .ToArray();
+            Common.SetVal(shipIdentity, "NetworkBehaviours", shipBehaviours, typeof(NetworkIdentity));
+            for (int i = 0; i < shipBehaviours.Length; i++)
             {
-                Common.SetVal(allBehaviours[i], "netIdentity", shipIdentity, typeof(NetworkBehaviour));
-                Common.SetVal(allBehaviours[i], "ComponentIndex", i, typeof(NetworkBehaviour));
+                Common.SetVal(shipBehaviours[i], "netIdentity", shipIdentity, typeof(NetworkBehaviour));
+                Common.SetVal(shipBehaviours[i], "ComponentIndex", i, typeof(NetworkBehaviour));
             }
         }
     }
