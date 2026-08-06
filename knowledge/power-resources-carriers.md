@@ -103,16 +103,19 @@ the same fixture reports `900 kW (-10%) / 2550 kW`, or `35%`. Two fixtures
 report `810 kW (-19%) / 2550 kW`, confirming that the combined `0.9 * 0.9`
 multiplier is rounded once and is not squared again by the editor path.
 
+Known private resource state is accessed through cached typed `Internals()`
+bindings for `Ship`, `HullPartResourceConnected`, `ResourcePool`, and the fleet
+editor's `ResourceItem`. The bindings cover the resource-pool dictionary,
+required values, provider/consumer lists, editor summary, and summary text. An
+opt-in startup preflight initialized all four accessor caches successfully
+against the installed `Nebulous.dll` with SHA-256
+`651B9CFBAB8D5411B7D241EB176F640F11BFEA8AAF5E8674093C9AE3198B5CF2`.
+
 Additional implementation risks:
 
-- the resource cache reads known native `_resources` state through
-  `Common.GetVal` on every ship allocation/tick/editor recalculation;
 - `AmountExtra` is populated but not consumed by current AGMLIB source;
 - reduction discovery uses root-wide `GetComponentsInChildren` and LINQ during
   high-frequency resource paths;
-- required-resource replacement writes a known private native field with
-  uncached reflection;
-- integer truncation occurs in `Reduce` before native demand use;
 - the custom editor summary replaces native localization tokens with literal
   English labels.
 

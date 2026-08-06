@@ -39,17 +39,19 @@
   users, and replace it with typed native comms/emitter state plus
   server-authoritative transitions and deterministic teardown.
 
-## Dynamic resource reduction typed parity remains incomplete
+## Dynamic resource reduction consolidation remains incomplete
 
 - **Evidence:** the editor's former second multiplication was removed and a
   live `0.9` fixture now reports `900 kW (-10%)` instead of the pre-fix `0.81`
   result. Effective demand now combines all reductions and rounds once, so two
-  stacked fixtures produce `810 kW (-19%)` at a nominal `0.81` multiplier.
-- **Impact:** the confirmed editor-only double reduction and truncation edge are
-  fixed, but direct runtime/editor parity still relies on reflected resource
-  state instead of a shared typed contract.
-- **Mitigation:** migrate the known resource members to typed accessors and
-  record one live fleet-editor versus runtime comparison. See
+  stacked fixtures produce `810 kW (-19%)` at a nominal `0.81` multiplier. The
+  known resource bindings are cached typed accessors and their startup preflight
+  passes against the installed game assembly.
+- **Impact:** the confirmed editor-only double reduction, truncation edge, and
+  repeated field reflection are fixed, but root-wide discovery still runs in
+  high-frequency paths and retains unused cache state.
+- **Mitigation:** profile reduction discovery, remove `AmountExtra` if it has no
+  intended consumer, and record one live fleet-editor versus runtime comparison. See
   `knowledge/power-resources-carriers.md`.
 
 ## Craft launch limit can starve carrier traffic

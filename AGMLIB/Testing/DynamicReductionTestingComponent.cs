@@ -1,5 +1,7 @@
 #if DEBUG && AGMLIB_LOCAL_TEST_FIXTURES
 using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Lib.Testing;
@@ -21,6 +23,8 @@ public sealed class DynamicReductionTestingComponentFactory : ITestingComponentF
             return;
         }
 
+        ValidateAccessorBindings();
+
         context.Create(SourceSaveKey, TestingSaveKey, builder =>
         {
             builder
@@ -40,6 +44,26 @@ public sealed class DynamicReductionTestingComponentFactory : ITestingComponentF
             reduction.Multiplier = 0.9f;
             reduction.Filter = filter;
         });
+    }
+
+    private static void ValidateAccessorBindings()
+    {
+        Type[] accessorTypes =
+        [
+            typeof(ShipInternals),
+            typeof(HullPartResourceConnectedInternals),
+            typeof(ResourcePoolInternals),
+            typeof(ResourceItemInternals)
+        ];
+
+        foreach (Type accessorType in accessorTypes)
+        {
+            Type refsType = accessorType.GetNestedType("Refs", BindingFlags.NonPublic)
+                ?? throw new MissingMemberException(accessorType.FullName, "Refs");
+            RuntimeHelpers.RunClassConstructor(refsType.TypeHandle);
+        }
+
+        Debug.Log("[AGMLIB Test] event=native-accessor-bindings result=success count=4");
     }
 }
 #endif

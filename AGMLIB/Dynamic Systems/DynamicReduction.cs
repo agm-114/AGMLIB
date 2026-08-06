@@ -9,7 +9,7 @@ public class DynamicReductionCache : MonoBehaviour
 
 
         DynamicReductionCache cache = ship.GetComponent<DynamicReductionCache>() ?? ship.gameObject.AddComponent<DynamicReductionCache>();
-        cache.AmountExtra = Common.GetVal<Dictionary<string, ResourcePool>>(ship, "_resources").Values.ToDictionary(pool => pool, pool => pool.AmountRemaining);
+        cache.AmountExtra = ship.Internals().ResourcePools.Values.ToDictionary(pool => pool, pool => pool.AmountRemaining);
         cache.dynamicReductions = ship.transform?.root?.GetComponentsInChildren<DynamicReduction>().ToList() ?? new();
         //Common.Trace($"CacheValues {cache.dynamicReductions.Count()}");
     }
@@ -114,17 +114,17 @@ public class DynamicReduction : ActiveSettings
 }
 public class RequiredResources : MonoBehaviour
 {
-    HullComponent _hullComponent;
+    HullPartResourceConnected _hullComponent;
     public ResourceValue[] Base;
 
-    public ResourceValue[] Current => Common.GetVal<ResourceValue[]>(_hullComponent, "_requiredResources");
+    public ResourceValue[] Current => _hullComponent.Internals().RequiredResourceValues;
 
     public void SetRequireResoures(ResourceValue[] resourceValues)
     {
-        Common.SetVal(_hullComponent, "_requiredResources", resourceValues);
+        _hullComponent.Internals().RequiredResourceValues = resourceValues;
 
     }
-    public void Setup(HullComponent hullComponent)
+    public void Setup(HullPartResourceConnected hullComponent)
     {
         _hullComponent = hullComponent;
         if (Base == null)
@@ -210,10 +210,11 @@ class ResourcePoolCalculateDemandForEditor
         ResourcePool pool = __instance;
         ResourceType Resource = pool.Resource;
 
-        List<IResourceSystemConnected> _providers = Common.GetVal<List<IResourceSystemConnected>>(pool, "_providers");
-        List<IResourceSystemConnected> _consumers = Common.GetVal<List<IResourceSystemConnected>>(pool, "_consumers");
-        HashSet<IResourceSystemConnected> allents = new HashSet<IResourceSystemConnected>(_providers);
-        allents.UnionWith(_consumers);
+        ResourcePoolInternals poolInternals = pool.Internals();
+        List<IResourceSystemConnected> providers = poolInternals.Providers;
+        List<IResourceSystemConnected> consumers = poolInternals.Consumers;
+        HashSet<IResourceSystemConnected> allents = new HashSet<IResourceSystemConnected>(providers);
+        allents.UnionWith(consumers);
         List<HullPartResourceConnected> components = allents.ToList().ConvertAll(a => (HullPartResourceConnected)a);
 
         List<float> reductions = new();
@@ -239,7 +240,7 @@ class ResourcePoolCalculateDemandForEditor
         pool.SortConsumers();
         EditorResourceSummary _summary = default(EditorResourceSummary);
         _summary.Details = ["Produced:"];
-        foreach (HullComponent provider in _providers)
+        foreach (HullComponent provider in providers)
         {
             if (provider.ResourcesProvided.Any((ResourceModifier x) => x.ResourceName == pool.Resource.Name))
             {
@@ -256,7 +257,7 @@ class ResourcePoolCalculateDemandForEditor
         _summary.Details.Add("Consumed:");
 
 
-        foreach (HullPartResourceConnected consumer in _consumers)
+        foreach (HullPartResourceConnected consumer in consumers)
         {
             if (consumer.ResourcesRequired.Any((ResourceModifier x) => x.ResourceName == Resource.Name))
             {
@@ -289,7 +290,7 @@ class ResourcePoolCalculateDemandForEditor
         }
 
 
-        Common.SetVal(pool, "_summary", _summary);
+        poolInternals.Summary = _summary;
     }
 
 }
@@ -301,12 +302,10 @@ class ResourceItemSetResource
     {
         Common.LogPatch();
         ResourceItem item = __instance;
-        TextMeshProUGUI _summaryText = Common.GetVal<TextMeshProUGUI>(item, "_summaryText");
-
         float num = (float)resource.AmountConsumed / (float)resource.TotalAvailable;
         string text = ((resource.ConsumedModifier == 0f) ? "" : (" (" + StatModifier.FormatModifierColored((float)Math.Round(resource.ConsumedModifier, 2), positiveBad: true) + ")"));
         string text2 = ((resource.ProducedModifier == 0f) ? "" : (" (" + StatModifier.FormatModifierColored((float)Math.Round(resource.ProducedModifier, 2), positiveBad: false) + ")"));
-        _summaryText.text = $"{resource.ResourceName} - {Mathf.Round(num * 100f)}%\n<size=20>{resource.AmountConsumed} {resource.UnitAbbrev}{text} / {resource.TotalAvailable} {resource.UnitAbbrev}{text2}</size>";
+        item.Internals().SummaryText.text = $"{resource.ResourceName} - {Mathf.Round(num * 100f)}%\n<size=20>{resource.AmountConsumed} {resource.UnitAbbrev}{text} / {resource.TotalAvailable} {resource.UnitAbbrev}{text2}</size>";
     }
 
 }

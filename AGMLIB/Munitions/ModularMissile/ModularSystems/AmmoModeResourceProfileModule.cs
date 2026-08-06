@@ -56,7 +56,9 @@ public static class AmmoModeResourceProfileRuntime
             return;
         }
 
-        ResourceValue[] current = Common.GetVal<ResourceValue[]>(component, "_requiredResources") ?? Array.Empty<ResourceValue>();
+        HullPartResourceConnectedInternals componentInternals =
+            ((HullPartResourceConnected)component).Internals();
+        ResourceValue[] current = componentInternals.RequiredResourceValues ?? Array.Empty<ResourceValue>();
         int amountRequired = Mathf.Max(0, Mathf.RoundToInt(profile.AmountRequired));
         List<ResourceValue> modified = current.Where(value => value != null).Select(CloneResourceValue).ToList();
         ResourceValue existing = modified.FirstOrDefault(value => value.Resource == resource);
@@ -71,7 +73,7 @@ public static class AmmoModeResourceProfileRuntime
             modified.Add(new ResourceValue(resource, amountRequired, profile.OnlyWhenOperating));
         }
 
-        Common.SetVal(component, "_requiredResources", modified.ToArray());
+        componentInternals.RequiredResourceValues = modified.ToArray();
     }
 
     public static bool MissingProfileResource(WeaponComponent weapon)
@@ -83,7 +85,8 @@ public static class AmmoModeResourceProfileRuntime
         }
 
         ResourceType resource = ResourceDefinitions.Instance.GetResource(profile.ResourceName);
-        ResourceValue[] requiredResources = Common.GetVal<ResourceValue[]>(weapon, "_requiredResources");
+        ResourceValue[] requiredResources =
+            ((HullPartResourceConnected)weapon).Internals().RequiredResourceValues;
         return requiredResources?.Any(value => value != null && value.Resource == resource && !value.HasAll) ?? false;
     }
 

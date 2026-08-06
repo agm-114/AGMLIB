@@ -186,7 +186,7 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
     resource summary.
   - [x] Define integer rounding and stacking order once and cover multiple
     reductions.
-  - [ ] Migrate known ship resource pools, required values, provider/consumer
+  - [x] Migrate known ship resource pools, required values, provider/consumer
     lists, and editor summary members to typed native accessors.
   - [ ] Profile root-wide reduction discovery and remove unused `AmountExtra`
     state if it has no intended role.
