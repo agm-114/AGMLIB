@@ -92,18 +92,14 @@ filters them per target component and resource name, multiplies their factors,
 and replaces the target's private runtime `ResourceValue[]` from a cached base
 copy. Runtime consumption therefore applies the combined multiplier once.
 
-The fleet-editor summary currently applies it twice:
-
-1. its custom loop calls `consumer.GetResourceDemand`;
-2. the Harmony prefix on that method first rebuilds `_requiredResources` with
-   the reduction applied;
-3. the custom summary then multiplies the returned demand by the same reduction
-   again.
-
-For example, a `0.9` reduction consumes `0.9` of base demand at runtime but is
-presented as `0.81` of base demand by the replacement editor summary. This is a
-confirmed code-path mismatch; a live editor fixture still needs to record the
-visible number.
+The fleet-editor summary now uses the effective demand returned by
+`consumer.GetResourceDemand` without multiplying it by the reduction again.
+Before the fix, a live `0.9` fixture changed a Predator's displayed Power load
+from `39%` to `32%`, demonstrating the erroneous `0.81` result. After the fix,
+the same fixture reports `900 kW (-10%) / 2550 kW`, or `35%`. Two fixtures
+report `809 kW (-19%) / 2550 kW`, confirming that the combined `0.9 * 0.9`
+multiplier is not squared again by the editor path. The `809` result also
+records the remaining integer-truncation behavior.
 
 Additional implementation risks:
 

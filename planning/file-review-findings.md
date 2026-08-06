@@ -81,10 +81,10 @@ many components. High patch and log counts cluster around resource ticks, area
 effects, and UI adapters. Consolidate activation, resource transactions,
 modifier registration, and teardown. `ShipStatusPowerBar` should split view,
 binding, updater, and model. Profile repeated reflection/logging in resource and
-area paths. `DynamicReduction` currently applies a reduction once in runtime
-allocation but twice in its replacement fleet-editor summary; use the shared
-native/data trace in `knowledge/power-resources-carriers.md` as the extraction
-contract.
+area paths. `DynamicReduction` no longer applies its multiplier twice in the
+replacement fleet-editor summary, but its rounding and reflection-heavy state
+replacement still need the shared native/data trace in
+`knowledge/power-resources-carriers.md` as the extraction contract.
 
 ### Editor
 

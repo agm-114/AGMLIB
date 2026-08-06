@@ -255,7 +255,9 @@ class ResourcePoolCalculateDemandForEditor
                 bool onlyWhenOperating;
                 float reduction = DynamicReduction.TotalMultiplier(pool.Resource, consumer);
 
-                int num = Mathf.RoundToInt(consumer.GetResourceDemand(pool, out onlyWhenOperating) * reduction);
+                // GetResourceDemand is already prefixed by DynamicReduction.UpdateResources,
+                // so it returns the effective demand with this multiplier applied.
+                int num = Mathf.RoundToInt(consumer.GetResourceDemand(pool, out onlyWhenOperating));
 
                 _summary.TotalConsumed += num;
                 _summary.TotalConsumedUnmodified += resourceModifier.Amount;

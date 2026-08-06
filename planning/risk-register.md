@@ -39,18 +39,17 @@
   users, and replace it with typed native comms/emitter state plus
   server-authoritative transitions and deterministic teardown.
 
-## Dynamic resource reduction disagrees between editor and runtime
+## Dynamic resource reduction rounding and typed parity remain incomplete
 
-- **Evidence:** the Harmony prefix on
-  `HullPartResourceConnected.GetResourceDemand` first installs reduced runtime
-  values. The replacement `ResourcePool.CalculateDemandForEditor` summary then
-  multiplies the already-reduced result by the same factor again. A `0.9`
-  reduction is therefore calculated as `0.81` in the custom editor path while
-  runtime consumption uses `0.9`.
-- **Impact:** fleet-editor power totals and fitting decisions can disagree with
-  the launched ship; compounding reductions amplify the error.
-- **Mitigation:** calculate base/effective demand once in a typed helper, use it
-  from both paths, add pure multi-reduction/rounding tests, and record one live
+- **Evidence:** the editor's former second multiplication was removed and a
+  live `0.9` fixture now reports `900 kW (-10%)` instead of the pre-fix `0.81`
+  result. Two stacked fixtures report `809 kW (-19%)`, exposing the remaining
+  floating-point/integer-truncation edge at a nominal `0.81` multiplier.
+- **Impact:** the confirmed editor-only double reduction is fixed, but rounding
+  boundaries and direct runtime/editor parity still lack one shared typed
+  contract and deterministic tests.
+- **Mitigation:** calculate base/effective demand once in a typed helper, define
+  rounding once, add pure multi-reduction tests, and record one live
   fleet-editor versus runtime comparison. See
   `knowledge/power-resources-carriers.md`.
 

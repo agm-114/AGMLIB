@@ -182,7 +182,7 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
 
 - [ ] Make dynamic resource reduction use one typed effective-demand
   calculation for runtime allocation and fleet-editor presentation.
-  - [ ] Remove the current double application in the replacement editor
+  - [x] Remove the current double application in the replacement editor
     resource summary.
   - [ ] Define integer rounding and stacking order once and cover multiple
     reductions.
