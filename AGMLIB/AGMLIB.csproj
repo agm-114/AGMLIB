@@ -23,6 +23,14 @@
     <Copyright>≽^•⩊•^≼</Copyright>
   </PropertyGroup>
 
+  <!-- Ordinary Debug DLLs are publishable in this repository, so local test
+       fixtures require a separate, explicit build-time opt-in and output path. -->
+  <PropertyGroup Condition="'$(AgmlibEnableLocalTestFixtures)' == 'true'">
+    <DefineConstants>$(DefineConstants);AGMLIB_LOCAL_TEST_FIXTURES</DefineConstants>
+    <BaseOutputPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\.agents\cache\agmlib-local-test'))\</BaseOutputPath>
+    <AgmlibManifestPath>$(BaseOutputPath)ModInfo.xml</AgmlibManifestPath>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="libs\**" />
     <EmbeddedResource Remove="libs\**" />

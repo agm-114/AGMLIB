@@ -38,6 +38,7 @@ Use broad before/after metrics rather than frame-perfect replay for performance 
 
 - Require explicit activation through a test component, exact config flag, exact save key, or separate test mod.
 - Keep passive installation behavior-free.
+- If the repository publishes Debug DLLs, do not treat `#if DEBUG` as a publication boundary. Require a dedicated local-test compile symbol and verify that an ordinary Debug assembly does not contain the fixture type or activation key.
 - Put global Harmony patches, network transport overrides, infinite health, mass damage, and similar intrusive behavior in a clearly named local-only support mod when practical.
 - Keep test-only dependencies and helpers out of publishable packages.
 - Make deep telemetry disabled by default.
