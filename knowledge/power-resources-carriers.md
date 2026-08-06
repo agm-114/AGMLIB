@@ -94,12 +94,14 @@ copy. Runtime consumption therefore applies the combined multiplier once.
 
 The fleet-editor summary now uses the effective demand returned by
 `consumer.GetResourceDemand` without multiplying it by the reduction again.
+`DynamicReduction.CalculateEffectiveDemand` combines all applicable multipliers
+and rounds the resulting demand once with `Mathf.RoundToInt`; it does not round
+between reductions.
 Before the fix, a live `0.9` fixture changed a Predator's displayed Power load
 from `39%` to `32%`, demonstrating the erroneous `0.81` result. After the fix,
 the same fixture reports `900 kW (-10%) / 2550 kW`, or `35%`. Two fixtures
-report `809 kW (-19%) / 2550 kW`, confirming that the combined `0.9 * 0.9`
-multiplier is not squared again by the editor path. The `809` result also
-records the remaining integer-truncation behavior.
+report `810 kW (-19%) / 2550 kW`, confirming that the combined `0.9 * 0.9`
+multiplier is rounded once and is not squared again by the editor path.
 
 Additional implementation risks:
 

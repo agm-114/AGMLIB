@@ -39,18 +39,17 @@
   users, and replace it with typed native comms/emitter state plus
   server-authoritative transitions and deterministic teardown.
 
-## Dynamic resource reduction rounding and typed parity remain incomplete
+## Dynamic resource reduction typed parity remains incomplete
 
 - **Evidence:** the editor's former second multiplication was removed and a
   live `0.9` fixture now reports `900 kW (-10%)` instead of the pre-fix `0.81`
-  result. Two stacked fixtures report `809 kW (-19%)`, exposing the remaining
-  floating-point/integer-truncation edge at a nominal `0.81` multiplier.
-- **Impact:** the confirmed editor-only double reduction is fixed, but rounding
-  boundaries and direct runtime/editor parity still lack one shared typed
-  contract and deterministic tests.
-- **Mitigation:** calculate base/effective demand once in a typed helper, define
-  rounding once, add pure multi-reduction tests, and record one live
-  fleet-editor versus runtime comparison. See
+  result. Effective demand now combines all reductions and rounds once, so two
+  stacked fixtures produce `810 kW (-19%)` at a nominal `0.81` multiplier.
+- **Impact:** the confirmed editor-only double reduction and truncation edge are
+  fixed, but direct runtime/editor parity still relies on reflected resource
+  state instead of a shared typed contract.
+- **Mitigation:** migrate the known resource members to typed accessors and
+  record one live fleet-editor versus runtime comparison. See
   `knowledge/power-resources-carriers.md`.
 
 ## Craft launch limit can starve carrier traffic

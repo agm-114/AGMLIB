@@ -184,7 +184,7 @@ This backlog captures the repository, build, CI, compatibility, documentation, t
   calculation for runtime allocation and fleet-editor presentation.
   - [x] Remove the current double application in the replacement editor
     resource summary.
-  - [ ] Define integer rounding and stacking order once and cover multiple
+  - [x] Define integer rounding and stacking order once and cover multiple
     reductions.
   - [ ] Migrate known ship resource pools, required values, provider/consumer
     lists, and editor summary members to typed native accessors.

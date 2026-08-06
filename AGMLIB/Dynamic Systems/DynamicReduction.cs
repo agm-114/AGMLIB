@@ -54,8 +54,17 @@ public class DynamicReduction : ActiveSettings
         float multiplier = TotalMultiplier(basevalue.Resource, hullComponent);
         if (multiplier == 1)
             return basevalue;
-        return new ResourceValue(basevalue.Resource, (int)(float)(basevalue.AmountRequired * multiplier), basevalue.OnlyWhenOperating);
+        return new ResourceValue(
+            basevalue.Resource,
+            CalculateEffectiveDemand(basevalue.AmountRequired, multiplier),
+            basevalue.OnlyWhenOperating);
     }
+
+    internal static int CalculateEffectiveDemand(int baseDemand, float multiplier)
+    {
+        return Mathf.RoundToInt(baseDemand * multiplier);
+    }
+
     public static IEnumerable<DynamicReduction> GetReductions(HullPartResourceConnected hullComponent)
     {
         DynamicReductionCache cache = hullComponent?.transform?.root?.GetComponent<DynamicReductionCache>();
