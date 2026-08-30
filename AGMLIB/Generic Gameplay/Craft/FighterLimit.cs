@@ -19,7 +19,7 @@ public sealed class CraftLaunchLimit : MonoBehaviour
             return null;
         }
 
-        CraftLaunchLimit limit = ship.GetComponent<CraftLaunchLimit>();
+        CraftLaunchLimit limit = ship.GetComponentInChildren<CraftLaunchLimit>(includeInactive: true);
         if (limit == null && AutoAttachToAllShips)
         {
             limit = ship.gameObject.AddComponent<CraftLaunchLimit>();
