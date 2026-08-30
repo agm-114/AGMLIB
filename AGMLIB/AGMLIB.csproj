@@ -8,7 +8,10 @@
     <Nullable>enable</Nullable>
     <ModName>AGMLIB</ModName>
     <ModDescription>By: AGM</ModDescription>
-    <DeployToGame>false</DeployToGame>
+    <NebulousGameRoot Condition="'$(NebulousGameRoot)' == ''">$(MSBuildProgramFiles32)\Steam\steamapps\common\Nebulous</NebulousGameRoot>
+    <ModInstallDir Condition="'$(ModInstallDir)' == ''">$(NebulousGameRoot)\Mods\AGMLIB</ModInstallDir>
+    <DeployToGame Condition="'$(DeployToGame)' == '' and '$(ContinuousIntegrationBuild)' != 'true' and Exists('$(NebulousGameRoot)\Nebulous.exe')">true</DeployToGame>
+    <DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
     <ArtifactsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\artifacts'))</ArtifactsDir>
     <BaseOutputPath>$(ArtifactsDir)\$(ModName)\</BaseOutputPath>
     <AgmlibManifestPath>$(BaseOutputPath)ModInfo.xml</AgmlibManifestPath>
@@ -383,7 +386,7 @@
           DependsOnTargets="GenerateModInfo"
           Condition="'$(DeployToGame)' == 'true'">
     <Error Condition="'$(ModInstallDir)' == ''"
-           Text="ModInstallDir is required. Use scripts\Build\Deploy-Agmlib.ps1 for explicit local deployment." />
+           Text="ModInstallDir is required when DeployToGame is enabled." />
     <Error Condition="!Exists('$(TargetPath)')"
            Text="Build output not found at $(TargetPath). Build AGMLIB before deploying." />
     <Error Condition="!Exists('$(TargetDir)0Harmony.dll')"

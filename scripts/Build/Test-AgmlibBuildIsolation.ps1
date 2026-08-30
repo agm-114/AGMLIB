@@ -61,6 +61,7 @@ $before = Get-RepositorySourceState
 
 & dotnet clean $projectPath -v:minimal `
     "-p:Configuration=$Configuration" `
+    -p:DeployToGame=false `
     "-p:PowerShellExecutable=$PowerShellExecutable"
 if ($LASTEXITCODE -ne 0)
 {
@@ -69,6 +70,7 @@ if ($LASTEXITCODE -ne 0)
 
 & dotnet build $projectPath --no-restore -v:minimal `
     "-p:Configuration=$Configuration" `
+    -p:DeployToGame=false `
     "-p:PowerShellExecutable=$PowerShellExecutable"
 if ($LASTEXITCODE -ne 0)
 {
@@ -97,5 +99,5 @@ if (-not (Test-Path -LiteralPath $artifactManifest -PathType Leaf))
     throw "Generated artifact manifest was not found at $artifactManifest"
 }
 
-Write-Host "AGMLIB $Configuration build completed without changing tracked files or AGMLIB\ModInfo.xml."
+Write-Host "AGMLIB $Configuration repository-only build completed without changing tracked files or AGMLIB\ModInfo.xml."
 Write-Host "Generated manifest: $artifactManifest"

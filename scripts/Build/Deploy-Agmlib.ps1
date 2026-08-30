@@ -47,7 +47,9 @@ if ($gameProcess)
 
 if (-not $SkipBuild)
 {
-    & dotnet build $projectPath --no-restore -v:minimal "-p:Configuration=$Configuration"
+    & dotnet build $projectPath --no-restore -v:minimal `
+        "-p:Configuration=$Configuration" `
+        -p:DeployToGame=false
     if ($LASTEXITCODE -ne 0)
     {
         throw "AGMLIB build failed with exit code $LASTEXITCODE."

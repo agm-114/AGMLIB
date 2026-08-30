@@ -47,12 +47,21 @@ The command builds AGMLIB, launches Nebulous with dumping enabled, waits for the
 
 ## Build and deploy
 
-An ordinary build writes only to the repository-local `artifacts\AGMLIB`
-directory. It does not rewrite the committed version baseline or source
-`ModInfo.xml`, and it does not copy files into the game:
+An ordinary local build writes to the repository-local `artifacts\AGMLIB`
+directory and, when the default NEBULOUS installation is present, also copies
+the generated manifest, AGMLIB DLL, PDB, and Harmony dependency to
+`Mods\AGMLIB\<Configuration>\net481`:
 
 ```powershell
 dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal
+```
+
+The build does not rewrite the committed version baseline or source
+`ModInfo.xml`. Suppress game deployment for repository-only validation,
+packaging, or CI with:
+
+```powershell
+dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal -p:DeployToGame=false
 ```
 
 The final version component is a change-aware local build revision.
@@ -63,7 +72,8 @@ inputs. Assembly and generated manifest versions always use the same derived
 value. Promote an intended revision into `Version.props` deliberately for a
 portable release baseline; the ignored ledger is local build history.
 
-Deploy to the local game only with the explicit command:
+Use the explicit deployment command to select an alternate game root, deploy a
+specific configuration, or verify an already-built copy by SHA-256:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\Build\Deploy-Agmlib.ps1
@@ -74,14 +84,14 @@ builds first unless `-SkipBuild` is supplied, refuses to deploy while Nebulous
 is running, copies to `Mods\AGMLIB\<Configuration>\net481`, and verifies the
 deployed DLL, Harmony dependency, and manifest by SHA-256.
 
-Run the isolation check after changing build logic:
+Run the repository-only isolation check after changing build logic:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\Build\Test-AgmlibBuildIsolation.ps1
 ```
 
-An ordinary build is safe while Nebulous is running because it no longer writes
-to the game installation. Close Nebulous only before explicit deployment.
+Close Nebulous before any build that deploys to the game installation. Use
+`-p:DeployToGame=false` when the game must remain running during compilation.
 Preserve CRLF in modified C# files.
 
 ## Run the major-mod compatibility CI

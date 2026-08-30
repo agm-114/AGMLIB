@@ -12,16 +12,21 @@ git status --short
 .\scripts\NativeCode\Export-NebulousManagedCode.ps1 -ValidateOnly
 ```
 
-The current MSBuild project is not yet safe for unattended CI because its
-pre/post-build targets generate `ModInfo.xml` and deploy to a hard-coded game
-path. Follow `planning/build-release-plan.md` before treating `dotnet build` as a
-repository-only command.
+Use the explicit deployment opt-out for unattended CI or any repository-only
+build. Generated files remain under `artifacts/AGMLIB`, and tracked source files
+are not rewritten:
+
+```powershell
+dotnet build AGMLIB\AGMLIB.csproj --no-restore -p:DeployToGame=false
+```
 
 ## Local build and deployment
 
 Read `.agents/neb-testing.local.md`, then follow
-`.agents/skills/neb-testing/SKILL.md`. That workflow owns machine-specific paths,
-deployment, launch, prefab dumping, and `Player.log` inspection.
+`.agents/skills/neb-testing/SKILL.md`. On a machine with the default NEBULOUS
+installation, an ordinary local build copies the Debug or Release output into
+`Mods/AGMLIB/<Configuration>/net481`. That workflow also covers alternate game
+roots, explicit deployment, launch, prefab dumping, and `Player.log` inspection.
 
 If a build or copy fails while the game is running, first determine whether the
 loaded AGMLIB DLL is locked. Do not interpret a stale deployed DLL as a source

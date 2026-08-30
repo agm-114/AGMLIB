@@ -22,12 +22,13 @@ assemblies with `knowledge/evidence-ledger.md`.
 
 ## Safe orientation commands
 
-These commands inspect or build repository-local state. The current project file
-still contains machine-specific pre/post-build behavior, so a normal build is not
-yet CI-safe and can rewrite `ModInfo.xml` or deploy into the game directory.
+These commands inspect repository-local state. For a repository-only build, set
+`DeployToGame=false`; otherwise a local build automatically updates the detected
+default NEBULOUS installation.
 
 ```powershell
 git status --short
+dotnet build AGMLIB\AGMLIB.csproj --no-restore -p:DeployToGame=false
 .\scripts\Documentation\Export-AgmlibInventory.ps1 -Check
 .\scripts\NativeCode\Export-NebulousManagedCode.ps1 -ValidateOnly
 ```
@@ -48,9 +49,8 @@ or launch NEBULOUS and must not be confused with repository-only validation.
 
 ## Important current limitations
 
-- The build writes directly to a hard-coded NEBULOUS mod directory and invokes
-  batch scripts from MSBuild.
-- `build.bat` generates the tracked `ModInfo.xml`.
+- Local builds auto-deploy when the default NEBULOUS installation is detected;
+  use `DeployToGame=false` for repository-only validation or packaging.
 - the entry point activates all Harmony patches in one operation;
 - much of the released API remains in the global namespace;
 - native private-member access is split between new typed `Internals()` accessors

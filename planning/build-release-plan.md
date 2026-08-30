@@ -11,10 +11,14 @@ The previous build chain was captured before replacement:
 - rewrites the source `ModInfo.xml` on every build;
 - increments `VersionPrefix` in the project after successful builds.
 
-That behavior is now removed. `AGMLIB/Version.props` is the explicit committed
-version baseline (`6.2.2.867`, game version `0.6.2`). Normal Debug and Release
-builds write beneath `artifacts/AGMLIB`, generate the artifact `ModInfo.xml`
-from `ModInfo.template.xml`, and never deploy or edit source files.
+The direct-output and source-mutation behavior is now removed.
+`AGMLIB/Version.props` is the explicit committed version baseline
+(`6.2.2.867`, game version `0.6.2`). Normal Debug and Release builds write
+beneath `artifacts/AGMLIB`, generate the artifact `ModInfo.xml` from
+`ModInfo.template.xml`, and never edit source files. On a local machine where
+the default NEBULOUS installation is detected, they also copy the generated
+package into `Mods/AGMLIB`; CI and repository-only builds opt out with
+`DeployToGame=false`.
 
 `Get-AgmlibBuildVersion.ps1` preserves the useful fourth-component build
 revision without restoring source mutation. It fingerprints build-relevant
@@ -28,21 +32,24 @@ before a release or supply a future release/CI version explicitly.
 The supported commands are:
 
 ```powershell
-# Repository-local build
+# Local build with automatic deployment when NEBULOUS is installed
 dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal
 
-# Clean-build proof that tracked files and source ModInfo.xml do not change
+# Repository-only build
+dotnet build AGMLIB\AGMLIB.csproj --no-restore -v:minimal -p:DeployToGame=false
+
+# Clean-build proof that repository-only builds do not change tracked sources
 powershell -ExecutionPolicy Bypass -File scripts\Build\Test-AgmlibBuildIsolation.ps1
 
-# Explicit local build and deployment
+# Explicit deployment, alternate root, or hash verification
 powershell -ExecutionPolicy Bypass -File scripts\Build\Deploy-Agmlib.ps1
 ```
 
 `Deploy-Agmlib.ps1` owns the machine-local default game path, accepts
 `-GameRoot` and `-Configuration`, refuses to deploy while Nebulous is running,
 and verifies the deployed DLL, Harmony dependency, and manifest against their
-source SHA-256 hashes. The MSBuild `DeployToGame` property defaults to `false`;
-only the explicit script enables the deployment target.
+source SHA-256 hashes. The MSBuild `DeployToGame` property defaults to `true`
+only for non-CI builds where the default game installation exists.
 
 Verification evidence for the change-aware revision was
 `867, 867, 868, 868`: initial input, identical rebuild, changed input, identical
@@ -123,6 +130,7 @@ The package is complete when a clean checkout can:
 2. build Debug and Release without changing Git;
 3. produce the same logical layout from the same version/source;
 4. validate manifest, binary, version, allowlist, and hashes;
-5. deploy only when explicitly requested;
+5. auto-deploy for an installed local game while honoring the explicit
+   `DeployToGame=false` repository-only path;
 6. exercise a release workflow without publishing to Workshop;
 7. recover from a locked DLL and a rejected package cleanly.
