@@ -19,9 +19,11 @@ type evidence lives in `planning/generated/source-file-atlas.md` and
 | Modified stacking multiplier | `Generic Gameplay/Modifer/CustomModiferScaling.cs`, dynamic modifier components | Custom modifier scaling and dynamic modifier sources exist. | Numeric parity with native stacking order and stable pure-math tests. |
 | Projectile/missile ammo swap | `Munitions/.../AmmoModeCycleProfileModule.cs`, `AmmoModeFallbackProfileModule.cs`, `AmmoModeResourceProfileModule.cs`, `Generic Gameplay/Discrete/*` | Modular callbacks can react to ammo changes and fire checks; discrete magazine/launcher variants extend ammo handling. | Exact projectile-to-missile configurations, magazine bookkeeping, UI refresh, resource rollback, and multiplayer replication. |
 | Drone command channel | `Generic Gameplay/Craft/FighterLimit.cs`, `ConfigurableBulkCraftHangarComponent.cs`, `LightweightCraftWorkSlotComponent.cs`, `Systems/DroneTester.cs` | Craft-limit and hangar experiments exist, but a single authoritative command-channel abstraction is not evident. | Decide whether limits apply to active craft, queued launches, or both; mixed drone/manned behavior; replacement queue semantics. |
+| Carrier Flight Quarters speed | `Generic Gameplay/Craft/CarrierFlightQuartersSpeed.cs` | An opt-in carrier component configures the aligned and off-angle green-deck speed limits, reapplies them across its enabled lifecycle, and restores the native values when disabled. Vanilla's one-third-speed floor and full-speed cap remain in force. | Prefab-authoring and host/client runtime verification on a carrier using non-default values. |
 | Debuff on impact | `Munitions/ModularMissile/ModularSystems/AreaDebuffProfileModule.cs`, `AreaShipDisableProfileModule.cs`, `AreaDamageControlTeamProfileModule.cs` | Scriptable impact callbacks and timed runtime state components implement area debuff/disruption effects. | Stacking/removal, repeated impacts, destruction cleanup, immunity rules, and server-only mutation. |
 | SIGINT | `Generic Gameplay/Ewar/PassiveCommsSensorComponent.cs`, `TacticalModule.cs`, `TrackLogic.cs` | Passive communications sensing and tactical track support are substantial implemented systems. | Detection model calibration, false/stale track behavior, host/client visibility, performance, and log-volume baseline. |
 | Wired guidance package | `Munitions/ModularMissile/CommandSeekers.cs` and modular command-seeker descriptors | Position and ranged command seekers, range-loss behavior, salvo integration, and debug overlay support exist. | End-to-end range loss, source destruction, guidance handoff, seeker pooling, and multiplayer testing. |
+| Missile track relay | `Munitions/ModularMissile/ModularDescriptors/Basic/ModularTrackRelaySupportDescriptor.cs` | A modular support descriptor gives its missile an independent sensor context and relays autonomous onboard seeker tracks to the friendly sensor network. | Authored-prefab launch, seeker handoff, comms isolation, pooling, and host/client runtime verification. |
 
 ## Core boot and integration
 
@@ -143,6 +145,8 @@ The modular missile family adds:
 - engines, decoy launchers, jammers, beam/fragmentation/impact-cone/kinetic and
   shell warheads;
 - fuses, time-fuse state, loitering flight, angle thresholds, and illumination;
+- a support-socket track relay that publishes autonomous seeker contacts through
+  a missile-owned sensor and communications context;
 - module filters, faction filters, module limits, ammo-mode callbacks, resource
   profiles, and impact-triggered area effects.
 

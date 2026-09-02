@@ -18,6 +18,35 @@ $StatePath = [IO.Path]::GetFullPath($StatePath)
 $stateDirectory = Split-Path -Parent $StatePath
 New-Item -ItemType Directory -Force $stateDirectory | Out-Null
 
+function Get-Sha256Hex
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$LiteralPath
+    )
+
+    $stream = $null
+    $sha256 = $null
+    try
+    {
+        $stream = [IO.File]::OpenRead($LiteralPath)
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        return [BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '')
+    }
+    finally
+    {
+        if ($null -ne $sha256)
+        {
+            $sha256.Dispose()
+        }
+
+        if ($null -ne $stream)
+        {
+            $stream.Dispose()
+        }
+    }
+}
+
 $includedExtensions = @(
     '.cs',
     '.csproj',
@@ -48,11 +77,11 @@ $fingerprintLines = @(
     foreach ($file in $files | Sort-Object FullName -Unique)
     {
         $relativePath = $file.FullName.Substring($ProjectRoot.Length + 1).Replace('\', '/')
-        $contentHash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+        $contentHash = Get-Sha256Hex -LiteralPath $file.FullName
         "$relativePath`0$contentHash"
     }
 
-    $versionScriptHash = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash
+    $versionScriptHash = Get-Sha256Hex -LiteralPath $PSCommandPath
     "../scripts/Build/Get-AgmlibBuildVersion.ps1`0$versionScriptHash"
 )
 
