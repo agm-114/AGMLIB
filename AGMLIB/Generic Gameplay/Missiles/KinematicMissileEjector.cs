@@ -11,6 +11,14 @@ public class KinematicLauncher : ActiveSettings
     public BaseSoundEffect Sound;
     public float Delay = 0;
 
+    public override void Awake()
+    {
+        base.Awake();
+
+        if (ParticleEffect != null && ParticleEffect.transform != transform && ParticleEffect.transform.IsChildOf(transform))
+            ParticleEffect.SetActive(false);
+    }
+
     //private Rigidbody Body => Obj?.gameObject?.GetComponent<Rigidbody>();
 
     public void PlayFiringEffect(MissileEjector ejector = null) => StartCoroutine(CoroutineDelayedPlayParticles(ejector.transform));
