@@ -69,6 +69,24 @@ Avoid an arbitrary delay without a predicate; it makes fast and slow machines fa
 - Let vanilla networking replicate results after native state changes.
 - Reject unknown ownership or session state instead of guessing.
 
+## Automatic Testing Range Setup
+
+When desktop control is unavailable, an explicitly gated local fixture can use
+the game's native testing-range path. Inspect the installed assembly first:
+`FleetEditorController.QuickTestBattle` passes `QuickFleetTestData` through
+`CrossScenePipe` to the skirmish load scene. Resolve fleet summaries with
+`Fleet.GetSummaryForFleet(FilePath)` and the stock testing map through
+`BundleManager.GetMap`. Wait for bundle initialization before transitioning,
+and bound all waits for a running match.
+
+Keep the runner across scene changes with `DontDestroyOnLoad`, then use the
+local player's live fleet to identify controlled test subjects. On the host,
+`HullDockingPoint.QuickDockShip` follows native docking and replication. Native
+player selection opens the docked ship menu; `TabbedControl.OpenTab` can expose
+the repair pane. Verify the applied hull repair stat and visible pane text,
+then destroy the setup runner while leaving the requested interactive game open.
+This proves setup and presentation; undamaged ships do not establish healing.
+
 ## Telemetry
 
 Use a unique prefix and stable key-value fields:
@@ -109,6 +127,13 @@ For selective target logic, vary one target-class flag at a time and include an 
 
 ## Test Layers
 
+- Unity adapter checks can run in an explicitly gated testing factory to verify
+  hierarchy searches and native Harmony getters without starting a match. Use
+  inert test subclasses to suppress unrelated initialization, frame callbacks,
+  and teardown. Inspect `RequireComponent` dependencies too: auto-added native
+  components may require live state during teardown. Add inert subclasses of
+  those dependencies before the controller so Unity uses them. These checks prove
+  adapter behavior, not docking, authoritative healing, or multiplayer replication.
 - Pure tests: filters, list normalization, target classification, config precedence.
 - Adapter tests: game-shaped interfaces without scene launch.
 - Prefab tests: component/reference/field wiring from dumped YAML.

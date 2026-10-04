@@ -1,4 +1,4 @@
----
+﻿---
 name: neb-testing
 description: Build and deploy AGMLIB, dump vanilla and modded Nebulous prefabs to YAML, launch Nebulous Fleet Command, reproduce fleet or missile editor bugs, and inspect Unity logs. Use for iterative Nebulous mod debugging, prefab inspection, editor UI reproduction, AGMLIB Harmony diagnostics, testing modded content, or locating Player.log output.
 ---
@@ -174,6 +174,12 @@ Prefer a known keyboard shortcut or short key macro over an equivalent multi-ste
 7. Capture the component save key, socket index/type, missile designation, rule branch, native result, and patched result.
 
 ## Enter Testing Range
+
+For friendly tender docking, select the receiving ship, right-click the tender,
+then choose `MOV` -> `DOCK`. Current vanilla docking orders work outside campaign;
+check the visible, enabled native DOCK command before assuming a campaign gate.
+Use the normal order to verify approach/alignment and reservation. A fixture's
+`QuickDockShip` proves docking-state setup but bypasses the approach portion.
 
 Prefer Testing Range for rapid fleet, weapon, missile, mine, and fighter iteration. It starts opposing units much closer together and avoids the skirmish lobby and deployment workflow.
 
@@ -380,6 +386,24 @@ reading `transform`, or entering any later render pass. One invalid reference
 can create a significant number of NREs.
 
 ## Maintain testing knowledge
+
+- For munition presentation adapter tests at the main menu, check
+  `ObjectPooler.Instance` before exercising effect spawning. The native pool may
+  exist only after a match loads; an opt-in fixture can create and own a temporary
+  `ObjectPooler` for these checks. Destroy the fixture-owned pool during cleanup.
+- Test both proximity and physical impact paths for custom warheads.
+  `ModularMissile.DamageableImpact` only reads `noVfx` from `TriggerDetonate`,
+  so physical `CollisionDetonate` can still send a following native impact event.
+  Verify that this event does not replay a custom explosion a second time.
+- Resolve fleet-authored missile patterns through that fleet's
+  `AvailableMunitions.GetMunition(saveKey)`. `BundleManager.GetMunition` covers
+  bundled munitions and does not resolve these scoped patterns. Check the current
+  body's socket layout, faction restrictions, and mod loading results before
+  treating a rejected or missing test design as a runtime failure.
+- For pooled multiplayer fixtures, give native `NetworkPoolable` instances a
+  pool owner and wait for native repooling to finish before reusing them.
+  Immediate repooling yields two frames; a fixed wall-clock delay can expire
+  during slow startup frames before that lifecycle has completed.
 
 - Update this skill when a reliable reusable testing procedure or console command is discovered.
 - Update `.agents/neb-testing.local.md` when a reliable reproduction fleet, mod dependency, installation override, or resolved local path is discovered.

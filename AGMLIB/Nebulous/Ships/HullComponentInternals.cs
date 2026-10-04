@@ -11,6 +11,10 @@ public readonly struct HullComponentInternals
 {
     private static class Refs
     {
+        internal static readonly AccessTools.FieldRef<HullComponent, Vector3Int> Size =
+            AccessTools.FieldRefAccess<HullComponent, Vector3Int>("_size");
+        internal static readonly AccessTools.FieldRef<HullComponent, string> BindToTag =
+            AccessTools.FieldRefAccess<HullComponent, string>("_bindToTag");
         internal static readonly Action<
             HullComponent,
             ComponentDebuff,
@@ -37,6 +41,9 @@ public readonly struct HullComponentInternals
     {
         _component = component ?? throw new ArgumentNullException(nameof(component));
     }
+
+    public ref Vector3Int Size => ref Refs.Size(_component);
+    public ref string BindToTag => ref Refs.BindToTag(_component);
 
     public void AddDebuff(
         ComponentDebuff debuff,
