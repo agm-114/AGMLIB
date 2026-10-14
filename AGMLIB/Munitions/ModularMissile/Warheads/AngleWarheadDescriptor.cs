@@ -1,10 +1,9 @@
-﻿using Game.Reports;
-using Lib.Generic_Gameplay;
+﻿using Lib.Generic_Gameplay;
 using Munitions.ModularMissiles;
 using Munitions.ModularMissiles.Descriptors.Warheads;
 using Munitions.ModularMissiles.Runtime;
 
-abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
+public abstract class AngleWarheadDescriptor : BaseWarheadDescriptor
 {
     [Header("Warhead Costing")]
     public float FixedPointCost = 0;
@@ -36,7 +35,7 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
             float penalty = FixedSizeCostPenalty;
             float stepsBelowThreshold = SizeCostPenaltyThreshold - socketSize;
             penalty += stepsBelowThreshold * ScalingCostPenalty;
-            return SizeCostPenaltyMultiplier* ( baseCost + penalty);
+            return SizeCostPenaltyMultiplier * (baseCost + penalty);
         }
     }
 
@@ -63,26 +62,21 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
 
     public AnimationCurve BeamCountScaling = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 1f));
     public float BeamCount = 100;
-    public float EffectiveBeamCount => LaunchAngle * BeamAngleScaling.Evaluate(WeightedSocketSize);
+    public float EffectiveBeamCount => BeamCount * BeamCountScaling.Evaluate(WeightedSocketSize);
 
     private ContactClassification _targetType = ContactClassification.Unknown;
-
 
     public override void GetWarheadStatsBlock(ref List<(string, string)> rows)
     {
         base.GetWarheadStatsBlock(ref rows);
         rows.Add(("Angle", $"{EffectiveLaunchAngle:N2} degrees"));
-
     }
+
     public override void FinalSetup(ModularMissile missile)
     {
-        //Debug.LogError("Setup");
         base.FinalSetup(missile);
-        //Debug.LogError("Dims: " + FuseDims + " Target: " + Vector3.one * 100);
         if (ProxFuse)
-            missile.SpawnProximityFuze(FuseDimensions);//Fusedimensions * 10 * (AoeRadius / 10) 100
-        missile.AddRuntimeBehaviour<RuntimeMissileWarhead>(this);
-
+            missile.SpawnProximityFuze(FuseDimensions);
     }
 
     public override void SetTrackTarget(ModularMissile missile, TrackIdentifier trackId)
@@ -99,8 +93,14 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
     }
     public Vector3 RandomConeRay(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
     {
-        if (SelectRandomPointInTarget && hitObject != null || hitInfo != null)
-            return runtime.transform.position.To(hitInfo.HitObject.transform.root.TransformPoint(hitObject.RandomPointInBounds())).normalized;
+        // Existing warheads aim at impact/proximity targets even with target selection disabled.
+        // The flag also allows target aiming when detonation has no hit information.
+        if ((SelectRandomPointInTarget || hitInfo != null) && hitObject?.GameObj != null)
+        {
+            Vector3 direction = runtime.transform.position.To(hitObject.GameObj.transform.TransformPoint(hitObject.RandomPointInBounds()));
+            if (direction.sqrMagnitude > 0f)
+                return direction.normalized;
+        }
         if (Omnidirectional)
             return UnityEngine.Random.onUnitSphere;
 
@@ -111,55 +111,30 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
     public abstract HitResult Explode(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo);
     public override HitResult TriggerDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo, out bool noVfx)
     {
-        //Debug.LogError("Trigger");
-
-        //GameObject cubes = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        //cubes.transform.position = runtime.transform.position;
-        //GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        //cube.transform.position = hitInfo.Point;
         // Detonation runs on the server. Keep damage dealers authoritative here; presentation-only
         // effects are spawned on every client by AngleWarheadNetworkEffectsPatch.
         noVfx = true;
+        if (!runtime.isServer)
+            return HitResult.None;
+
+        // Only marked impact events replay custom effects. Native collision/destruction events
+        // can follow this one and must not spawn another explosion.
+        ((LookaheadMunitionBase)runtime.Missile).Internals().RpcRollImpactEffect(HitResult.None, AngleWarheadNetworkEffectsPatch.ExplosionEffect,
+            0, runtime.transform.position, runtime.transform.rotation, null!);
         SpawnExplosionEffects(runtime.transform.position, runtime.transform.rotation, runtime, true);
-        HitResult finalresult = Explode(runtime, hitObject, hitInfo);
+        HitResult result = Explode(runtime, hitObject, hitInfo);
         for (int i = 0; i < EffectiveBeamCount; i++)
         {
-            Vector3 randomdirection = RandomConeRay(runtime, hitObject, hitInfo);
-            Ray r = new Ray(runtime.transform.position, randomdirection);
-            HitResult hitRes = DoRay(runtime, hitObject, hitInfo, randomdirection, r);
-            if (finalresult < hitRes)
-                finalresult = hitRes;
+            Vector3 direction = RandomConeRay(runtime, hitObject, hitInfo);
+            HitResult hitRes = DoRay(runtime, hitObject, hitInfo, direction, new Ray(runtime.transform.position, direction));
+            if (hitRes > result)
+                result = hitRes;
         }
-        // This is also the network event used to deliver the custom presentation effects. Setting
-        // noVfx above prevents ProcessCollision from sending a second impact event.
-        runtime.Missile.DoImpactEffect(finalresult, runtime.transform.position, runtime.transform.rotation, null);
-        return finalresult;
-
-        /*
-        if (FuseDelay > 0.01f)
-        {
-            runtime.StartCoroutine(CoroutineDelayedDamage(runtime, hitObject, hitInfo));
-            return HitResult.None;
-
-            for (int i = 0; i < 10; i++)
-            {
-                if(Vector3.Angle(runtime.transform.forward, hitObject.GameObj.transform.position - runtime.transform.position) < LaunchAngle)
-                    return HitResult.Penetrated;
-                Ray r = new Ray(runtime.transform.position, MathHelpers.RandomRayInCone(runtime.transform.forward, LaunchAngle));
-                if (Physics.Raycast(r, out var rayHit, BeamLength, 524801, QueryTriggerInteraction.Ignore))
-                    return HitResult.Penetrated;
-            }
-
-            return HitResult.None;
-        }
-        */
-
+        return result;
     }
 
-    internal void SpawnPresentationExplosionEffects(Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime)
-    {
+    internal void SpawnPresentationExplosionEffects(Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime) =>
         SpawnExplosionEffects(position, rotation, runtime, false);
-    }
 
     private void SpawnExplosionEffects(
         Vector3 position,
@@ -182,31 +157,28 @@ abstract public class AngleWarheadDescriptor : BaseWarheadDescriptor
         }
     }
 
-    private static bool HasDamageDealer(GameObject prefab)
-    {
-        return prefab.GetComponentsInChildren<IDamageDealer>(true).Length > 0;
-    }
+    protected static bool HasDamageDealer(GameObject prefab) => prefab.GetComponentsInChildren<IDamageDealer>(true).Length > 0;
 
     public override HitResult CollisionDetonate(RuntimeMissileWarhead runtime, IDamageable hitObject, MunitionHitInfo hitInfo)
-    {
-        //Debug.LogError("Collide");
-        return TriggerDetonate(runtime, hitObject, hitInfo, out bool _);
-    }
+        => TriggerDetonate(runtime, hitObject, hitInfo, out _);
 
-    public Poolable SpawnEffect(GameObject prefab, Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime)
+    public Poolable? SpawnEffect(GameObject prefab, Vector3 position, Quaternion rotation, RuntimeMissileWarhead runtime)
     {
+        if (prefab == null)
+            return null;
         Poolable poolable = ObjectPooler.Instance.GetNextOrNew(prefab, position, rotation);
+        if (poolable == null)
+            return null;
         foreach (IWeightedEffect effect in poolable.GetComponentsInChildren<IWeightedEffect>())
-        {             
+        {
             effect.SetWeight(WeightedSocketSize);
         }
 
-
-        //ShortDurationEffect sde = poolable?.GetComponent<ShortDurationEffect>();
+        var missile = ((LookaheadMunitionBase)runtime.Missile).Internals();
         foreach (ILocalImbued imbued in poolable.gameObject.GetComponentsInChildren<ILocalImbued>())
         {
-            imbued.ImbueLocal(Common.GetVal<IImbuedObjectSource>(runtime.Missile, "_localLaunchedFrom"));
-            imbued.SetWeaponReportPath(Common.GetVal<IWeaponStatReportReceiver>(runtime.Missile, "_reportTo"));
+            imbued.ImbueLocal(missile.LocalLaunchedFrom);
+            imbued.SetWeaponReportPath(missile.ReportTo);
         }
         if (poolable.GetComponent<ModularEffect>() == null)
             foreach (IEffectModule effect in poolable.gameObject.GetComponentsInChildren<IEffectModule>())

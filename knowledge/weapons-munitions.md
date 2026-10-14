@@ -116,6 +116,52 @@ Effects and gameplay mutation are separate responsibilities. A visible impact
 is not proof that server damage ran, and server damage is not proof that a
 remote client received an impact effect.
 
+## Custom beam warhead targeting
+
+**Verified (2026-10-05, installed `Nebulous.dll` SHA-256
+`86EF9681F3C6B08BD9BEAC2173F903CE29D8197DD4D5E49279EA9CA058F14461`):**
+native `RuntimeMissileWarhead.FixedUpdate` creates `MunitionHitInfo` for
+detonation on target acquisition. Physical and proximity impacts also supply
+hit information. Search-phase and flight-time expiry detonations supply neither
+a target nor hit information.
+
+`AngleWarheadDescriptor.RandomConeRay` preserves historical target aiming when
+hit information and a valid `IDamageable` are supplied, regardless of
+`SelectRandomPointInTarget`. That flag additionally enables aiming at a supplied
+target without hit information. Only untargeted or invalid-target cases fall
+back to the authored forward cone or omnidirectional spread. Converting the
+historical condition to `SelectRandomPointInTarget && target != null` breaks
+existing assets that rely on impact/fuse target aiming while serializing the
+flag as false and `Omnidirectional` as true.
+
+Transform `RandomPointInBounds()` through the damageable's `GameObj` transform,
+not an unrelated hit object's root. A coincident aim point must fall back to a
+valid emission direction instead of producing a zero-length ray.
+
+The opt-in adapter regression used three installed beam descriptors, a small
+controlled collider 100 game units away, and an offset, rotated target parent.
+Each descriptor produced zero hits from 100 rays before the fix and 100 hits
+afterward. This proves target selection, coordinate conversion, ray intersection,
+and damage dispatch for those assets; it does not measure real ship component
+damage. See [networking authority](networking-authority.md) for client delivery
+verification.
+
+A testing-range follow-up finalized three beam missile patterns and launched
+each three times through native pooling and launch APIs. Native proximity
+callbacks detonated them at about 80 game units: all 135 beams hit the controlled
+target, with zero direction errors and one detonation per launch. Reuses retained
+the same network identity. Targets started inside the fuse volume, so this
+verifies launch, overlap triggering, damage, effects, and pooling rather than
+guidance during a long approach.
+
+The subsequent compatibility audit passed 38 adapter/prefab checks, including
+independent beam-count, angle, size-damage, and range-damage curves; the missing
+damager-settings fallback; and child-collider hits in the owning damageable's
+rotated coordinate frame. All seven configured warhead descriptors aimed
+100 of 100 rays into a small controlled target within their authored beam
+length. These per-descriptor aiming checks exercise ray generation and damage
+dispatch separately from each asset's effective detonation ray count.
+
 ## Impact profile modules
 
 Area debuff, ship-disable, and damage-control-team profiles are server-side

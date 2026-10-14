@@ -43,6 +43,14 @@ The verified-source sequence is:
 7. guidance, seeker, fuze, and warhead behavior runs on the live instance;
 8. collision processing and gameplay mutation remain server-owned.
 
+**Verified (2026-10-03, installed `Nebulous.dll` SHA-256
+`86EF9681F3C6B08BD9BEAC2173F903CE29D8197DD4D5E49279EA9CA058F14461`):**
+`BaseWarheadDescriptor.FinalSetup` already adds `RuntimeMissileWarhead`.
+`ModularMissile.AddRuntimeBehaviour<T>` always creates a new component; it does
+not reuse an existing handler. Derived warheads that call the base setup must
+not add the same handler again. Inspect finalized patterns and live clones,
+since an adapter that manually calls `OnAdded` bypasses this registration path.
+
 Evidence:
 
 - `Munitions/ModularMissiles/ModularMissile.cs`;
