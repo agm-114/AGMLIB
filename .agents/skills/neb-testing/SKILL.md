@@ -1,4 +1,4 @@
-﻿---
+---
 name: neb-testing
 description: Build and deploy AGMLIB, dump vanilla and modded Nebulous prefabs to YAML, launch Nebulous Fleet Command, reproduce fleet or missile editor bugs, and inspect Unity logs. Use for iterative Nebulous mod debugging, prefab inspection, editor UI reproduction, AGMLIB Harmony diagnostics, testing modded content, or locating Player.log output.
 ---
@@ -178,6 +178,14 @@ Prefer a known keyboard shortcut or short key macro over an equivalent multi-ste
 For friendly tender docking, select the receiving ship, right-click the tender,
 then choose `MOV` -> `DOCK`. Current vanilla docking orders work outside campaign;
 check the visible, enabled native DOCK command before assuming a campaign gate.
+For a missing DOCK command, distinguish the receiver hull's serialized attachment
+positions from the provider's actual ReplenishmentDockingPoint hull parts. The
+former only let that ship dock elsewhere. Check the live native berth collection,
+menu docking target, and button visibility; a sidecar alone supplies no berth.
+For static Hull prefabs, accepting berths must descend from the transform assigned
+to Hull._subPartRoot. A ReplenishmentDockingPoint under the socket root is present
+in the prefab but absent from native hull-part and docking-provider collections.
+
 Use the normal order to verify approach/alignment and reservation. A fixture's
 `QuickDockShip` proves docking-state setup but bypasses the approach portion.
 
@@ -395,6 +403,10 @@ can create a significant number of NREs.
   `ModularMissile.DamageableImpact` only reads `noVfx` from `TriggerDetonate`,
   so physical `CollisionDetonate` can still send a following native impact event.
   Verify that this event does not replay a custom explosion a second time.
+- Test native scenery impacts separately. `ModularMissile.GenericImpact` bypasses
+  the warhead and sends an ordinary impact event. Restricting custom presentation
+  to detonation events can remove its existing visual. Preserve that path explicitly
+  and verify zero damage and zero beam events, including after native repooling.
 - Resolve fleet-authored missile patterns through that fleet's
   `AvailableMunitions.GetMunition(saveKey)`. `BundleManager.GetMunition` covers
   bundled munitions and does not resolve these scoped patterns. Check the current
@@ -404,6 +416,15 @@ can create a significant number of NREs.
   pool owner and wait for native repooling to finish before reusing them.
   Immediate repooling yields two frames; a fixed wall-clock delay can expire
   during slow startup frames before that lifecycle has completed.
+- Exercise delayed fuses through the patched `OnTriggerEnter` and Unity's
+  coroutine scheduler. Check duplicate triggers, cancellation on repool, and
+  reuse past the cancelled deadline. Give the cancellation case enough delay
+  for the native two-frame repool to finish before the timer can fire.
+- For beam warheads, verify aiming separately from detonation and event counts.
+  Use the loaded asset's serialized direction flags, a small target at standoff
+  distance, and a target outside the missile's forward cone. A large near-impact
+  target can receive damage even when most beams are emitted in random directions.
+  Compare authoritative ray hits with the remote client's directions and endpoints.
 
 - Update this skill when a reliable reusable testing procedure or console command is discovered.
 - Update `.agents/neb-testing.local.md` when a reliable reproduction fleet, mod dependency, installation override, or resolved local path is discovered.
