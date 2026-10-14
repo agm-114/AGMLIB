@@ -1,6 +1,4 @@
-﻿using UnityEngine.Profiling;
-
-namespace Lib.Generic_Gameplay.Engines
+﻿namespace Lib.Generic_Gameplay.Engines
 {
     public class RuntimeThruster : HullPart, IThruster
     {
@@ -9,17 +7,15 @@ namespace Lib.Generic_Gameplay.Engines
         private AttitudeControl _attitudeInverse;
         private Direction _thrustDirection;
 
-        private AngledThruster _parent;
+        private AngledThruster _parent = null!;
         float _localpower;
 
-        private IThrustController _thrustController;
-
+        private IThrustController? _thrustController;
 
         bool IThruster.IsFunctional => _parent.IsFunctional;
         float IThruster.LateralPower => _parent.Power * _localpower;
         Direction IThruster.LateralDirection => _thrustDirection;
         AttitudeControl IThruster.AttitudeDirections => _attitudeInfluence;
-
 
         private Sides _lastLateral = Sides.None;
         private AttitudeControl _lastAngular = AttitudeControl.None;
@@ -30,25 +26,28 @@ namespace Lib.Generic_Gameplay.Engines
             Full = 2
         }
         private Throttle _currentThrottle = Throttle.Idle;
-        //private Throttle _lastThrottle = Throttle.Idle;
-        //public bool ThrottleChange => _currentThrottle != _lastThrottle;
-        public float CurrentThottle => ((float)((int)_currentThrottle) / 2) * _localpower;
+        public float CurrentThottle => _parent.CanThrust ? (int)_currentThrottle / 2f * _localpower : 0f;
 
         public bool MainEngine => _parent._mainEngine;
 
-        private bool _providingLateralThrust = false;
+        public new event HullPart.PartChanged? OnIsFunctionalChanged;
 
-        public event HullPart.PartChanged OnIsFunctionalChanged;
+        internal void ResetThrottle()
+        {
+            _currentThrottle = Throttle.Idle;
+            _lastLateral = Sides.None;
+            _lastAngular = AttitudeControl.None;
+        }
 
         public void RuntimeUpdate()
         {
-            Profiler.BeginSample("Update Thrusters");
-            if (_thrustController.AfterburnerEffect)
+            if (_thrustController == null || !_parent.CanThrust)
+            {
+                ResetThrottle();
                 return;
+            }
             if (_lastLateral != _thrustController.LateralThrust || _lastAngular != _thrustController.AngularThrust)
             {
-                //_lastThrottle = _currentThrottle;
-
                 _lastAngular = _thrustController.AngularThrust;
                 _lastLateral = _thrustController.LateralThrust;
                 bool lateral = _lastLateral.IsSet(_thrustDirection);
@@ -56,7 +55,6 @@ namespace Lib.Generic_Gameplay.Engines
                 bool angular = (_lastAngular & _attitudeInfluence) != 0;
                 bool angularOpposite = (_lastAngular & _attitudeInverse) != 0;
 
-                _providingLateralThrust = lateral;
                 if (lateral && !angular)
                 {
                     if (angularOpposite)
@@ -75,31 +73,28 @@ namespace Lib.Generic_Gameplay.Engines
                 {
                     _currentThrottle = Throttle.Idle;
                 }
-                //Debug.LogError(gameObject.name + " " + _thrustDirection + " " + _currentThrottle + CurrentThottle);
-
             }
-            Profiler.EndSample();
         }
-
-
 
         void IThruster.SetThrustController(IThrustController controller)
         {
-            //Debug.LogError(gameObject.name + " child controller setup");
             _thrustController = controller;
-            if (_parent == null)
-            {
-                //Debug.LogError("nullparent");
-                //return;
-            }
             _parent.SetThrustController(controller);
         }
 
         private void ParentDisabled(HullPart part)
         {
+            ResetThrottle();
             OnIsFunctionalChanged?.Invoke(part);
         }
 
+        protected override void OnDestroy()
+        {
+            if (_parent != null)
+                _parent.OnIsFunctionalChanged -= ParentDisabled;
+            OnIsFunctionalChanged = null;
+            base.OnDestroy();
+        }
 
         public void Setup(AngledThruster parent, Vector3 componentVector)
         {
@@ -113,8 +108,6 @@ namespace Lib.Generic_Gameplay.Engines
             relToCenter.x = ((Mathf.Abs(relToCenter.x) < 0.1f) ? 0f : relToCenter.x);
             relToCenter.y = ((Mathf.Abs(relToCenter.y) < 0.1f) ? 0f : relToCenter.y);
             relToCenter.z = ((Mathf.Abs(relToCenter.z) < 0.1f) ? 0f : relToCenter.z);
-
-
 
             if (!_parent.ContributeAngular)
             {

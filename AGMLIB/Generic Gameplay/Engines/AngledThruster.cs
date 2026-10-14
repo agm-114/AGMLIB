@@ -17,25 +17,17 @@ namespace Lib.Generic_Gameplay.Engines
         [SerializeField] public bool _mainEngine = false;
         [SerializeField] private GroupedAudioSource _audioSource;
         private const float CenterlineOffsetMargin = 0.1f;
-        private IThrustController _thrustController;
+        private IThrustController? _thrustController;
         private List<RuntimeThruster> _subthrusters = new();
         private const float _flankDamagePeriod = 1f;
         private const float _flankDamage = 5f;
         private const string _paramPower = "Power";
         private const string _paramWarpOn = "Afterburner";
         private const string _paramWarpPercent = "Afterburner Power";
-        private float _currentThrottle
-        {
-            get
-            {
-                if (_afterburnerEffectPlaying)
-                    return 1;
-                if (_subthrusters.Count > 0)
-                    return _subthrusters.ConvertAll(rt => rt.CurrentThottle).Sum();
-
-                return 0;
-            }
-        }
+        internal bool CanThrust => isActiveAndEnabled && IsFunctional && _thrustController != null &&
+            (_thrustController is not ShipController ship || (!ship.DrivesDisabled && !ship.IsEliminated));
+        private float _currentThrottle => !CanThrust ? 0f :
+            _afterburnerEffectPlaying ? 1f : _subthrusters.Sum(thruster => thruster.CurrentThottle);
 
         public bool MainEngine { get => _mainEngine; set => _mainEngine = value; }
 
@@ -52,7 +44,6 @@ namespace Lib.Generic_Gameplay.Engines
                 _particles = GetComponent<DynamicVisibleParticles>();
             }
         }
-
 
         public void Initialize()
         {
@@ -100,61 +91,61 @@ namespace Lib.Generic_Gameplay.Engines
             StopEffect();
         }
 
-        public void SetThrustController(IThrustController controller)
+        public void SetThrustController(IThrustController? controller)
         {
-            //Debug.LogError("parent setting controller");
+            if (_thrustController == controller)
+                return;
+            if (_thrustController != null)
+                _thrustController.OnVisibilityChanged -= HandleVisibilityChanged;
             _thrustController = controller;
-            _thrustController.OnVisibilityChanged += delegate (bool visible)
-            {
-                UpdateDamageEffects(visible, base.IsFunctional);
-            };
+            if (_thrustController != null)
+                _thrustController.OnVisibilityChanged += HandleVisibilityChanged;
         }
 
+        private void HandleVisibilityChanged(bool visible) => UpdateDamageEffects(visible, IsFunctional);
+        private void OnDisable() => StopThrust();
+
+        private void StopThrust()
+        {
+            _subthrusters.ForEach(thruster => thruster.ResetThrottle());
+            _currentParticlePower = 0f;
+            _afterburnerEffectPlaying = false;
+            _flankDamageAccumulator = 0f;
+            _particles?.SetFloat(_paramPower, 0f);
+            _particles?.SetBool(_paramWarpOn, false);
+            _particles?.SetFloat(_paramWarpPercent, 0f);
+            StopEffect();
+        }
 
         protected override void OnDestroy()
         {
+            SetThrustController(null);
             base.OnDestroy();
-            _thrustController = null;
             _subthrusters.Clear();
         }
+
         private void HandleBurnIn()
         {
-            if (_mainEngine)
+            bool afterburner = _mainEngine && _thrustController!.AfterburnerEffect;
+            if (afterburner != _afterburnerEffectPlaying)
             {
-                if (_thrustController.AfterburnerEffect)
-                {
-                    if (!_afterburnerEffectPlaying)
-                    {
-                        _particles.SetBool("Afterburner", value: true);
-                        _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
-                        _afterburnerEffectPlaying = true;
-                    }
-                    _particles.SetFloat("Afterburner Power", _thrustController.AfterburnerPercent);
-                }
-                else if (_afterburnerEffectPlaying)
-                {
-                    _particles.SetBool("Afterburner", value: false);
-                    _particles.SetFloat("Afterburner Power", 0f);
-                    _afterburnerEffectPlaying = false;
-                }
+                _particles?.SetBool(_paramWarpOn, afterburner);
+                _afterburnerEffectPlaying = afterburner;
             }
+            _particles?.SetFloat(_paramWarpPercent, afterburner ? _thrustController!.AfterburnerPercent : 0f);
         }
 
         private void Update()
         {
-            Profiler.BeginSample("Update Thrusters");
-            if (_thrustController == null)
+            if (!CanThrust)
             {
-                //Debug.LogError("null controller");
-
+                StopThrust();
                 return;
             }
+            Profiler.BeginSample("Update Thrusters");
             HandleBurnIn();
 
-            //Debug.LogError("runtime update");
-
-            foreach (RuntimeThruster runtimeThruster in _subthrusters)
-                runtimeThruster.RuntimeUpdate();
+            _subthrusters.ForEach(thruster => thruster.RuntimeUpdate());
             if (!_tweenParticlePower)
             {
                 _currentParticlePower = _currentThrottle;
@@ -168,7 +159,7 @@ namespace Lib.Generic_Gameplay.Engines
             {
                 _currentParticlePower = Mathf.Clamp(_currentParticlePower - _particleThrottleRate * Time.deltaTime, targetPower, 1f);
             }
-            _particles.SetFloat("Power", _currentParticlePower);
+            _particles?.SetFloat(_paramPower, _currentParticlePower);
             if (_currentParticlePower == 0f)
             {
                 StopEffect();
@@ -178,10 +169,8 @@ namespace Lib.Generic_Gameplay.Engines
                 StartEffect();
             }
 
-
             Profiler.EndSample();
         }
-
 
         private void FixedUpdate()
         {
@@ -221,22 +210,24 @@ namespace Lib.Generic_Gameplay.Engines
         protected override void PartFunctionalChangedInternal(bool newFunctional)
         {
             base.PartFunctionalChangedInternal(newFunctional);
-            UpdateDamageEffects(_thrustController.Visible, base.IsFunctional);
+            if (!newFunctional)
+                StopThrust();
+            if (_thrustController != null)
+                UpdateDamageEffects(_thrustController.Visible, newFunctional);
         }
         public void UpdateDamageEffects(bool visible, bool functional)
         {
             if (visible && !functional)
             {
-                _particles.SendEvent("StartDamage");
-                _particles.SetBool("Damaged", value: true);
+                _particles?.SendEvent("StartDamage");
+                _particles?.SetBool("Damaged", value: true);
             }
             else
             {
-                _particles.SendEvent("StopDamage");
-                _particles.SetBool("Damaged", value: false);
+                _particles?.SendEvent("StopDamage");
+                _particles?.SetBool("Damaged", value: false);
             }
         }
-
 
     }
 
