@@ -53,6 +53,12 @@ extend authoring and fleet composition.
 
 ## Dynamic ship systems
 
+[`ShipRepairFacility`](features/ship-repair-facilities.md) adds station-style component
+repair services to a ship's replenishment berths. Attach it beneath an installed
+`HullComponent` for a functional upgrade, or elsewhere under the ship for built-in service.
+The separate [`SkirmishTenderDocking`](features/ship-repair-facilities.md#skirmish-docking-marker)
+marker prioritizes the native DOCK command when targeting that tender in skirmish.
+
 `ActiveSettings` is the shared activation/state base for many dynamic behaviors.
 The family includes:
 
