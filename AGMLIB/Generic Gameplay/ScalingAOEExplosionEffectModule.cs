@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.Serialization;
 
 namespace Lib.Generic_Gameplay
 {
@@ -104,13 +101,10 @@ namespace Lib.Generic_Gameplay
         {
             get
             {
-                float _armorScaling = 1;
-                _armorScaling *= _componentDamageWeightScaling.Evaluate(_weight);
+                float armorScaling = _armorPenetrationWeightScaling.Evaluate(_weight);
                 if (_scaleDamageOverArea)
-                {
-                    _armorScaling *= _armorPenetrationRangeScaling.Evaluate(_currentTargetDistance / _blastRadius);
-                }
-                return _armorScaling * _armorPenetration;
+                    armorScaling *= _armorPenetrationRangeScaling.Evaluate(_currentTargetDistance / _blastRadius);
+                return armorScaling * _armorPenetration;
             }
         }
 
@@ -178,7 +172,7 @@ namespace Lib.Generic_Gameplay
             }
             foreach (Collider hit in _collected)
             {
-                if (UnityEngine.Random.Range(0f, 1f) > _damageChance)
+                if (hit == null || UnityEngine.Random.Range(0f, 1f) > _damageChance)
                 {
                     continue;
                 }
@@ -228,7 +222,9 @@ namespace Lib.Generic_Gameplay
                     }
                 }
                 _currentTargetDistance = Vector3.Distance(hitInfo.Point, base.transform.position);
-                _currentBrushSize = Mathf.Sqrt(_blastRadius * _blastRadius - _currentTargetDistance * _currentTargetDistance);
+                // Collected targets may move outside the radius before this deferred pass.
+                _currentBrushSize = Mathf.Sqrt(Mathf.Max(0f,
+                    _blastRadius * _blastRadius - _currentTargetDistance * _currentTargetDistance));
                 _currentSpherecastSize = Mathf.Min(_currentBrushSize, damageable.BoundingRadius);
                 float damage;
                 bool destroyed;
