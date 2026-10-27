@@ -11,6 +11,8 @@ public readonly struct HullComponentInternals
 {
     private static class Refs
     {
+        internal static readonly Func<HullComponent, int> CalcTileMultiplier =
+            AccessTools.MethodDelegate<Func<HullComponent, int>>(AccessTools.Method(typeof(HullComponent), "CalcTileMultiplier"));
         internal static readonly AccessTools.FieldRef<HullComponent, Vector3Int> Size =
             AccessTools.FieldRefAccess<HullComponent, Vector3Int>("_size");
         internal static readonly AccessTools.FieldRef<HullComponent, string> BindToTag =
@@ -43,6 +45,7 @@ public readonly struct HullComponentInternals
     }
 
     public ref Vector3Int Size => ref Refs.Size(_component);
+    public int TileMultiplier => Refs.CalcTileMultiplier(_component);
     public ref string BindToTag => ref Refs.BindToTag(_component);
 
     public void AddDebuff(

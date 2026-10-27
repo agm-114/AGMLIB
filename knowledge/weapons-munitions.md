@@ -162,6 +162,31 @@ rotated coordinate frame. All seven configured warhead descriptors aimed
 length. These per-descriptor aiming checks exercise ray generation and damage
 dispatch separately from each asset's effective detonation ray count.
 
+## Scaling blast damage
+
+**Verified (2026-10-27, installed `Nebulous.dll` SHA-256
+`86EF9681F3C6B08BD9BEAC2173F903CE29D8197DD4D5E49279EA9CA058F14461`):**
+`ScalingAOEExplosionEffectModule` uses `_armorPenetrationWeightScaling` for
+armor penetration and `_componentDamageWeightScaling` for component damage.
+Its earlier armor getter mistakenly used the component curve. Distinct curves
+now pass both with and without range attenuation.
+
+The blast collects colliders across fixed frames and damages the collected
+targets afterward. A collider may be destroyed during that interval; skip it
+using Unity's null check before accessing its transform. A surviving target may
+also move outside the original sphere. Preserve the collected-target behavior
+while clamping the damage-footprint radicand to zero, avoiding a NaN brush.
+
+The opt-in regression reproduced all three defects before the fix. Afterward,
+five Unity adapter checks passed, including unchanged interior and exact-edge
+footprints. A sixth testing-range check exercised native ship armor damage and
+the blast dealer's component-damage API against a real installed component:
+18 cm penetration cleared 15 cm armor; applied component HP fell from 200 to
+195.1027 after damage reduction and native damage-frame replication. This
+checks the real armor and HP mutations through those APIs; component selection
+was controlled explicitly rather than obtained from a launched missile's blast.
+Steam multiplayer was not rerun for this change.
+
 ## Impact profile modules
 
 Area debuff, ship-disable, and damage-control-team profiles are server-side

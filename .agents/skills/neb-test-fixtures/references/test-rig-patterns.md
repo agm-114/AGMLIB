@@ -20,6 +20,9 @@ Do not use broad substring matching unless the configured fixture explicitly req
 
 Resolve the actual spawned prefab reference first, then read its `SaveFileObject` key or equivalent stable identity from the refreshed prefab YAML. Similar display names are not interchangeable.
 
+When a fixture replaces an inactive prefab root, verify required helper components
+exist before configuring their fields. Explicitly attach missing helpers through
+the prefab builder; a replacement subclass's `RequireComponent` attribute will only add them in the unity editor.
 ## Observational Probes
 
 - Attach the probe to the GameObject that actually owns the callback, or observe the production method with a narrowly gated local-only Harmony patch.
@@ -87,6 +90,16 @@ the repair pane. Verify the applied hull repair stat and visible pane text,
 then destroy the setup runner while leaving the requested interactive game open.
 This proves setup and presentation; undamaged ships do not establish healing.
 
+For an editable fixture, pass `EditFleetData { Fleet = summary }` through
+`CrossScenePipe` and load Fleet Editor (scene 1). Wait for
+`FleetEditorController.EditorControllers` to contain the target ship before
+selecting it with `FleetCompositionSubmodeController.SelectShip`.
+`Fleet.FleetShipControllers` contains live-match controllers and cannot locate
+`EditorShipController` objects. Keep graphics enabled for editor tests: native
+nameplate baking and HDRP initialization can fail or crash with `-nographics`,
+even when prefab loading succeeds. A normal rendered window may be launched
+hidden for automated checks and closed after collecting evidence.
+
 ## Telemetry
 
 Use a unique prefix and stable key-value fields:
@@ -141,3 +154,20 @@ For selective target logic, vary one target-class flag at a time and include an 
 - Scenario comparison: broad behavior/performance metrics and log summaries.
 
 Escalate only when the lower layer cannot represent the suspected failure.
+
+## Damage Verification
+
+- Separate collision/damage dispatch checks from real armor and component HP
+  changes. A dummy IDamageable returning a fixed number does not exercise native
+  armor, internal component selection, damage reduction, or damage frames.
+- Native GPU armor painting and readback are asynchronous. Poll the sampled armor
+  value with a bounded deadline after applying damage instead of asserting a
+  change in the same frame.
+- HullPart.CurrentHealth changes when native damage frames are applied;
+  ISubDamageable.CurrentHealth also accounts for pending damage. When a fixture
+  invokes a dealer directly, call the native controller's MarkAsDamaged and wait
+  for the public HP value to change before claiming applied damage.
+- Use different armor and component curves and an armor threshold that separates
+  the expected penetration values. Explicitly selecting a real component proves
+  its damage API and HP mutation; launched-blast component selection is a separate
+  integration test.

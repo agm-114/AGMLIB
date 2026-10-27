@@ -129,6 +129,42 @@ turrets. Generic gameplay adds configurable bulk hangars, craft weapon settings,
 fighter limits, and lightweight work slots. `Systems/DroneTester` is an
 experimental runtime test/control feature.
 
+[`HangarMagazineComponent`](../AGMLIB/Generic%20Gameplay/Craft/HangarMagazineComponent.cs)
+derives from `ConfigurableBulkCraftHangarComponent` and uses
+[`MagazineComponent`](../AGMLIB/Generic%20Gameplay/MagazineComponent.cs) to own
+magazine configuration and the native `MagazineCollection`, sharing ammunition
+volume with craft storage. Craft
+storage, spawning, reservations, and synchronization use the inherited native
+hangar implementation. Configure `_availableVolume` and `_storageRestrictions`
+on the attached `MagazineComponent` for magazine volume per tile and allowed ammunition,
+`_spaceUnitsPerTile` for hangar capacity, and use
+`_workSlotProviders` with the same lightweight work-slot components as
+`ConfigurableBulkCraftHangarComponent`. This is a storage-only hangar; the ship
+still needs compatible flight-deck pads and preflight work slots.
+
+Each occupied craft storage unit costs `_magazineVolumePerSlot` cubic metres
+plus `_magazineReductionPercentPerSlot` percent of the original, tile-scaled
+magazine capacity. Set either cost to zero to use the other alone. Costs add
+linearly, the result rounds down to whole cubic metres, and capacity cannot fall
+below zero. For example, three slots at 5% plus 50 m³ per slot leave 700 m³ of a
+1,000 m³ magazine. A craft using two native storage units pays twice the cost.
+
+The component exposes both ammunition and hangar loadout panels. Remove enough
+ammunition before adding craft whose space cost would exceed the remaining
+volume; adding craft does not discard loaded ammunition. Launching or removing
+craft releases their volume. The displayed hangar capacity also shrinks as
+ammunition fills the shared volume and refreshes when ammunition changes. With
+the example costs above, 999 m³ of ammunition leaves zero craft spaces; 600 m³
+leaves four. Server-side landing reservations also reserve
+magazine volume until landing or cancellation; these reservations follow native
+hangar behavior and are not independently replicated to clients. Combined design
+saves retain both ammunition and craft, and runtime saves use the native magazine
+and hangar state records. Existing combined fleet XML remains compatible.
+**Verified:** build, capacity calculations, native adapter bindings, combined XML
+serialization, live editor updates when ammunition changes, and a native Testing
+Range startup with craft registration and spawning. Launch/recovery, runtime
+restoration, and multiplayer still require playtesting.
+
 `Advanced/StrikeCraft` contains an older independent craft, kinematics,
 formation, and movement model. It should not be treated as the canonical native
 small-craft integration without an explicit revival decision.
@@ -155,6 +191,16 @@ The modular missile family adds:
   a missile-owned sensor and communications context;
 - module filters, faction filters, module limits, ammo-mode callbacks, resource
   profiles, and impact-triggered area effects.
+
+`FuseSupportDescriptor` and `FuseWarheadDescriptor` both install
+`RuntimeMissileFuse`. Their `OnlyFuseOnTarget` option restricts proximity
+detonation to `Missile.CurrentTarget`, following seeker retargeting. With no
+current target or a different object hit, proximity detonation is blocked.
+`RequireFoundSeeker` requires guidance to have a selected seeker with
+a successful search result; no contact or a jammed result blocks detonation.
+Both options default to `false`, and enabling both requires both checks to
+pass. These options apply to proximity triggers; direct impacts and the
+warhead's native checks retain their normal behavior.
 
 The fuse patch for submunitions is associated with two focused historical
 AGMLIB commits. It skips a proxy-fuse decision on the transient `IFF.None`

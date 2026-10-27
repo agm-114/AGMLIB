@@ -23,6 +23,44 @@ The generated component list is `planning/generated/component-inventory.md`.
 It is deliberately broad and must be refined against built assembly metadata
 before becoming the compatibility baseline.
 
+## Adding a magazine to another component
+
+Attach [`MagazineComponent`](../AGMLIB/Generic%20Gameplay/MagazineComponent.cs)
+to the same GameObject as a hull component implementing `IMagazineProvider`.
+Configure its `_availableVolume` per tile and `_storageRestrictions` in Unity. In the
+host's `Awake`, call `magazine.Initialize(this)` after the base initialization.
+The component exposes its native `MagazineCollection` through `Collection`;
+that collection uses the host as its provider, preserving native identity and
+delta routing. Initialization is idempotent for the same host.
+
+The magazine retains its parent `HullComponent` in a serialized reference and
+exposes it through `Parent`. `AvailableVolume` already includes that parent's
+virtual tile multiplier, including prospective socket sizing; hosts must not
+multiply it again.
+
+The host applies any additional capacity rules and forwards magazine operations/events to
+`Collection`. The magazine component supplies `LoadSaveData`, `GetSaveData`,
+`WriteSaveState`, `RestoreFromSaveState`, point costs/breakdowns, dependencies,
+design warnings, tooltips, and notifications when its host becomes damaged or
+nonfunctional. The host still calls its native base lifecycle methods and
+combines these results with its other behavior.
+
+Custom save data can implement `IMagazineClipboardData` to provide clipboard
+volume alongside the native `IMagazineLoadComponentData.DefaultLoad`. Implement
+the clipboard property explicitly if retaining an existing serialized field
+with the same name. Native `BulkMagazineData` is also supported. Loading replaces
+existing ammunition and proportionally scales clipboard loads that exceed the
+host's capacity. Hosts sharing space with another resource must clear old ammo
+before loading that resource, then call the magazine's `LoadSaveData` afterward.
+
+`HangarMagazineComponent` is the working example. Its serialized magazine
+reference is optional: `[RequireComponent]` and runtime resolution supply the
+attached component. No global patch discovers standalone magazine behaviours;
+the installed hull component remains the game's magazine provider.
+
+Custom combined XML payload types still need registration with the game's
+serializer, as shown by the hangar's serialization patch.
+
 ## Serialization and cloning
 
 The nested-custom-value restriction below is precautionary. Its current
