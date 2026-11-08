@@ -70,6 +70,15 @@ Vanilla already allows compatible friendly ships to dock with tenders in skirmis
 through **MOV → DOCK**. The marker prioritizes this existing command; it does not
 remove vanilla docking from unmarked tenders or alter campaign behavior.
 
+## Inventory transfers in skirmish
+
+AGMLIB supplies the native inventory lookup when skirmish has no campaign inventory
+registry. This lets transfer commands resolve ammunition, fuel, restores, modular
+missiles, and craft by save key. The lookup is created on first use and belongs to
+that match. It indexes loaded bundled munitions and reuses each fleet's existing
+missile and craft designs, including fleets loaded later. It does not build extra
+patterns or run a per-frame update. Existing campaign registries are preserved.
+
 ## Verification
 
 Build and Unity adapter verification cover hierarchy discovery, native repair
@@ -81,6 +90,9 @@ Marker checks cover module failure/recovery, disabling, command presentation,
 and docking without an enabled repair facility.
 Live Testing Range verification also confirms that marked hulls with no registered
 replenishment berths log the authoring error and have no native DOCK command.
+Skirmish inventory verification covers bundled item and fleet-design serialization,
+reuse without cloning patterns, and native host transfer commands for ammunition,
+fuel, and restores in both directions while docked.
 Damaged-component healing, save/load, and multiplayer remain unverified.
 
 Implementation: [`ShipRepairFacility.cs`](../../AGMLIB/Generic%20Gameplay/ShipRepairFacility.cs).
