@@ -57,6 +57,12 @@ private static IEnumerator ApplyWhenReady(Target target)
 
 Avoid an arbitrary delay without a predicate; it makes fast and slow machines fail differently.
 
+A testing factory's runner can start before all enabled mod bundles finish loading.
+Wait for `BundleManager.IsInitialized` before asserting short-lived timers or measuring
+runtime cost. For overlapping timed effects, wait for the earlier effect's actual
+expiry with a bounded deadline; a short `WaitForSeconds` can overshoot both effects
+during a startup frame stall.
+
 ## Idempotence And Cleanup
 
 - Track application per live object or network identity.
