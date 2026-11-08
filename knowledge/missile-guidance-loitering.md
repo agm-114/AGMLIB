@@ -171,13 +171,23 @@ Source-level concerns:
   This resembles native loitering behavior, but the custom manual RPC and
   pooled subclass still require late-spawn, host, remote-client, and second-use
   tests.
-- unlike native `LoiteringMissile`, the modular subclass intentionally retains
-  `ModularMissile.PositionTargetingNoInput == false`. Confirm whether the
-  desired UX is target-position deployment or native-style no-input release;
-  both are plausible, but they produce different order UI.
 - native loitering disables its network transform while stationary. This
   subclass does not expose equivalent behavior, so a dense minefield needs a
   network-traffic profile.
+
+**Verified (assembly, 2026-11-08):** native `LoiteringMissile` overrides
+`PositionTargetingNoInput` to `true`. `BaseTubeLauncherComponent` forwards the
+current/prospective ammunition's flag; `BaseCellLauncherComponent` requires it
+on every loaded missile type. `WeaponGroup` requires it on every member.
+`ActionMenu.OrderMissileWeaponSelection` uses constant position input instead
+of prompting for a trajectory when this flag is true. It supplies the ship's
+position as the origin and a single `Vector3.zero` path point. Evidence: installed
+`C:\Program Files (x86)\Steam\steamapps\common\Nebulous\Nebulous_Data\Managed\Nebulous.dll`,
+SHA-256 `86EF9681F3C6B08BD9BEAC2173F903CE29D8197DD4D5E49279EA9CA058F14461`.
+AGMLIB now exposes this contract through the serialized `LaunchWithoutTarget`
+flag on `LoiteringModularMissile`, defaulting to `false`. The launch phases are
+unchanged. Live verification should compare the same directly loaded missile
+with the flag disabled/enabled, then repeat with mixed launcher ammunition.
 
 The friendly-IFF rule matches the important native behavior: a friendly object
 can still wake the mine when the mine cannot receive that object's comms

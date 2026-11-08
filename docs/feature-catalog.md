@@ -196,6 +196,16 @@ The modular missile family adds:
 - module filters, faction filters, module limits, ammo-mode callbacks, resource
   profiles, and impact-triggered area effects.
 
+`LoiteringModularMissile.LaunchWithoutTarget` enables vanilla-style mine
+deployment: select the weapon in the weapons list to launch without choosing
+a target position or trajectory. Enable **Launch Without Target** on the
+missile prefab in Unity. It defaults to `false`, preserving position/trajectory
+selection for existing prefabs. Flyout, arming, and target activation settings
+still apply. Native launcher groups skip position input only when every member
+supports it; cell launchers also require all loaded missile types to support it.
+The native order path is **verified** from the game assembly; live click-to-launch
+verification remains outstanding.
+
 `FuseSupportDescriptor` and `FuseWarheadDescriptor` both install
 `RuntimeMissileFuse`. Their `OnlyFuseOnTarget` option restricts proximity
 detonation to `Missile.CurrentTarget`, following seeker retargeting. When that

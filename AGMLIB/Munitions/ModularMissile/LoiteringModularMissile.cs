@@ -26,6 +26,9 @@ public class LoiteringModularMissile : ModularMissile
     }
 
     [Header("Loitering Munition")]
+    [Tooltip("Launches directly from the weapons list without selecting a target position or trajectory, like vanilla mines.")]
+    public bool LaunchWithoutTarget = true;
+
     [Tooltip("Time spent in guided flyout or push-off before entering the arming state.")]
     [Min(0f)]
     [SerializeField]
@@ -158,6 +161,8 @@ public class LoiteringModularMissile : ModularMissile
             : MarkerType.Mine;
 
     public override bool SupportsPositionTargeting => true;
+
+    public override bool PositionTargetingNoInput => LaunchWithoutTarget;
 
     public override bool SupportsTrackTargeting => false;
 
