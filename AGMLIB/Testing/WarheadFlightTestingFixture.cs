@@ -123,7 +123,9 @@ internal class WarheadFlightTests : MonoBehaviour
                 bool proximity = missile.GetComponentsInChildren<Collider>(true)
                     .Any(collider => collider.isTrigger && collider.gameObject.layer == 22);
                 missile.SetProgramPath(launcher, [targetCollider.transform.position]);
-                missile.Launch(launcher, -1, true, true, true);
+                int salvoId = Environment.GetEnvironmentVariable("AGMLIB_SALVO_DEBUG_LIVE_TEST") == "1"
+                    ? ActiveMissileSalvo.NextSalvoID(false) : -1;
+                missile.Launch(launcher, salvoId, true, true, true);
                 Debug.Log($"[AGMLIB Test] event=warhead-native-launch key={key} reuse={reuse} netId={missile.netId} rays={descriptor.EffectiveBeamCount} weight={descriptor.WeightedSocketSize} finalStage={missile.FinalStage} phase={missile.FlightPhase}");
                 deadline = Time.realtimeSinceStartup + 30f;
                 while (probe.Detonations + probe.SceneryImpacts == 0)

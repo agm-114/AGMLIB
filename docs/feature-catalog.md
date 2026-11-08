@@ -103,6 +103,10 @@ Damage mutation must remain authoritative while charge-up, tracers, beams, audio
 and impact visuals may need client-side execution. Each custom muzzle needs a
 state-reset checklist for clone/pool/reuse.
 
+The [salvo debugger](features/salvo-debugger.md) records local-host missile
+paths and AGMLIB beam-warhead damage explanations for inspection from finished
+salvo rows or retained history.
+
 The common modular-missile turret setup has a dedicated authoring and
 troubleshooting guide:
 [`Turreted discrete weapons using modular missile ammunition`](features/turreted-discrete-modular-missiles.md).

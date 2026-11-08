@@ -1,5 +1,6 @@
 ﻿using Lib.Munitions.Damagers;
 using Munitions.ModularMissiles.Runtime;
+using Lib.Diagnostics;
 
 public class RuntimeTimeFuse : MonoBehaviour
 {
@@ -50,15 +51,22 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
         if (DebugMode)
             DrawDebugRay(ray, length, hit);
         IDamageable? damageable = hit ? rayHit.collider.GetComponentInParent<IDamageable>() : null;
+        using BeamRayCapture? capture = SalvoDebugRecorder.BeginRay(runtime, this, ray, length, hit ? rayHit.collider : null, damageable);
         if (damageable == null)
+        {
+            capture?.Complete(HitResult.None);
             return HitResult.None;
+        }
 
         MunitionHitInfo beamHit = MunitionsHelpers.RaycastHitToMunitionHit(rayHit, direction, damageable.GameObj);
         try
         {
             if (beamHit.HitCollider is MeshCollider mesh)
                 beamHit.HitUV = damageable.SampleUV(mesh, beamHit.LocalPoint, beamHit.LocalNormal);
-            HitResult result = damageable.DoDamage(beamHit, MakeDamageDealer(length), out float damage, out bool destroyed);
+            IDamageDealer dealer = MakeDamageDealer(length);
+            capture?.SetDealer(dealer);
+            HitResult result = damageable.DoDamage(beamHit, dealer, out float damage, out bool destroyed);
+            capture?.Complete(result, damage, destroyed);
             runtime.ReportDamageDone(result, damage, destroyed);
             return result;
         }
@@ -105,6 +113,10 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
                 if (Vector3.Angle(runtime.transform.forward, direction) > EffectiveLaunchAngle)
                     return;
                 Vector3 point = collider.ClosestPoint(runtime.transform.position);
+                float length = Vector3.Distance(runtime.transform.position, point);
+                using BeamRayCapture? capture = SalvoDebugRecorder.BeginRay(runtime, this,
+                    new Ray(runtime.transform.position, (point - runtime.transform.position).normalized), length,
+                    collider, damageable, "Cone-area hit (overlap, not a line-of-sight ray)");
                 MunitionHitInfo fragmentHit = MunitionHitInfo.Take();
                 try
                 {
@@ -118,8 +130,10 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
                     fragmentHit.LocalNormal = -fragmentHit.LocalHitNormal;
                     if (collider is MeshCollider mesh)
                         fragmentHit.HitUV = damageable.SampleUV(mesh, fragmentHit.LocalPoint, fragmentHit.LocalNormal);
-                    HitResult hitResult = damageable.DoDamage(fragmentHit, MakeDamageDealer(Vector3.Distance(runtime.transform.position, point)),
-                        out float damage, out bool destroyed);
+                    IDamageDealer dealer = MakeDamageDealer(length);
+                    capture?.SetDealer(dealer);
+                    HitResult hitResult = damageable.DoDamage(fragmentHit, dealer, out float damage, out bool destroyed);
+                    capture?.Complete(hitResult, damage, destroyed);
                     runtime.ReportDamageDone(hitResult, damage, destroyed);
                     if (hitResult > result)
                         result = hitResult;
@@ -135,6 +149,27 @@ public class BeamWarheadDescriptor : AngleWarheadDescriptor, IFuse
     protected virtual IDamageDealer MakeDamageDealer(float range = 0) => DamageSettings.MakeDamageDealer(this, range);
     private SingleRayDamagerSettings DamageSettings => DamagerSettings ??= ScriptableObject.CreateInstance<SingleRayDamagerSettings>();
     private IDamageCharacteristic DamageCharacteristic => DamageSettings.MakeDamageCharacteristic(this);
+
+    internal BeamRayTrace CreateTrace(Ray ray, float range)
+    {
+        SingleRayDamagerSettings settings = DamageSettings;
+        return new BeamRayTrace
+        {
+            Origin = ray.origin,
+            End = ray.GetPoint(range),
+            Range = range,
+            SocketSize = WeightedSocketSize,
+            SizeDamage = BeamComponentDamageSizeScaling.Evaluate(WeightedSocketSize),
+            RangeDamageMultiplier = BeamComponentDamageRangeScaling.Evaluate(range),
+            SizePenetration = BeamArmorPenetrationSizeScaling.Evaluate(WeightedSocketSize),
+            RangePenetrationMultiplier = BeamArmorPenetrationRangeScaling.Evaluate(range),
+            Settings = $"{settings.GetType().Name}; ignore DR: {settings.IgnoreDamageReduction}; " +
+                $"spread: {settings.SpreadingMethod}; always spread: {settings.AlwaysSpreadDamage}; " +
+                $"overpen multiplier: {settings.OverpenetrationDamageMultiplier:N3}; " +
+                $"max depth: {settings.InternalPenetrationDepth:N3}; never overpen: {settings.NeverOverpen}; " +
+                $"ignore slope: {settings.IgnoreEffectiveThickness}; never ricochet: {settings.NeverRicochet}"
+        };
+    }
 
     public IEnumerator CoroutineOnTriggerEnter(LookaheadMunitionBase missile, Collider other, float delay)
     {

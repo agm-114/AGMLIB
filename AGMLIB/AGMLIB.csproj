@@ -45,6 +45,7 @@
       <HintPath>libs\0Harmony.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="Facepunch.Steamworks.Win64">
       <HintPath>libs\Facepunch.Steamworks.Win64.dll</HintPath>
       <Private>False</Private>
@@ -201,6 +202,10 @@
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>libs\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>libs\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.VFXModule">

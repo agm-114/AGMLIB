@@ -24,6 +24,7 @@ public class EntryPoint : IModEntryPoint
 
     public void PostLoad()
     {
+        Lib.Diagnostics.SalvoDebugRecorder.Initialize();
 #if DEBUG
         Lib.Testing.TestingPrefabYamlDumper.ScheduleDumpAfterAllModsLoaded();
 #endif
