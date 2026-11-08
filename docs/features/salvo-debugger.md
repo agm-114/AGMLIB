@@ -6,11 +6,13 @@ not fire another ray or apply damage again.
 
 ## Use
 
-1. Run Testing Range or host a match. Firing a missile automatically opens the
-   debugger with its salvo selected. **Ctrl+F8** also opens or hides it.
-2. Capture is enabled by default. **Capture local salvos** can disable it;
-   enabling or disabling capture clears the previous history. Setting the process
-   environment variable `AGMLIB_SALVO_DEBUG=0` disables capture at startup.
+1. The debugger is disabled by default. Set the process environment variable
+   `AGMLIB_SALVO_DEBUG=1` before launching the game to enable it, then run Testing
+   Range or host a match. While disabled, it creates no recorder, window, or salvo
+   row bindings, and **Ctrl+F8** has no debugger action.
+2. After opting in, capture starts enabled. Firing a missile automatically opens
+   the debugger with its salvo selected. **Ctrl+F8** also opens or hides it.
+   **Record local salvos** toggles capture and clears the previous history.
 3. The selected salvo updates as its missiles fly and detonate. Each new salvo
    opens the inspector once, regardless of warhead type. Click a finished salvo
    in the native salvo list, or use History to inspect an earlier launch.

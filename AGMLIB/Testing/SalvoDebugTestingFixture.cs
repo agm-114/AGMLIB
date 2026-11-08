@@ -106,7 +106,7 @@ internal class SalvoDebugTests : MonoBehaviour
         }
 
         SalvoDebugRecorder recorder = SalvoDebugRecorder.Instance!;
-        Require(recorder.Recording, "capture-default-on");
+        Require(recorder.Recording, "capture-enabled-after-opt-in");
         recorder.SetRecording(true);
         SalvoTrace report = new(1, "TEST / synthetic viewer fixture");
         missile = new MissileTrace(1, "TEST / synthetic trajectory") { Status = ActiveMissileSalvo.MissileStatus.Hit };

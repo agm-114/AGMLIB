@@ -49,8 +49,11 @@ internal class SalvoDebugRow : MonoBehaviour
 [HarmonyPatch(typeof(FriendlySalvoItem), nameof(FriendlySalvoItem.SetSalvo))]
 internal static class SalvoDebugBindRowPatch
 {
-    private static void Postfix(FriendlySalvoItem __instance, IActiveMissileSalvo salvo) =>
-        (__instance.GetComponent<SalvoDebugRow>() ?? __instance.gameObject.AddComponent<SalvoDebugRow>()).Bind(__instance, salvo);
+    private static void Postfix(FriendlySalvoItem __instance, IActiveMissileSalvo salvo)
+    {
+        if (SalvoDebugRecorder.Instance != null)
+            (__instance.GetComponent<SalvoDebugRow>() ?? __instance.gameObject.AddComponent<SalvoDebugRow>()).Bind(__instance, salvo);
+    }
 }
 
 [HarmonyPatch(typeof(FriendlySalvoItem), nameof(FriendlySalvoItem.OnRepooled))]

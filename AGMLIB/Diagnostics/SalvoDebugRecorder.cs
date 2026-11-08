@@ -29,7 +29,7 @@ internal class SalvoDebugRecorder : MonoBehaviour
 
     public static void Initialize()
     {
-        if (Instance == null)
+        if (Instance == null && Environment.GetEnvironmentVariable("AGMLIB_SALVO_DEBUG") == "1")
             new GameObject("AGMLIB Salvo Debugger").AddComponent<SalvoDebugRecorder>();
     }
 
@@ -38,7 +38,7 @@ internal class SalvoDebugRecorder : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         _window = gameObject.AddComponent<SalvoDebugWindow>();
-        Recording = Environment.GetEnvironmentVariable("AGMLIB_SALVO_DEBUG") != "0";
+        Recording = true;
         SceneManager.activeSceneChanged += OnSceneChanged;
     }
 
