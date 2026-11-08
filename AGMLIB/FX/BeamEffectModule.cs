@@ -3,14 +3,14 @@
     public ShortDurationEffect Effect => gameObject.GetComponentInChildren<ShortDurationEffect>();
     public LineBeamMuzzleEffects LineBeamMuzzleEffects => gameObject.GetComponentInChildren<LineBeamMuzzleEffects>();
 
-    protected LineRenderer Beam => Common.GetVal<LineRenderer>(LineBeamMuzzleEffects, "_beam");
+    protected LineRenderer Beam => LineBeamMuzzleEffects?.Internals().Beam;
     private float _accumulator = 0;
     private float Accumulator
     {
         get
         {
             if (Effect != null)
-                return Common.GetVal<float>(Effect, "_accumulator");
+                return (Effect?.Internals().Accumulator ?? default);
             //Debug.LogError("using Internal Accum");
             return _accumulator;
         }   // get method

@@ -30,11 +30,11 @@ namespace Lib.Generic_Gameplay.Muzzles
         private bool _fireRequested;
         private bool _isFiring;
         private float _fireAccum;
-        private BeamMuzzleEffects Effects => Common.GetVal<BeamMuzzleEffects>(this, "_effects");
+        private BeamMuzzleEffects Effects => this.Internals().Effects;
         private float BeamLength
         {
-            get => Common.GetVal<float>(this, "_beamLength");
-            set => Common.SetVal(this, "_beamLength", value);
+            get => this.Internals().BeamLength;
+            set => this.Internals().BeamLength = value;
         }
 
         float IDirectDamageMuzzle.ArmorPenetration => ((IDamageCharacteristic)this).ArmorPenetration * (1f / _damagePeriod);
@@ -57,7 +57,7 @@ namespace Lib.Generic_Gameplay.Muzzles
             {
                 _immediateSoundSource.outputAudioMixerGroup = AudioGroupBinding.Instance.VaccumEffectsGroup;
             }
-            if(_delayedSoundSource != null) 
+            if(_delayedSoundSource != null)
             {
                 _delayedSoundSource.outputAudioMixerGroup = AudioGroupBinding.Instance.VaccumEffectsGroup;
             }

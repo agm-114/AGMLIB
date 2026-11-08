@@ -7,7 +7,7 @@ class ShipStatusIconGroupSetShipPowerStatusBar
 
         if (ship == null)
         {
-            QuantityStatusIcon powerIcon = Common.GetVal<QuantityStatusIcon>(__instance, "_powerQuantityIcon");
+            QuantityStatusIcon powerIcon = __instance.Internals().PowerQuantityIcon;
             powerIcon?.GetComponent<ShipStatusPowerBarBinding>()?.ClearAnySource();
             return;
         }

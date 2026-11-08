@@ -14,7 +14,7 @@ namespace Lib.Editor.Yaml
         static void Prefix(SocketItem __instance)
         {
             Common.LogPatch();
-            ShipEditorPane _editor = Common.GetVal<ShipEditorPane>(__instance, "_editor");
+            ShipEditorPane _editor = __instance.Internals().Editor;
             if (_editor == null)
                 Debug.LogError("editornull");
         }
@@ -56,7 +56,7 @@ namespace Lib.Editor.Yaml
                 {
                     //var deserializer = new DeserializerBuilder().Build();
 
-                    Dictionary<string, HullComponent> _components = Common.GetVal<Dictionary<string, HullComponent>>(BundleManager.Instance, "_components");
+                    Dictionary<string, HullComponent> _components = BundleManager.Instance?.Internals().Components;
 
                     YamlHullComponent yamlObject = new();//deserializer.Deserialize<YamlHullComponent>(reader); // Replace YourYamlClass with your actual class
                     GameObject prefab = new GameObject(yamlObject.ShortUIName);
@@ -67,40 +67,40 @@ namespace Lib.Editor.Yaml
 
                     //comp.enabled = false;
 
-                    Common.SetVal(comp, "_partKey", yamlObject.PartKey);
-                    Common.SetVal(comp, "_maxHealth", yamlObject.MaxHealth);
-                    Common.SetVal(comp, "_functioningThreshold", yamlObject.FunctioningThreshold);
-                    Common.SetVal(comp, "_damageThreshold", yamlObject.DamageThreshold);
-                    Common.SetVal(comp, "_reinforced", yamlObject.Reinforced);
-                    Common.SetVal(comp, "_bindTag", yamlObject.BindTag);
-                    Common.SetVal(comp, "_dcPriority", yamlObject.DcPriority);
-                    Common.SetVal(comp, "_casualtyClass", yamlObject.CasualtyClass);
-                    Common.SetVal(comp, "_dcVoiceDisabledOnly", yamlObject.DcVoiceDisabledOnly);
-                    Common.SetVal(comp, "_saveKey", yamlObject.SaveKey);
-                    Common.SetVal(comp, "_modId", record.Info.UniqueIdentifier);
-                    Common.SetVal(comp, "_shortUIName", yamlObject.ShortUIName);
+                    ((HullPart)comp).Internals().PartKey = yamlObject.PartKey;
+                    ((HullPart)comp).Internals().MaxHealth = yamlObject.MaxHealth;
+                    ((HullPart)comp).Internals().FunctioningThreshold = yamlObject.FunctioningThreshold;
+                    ((HullPart)comp).Internals().DamageThreshold = yamlObject.DamageThreshold;
+                    ((HullPart)comp).Internals().Reinforced = yamlObject.Reinforced;
+                    ((HullPart)comp).Internals().BindTag = yamlObject.BindTag;
+                    ((HullPart)comp).Internals().DcPriority = yamlObject.DcPriority;
+                    ((HullPart)comp).Internals().CasualtyClass = yamlObject.CasualtyClass;
+                    ((HullPart)comp).Internals().DcVoiceDisabledOnly = yamlObject.DcVoiceDisabledOnly;
+                    comp.Internals().SaveKey = yamlObject.SaveKey;
+                    comp.Internals().ModId = record.Info.UniqueIdentifier;
+                    comp.Internals().ShortUIName = yamlObject.ShortUIName;
                     //Common.SetVal(comp, "_smallImage", yamlObject.);
                     //Common.SetVal(comp, "_largeImage", yamlObject.);
-                    Common.SetVal(comp, "_factionKey", yamlObject.FactionKey);
-                    Common.SetVal(comp, "_shortDescription", yamlObject.ShortDescription);
-                    Common.SetVal(comp, "_longDescription", yamlObject.LongDescription);
-                    Common.SetVal(comp, "_flavorText", yamlObject.FlavorText);
-                    Common.SetVal(comp, "_category", yamlObject.Category);
-                    Common.SetVal(comp, "_costBreakdownClass", yamlObject.CostBreakdownClass);
-                    Common.SetVal(comp, "_compoundingCost", yamlObject.CompoundingCost);
-                    Common.SetVal(comp, "_firstInstanceFree", yamlObject.FirstInstanceFree);
-                    Common.SetVal(comp, "_compoundingMultiplier", yamlObject.CompoundingMultiplier);
-                    Common.SetVal(comp, "_pointCost", yamlObject.PointCost);
-                    Common.SetVal(comp, "_type", yamlObject.Type);
-                    Common.SetVal(comp, "_size", new Vector3Int(yamlObject.Size.X, yamlObject.Size.Y, yamlObject.Size.X));
-                    Common.SetVal(comp, "_interiorOverhang", yamlObject.InteriorOverhang);
-                    Common.SetVal(comp, "_removeSocketCap", yamlObject.RemoveSocketCap);
-                    Common.SetVal(comp, "_mass", yamlObject.Mass);
-                    Common.SetVal(comp, "_bindToTag", yamlObject.BindToTag);
-                    Common.SetVal(comp, "_rotateToFit", yamlObject.RotateToFit);
-                    Common.SetVal(comp, "_canTile", yamlObject.CanTile);
-                    Common.SetVal(comp, "Modifiers", yamlObject.Modifiers.ConvertAll(yamlstat => new StatModifier(yamlstat.StatName, yamlstat.Literal, yamlstat.Modifier)).ToArray());
-                    Common.SetVal(comp, "_resourceDemandPriority", yamlObject.ResourceDemandPriority);
+                    comp.Internals().FactionKey = yamlObject.FactionKey;
+                    comp.Internals().ShortDescription = yamlObject.ShortDescription;
+                    comp.Internals().LongDescription = yamlObject.LongDescription;
+                    comp.Internals().FlavorText = yamlObject.FlavorText;
+                    comp.Internals().Category = yamlObject.Category;
+                    comp.Internals().CostBreakdownClass = yamlObject.CostBreakdownClass;
+                    comp.Internals().CompoundingCost = yamlObject.CompoundingCost;
+                    comp.Internals().FirstInstanceFree = yamlObject.FirstInstanceFree;
+                    comp.Internals().CompoundingMultiplier = yamlObject.CompoundingMultiplier;
+                    comp.Internals().PointCost = yamlObject.PointCost;
+                    comp.Internals().Type = yamlObject.Type;
+                    comp.Internals().Size = new Vector3Int(yamlObject.Size.X, yamlObject.Size.Y, yamlObject.Size.X);
+                    comp.Internals().InteriorOverhang = yamlObject.InteriorOverhang;
+                    comp.Internals().RemoveSocketCap = yamlObject.RemoveSocketCap;
+                    comp.Internals().Mass = yamlObject.Mass;
+                    comp.Internals().BindToTag = yamlObject.BindToTag;
+                    comp.Internals().RotateToFit = yamlObject.RotateToFit;
+                    comp.Internals().CanTile = yamlObject.CanTile;
+                    comp.Modifiers = yamlObject.Modifiers.ConvertAll(yamlstat => new StatModifier(yamlstat.StatName, yamlstat.Literal, yamlstat.Modifier)).ToArray();
+                    ((HullPartResourceConnected)comp).Internals().ResourceDemandPriority = yamlObject.ResourceDemandPriority;
 
 
 
@@ -133,11 +133,11 @@ namespace Lib.Editor.Yaml
                         return modifier;
                     }
 
-                    Common.SetVal(comp, "ResourcesProvided", yamlObject.ResourcesProvided.ConvertAll(resource => ConvertYamlToNeb(resource)).ToArray());
-                    Common.SetVal(comp, "ResourcesRequired", yamlObject.ResourcesRequired.ConvertAll(resource => ConvertYamlToNeb(resource)).ToArray());
-                    Common.SetVal(comp, "_uniqueDebuffs", Array.Empty<ComponentDebuff>());
-                    Common.SetVal(comp, "_rareDebuffChance", yamlObject.RareDebuffChance);
-                    Common.SetVal(comp, "_rareDebuffSubtype", yamlObject.RareDebuffSubtype);
+                    comp.ResourcesProvided = yamlObject.ResourcesProvided.ConvertAll(resource => ConvertYamlToNeb(resource)).ToArray();
+                    comp.ResourcesRequired = yamlObject.ResourcesRequired.ConvertAll(resource => ConvertYamlToNeb(resource)).ToArray();
+                    comp.Internals().UniqueDebuffs = Array.Empty<ComponentDebuff>();
+                    comp.Internals().RareDebuffChance = yamlObject.RareDebuffChance;
+                    comp.Internals().RareDebuffSubtype = yamlObject.RareDebuffSubtype;
                     //Common.SetVal(comp, "_debuffProbability", yamlObject.);
                     //Common.SetVal(comp, "replace", yamlObject.);
                     //prefab.SetActive(true);
@@ -148,7 +148,7 @@ namespace Lib.Editor.Yaml
                     //    Debug.Log(pcomp.ComponentName + " bndl " + pcomp.SaveKey);
                     Debug.LogError("Saving " + yamlObject.SaveKey);
                     _components.Add(yamlObject.SaveKey, comp);
-                    Common.SetVal(BundleManager.Instance, "_components", _components);
+                    BundleManager.Instance.Internals().Components = _components;
                     foreach (HullComponent component in BundleManager.Instance.AllComponents)
                         Debug.Log("plt " + component.name + "  " + component.SaveKey + " " + component.Type + " " + component.Category);
 

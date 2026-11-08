@@ -21,7 +21,7 @@ class MissileComponentDescriptorInstallSocketModuleInternal
 
         IFilterIndexed socketfilter = Modular.FindIndexedFilter(__instance.GetComponentsInChildren<IFilterIndexed>(), index) ?? Modular.Default;
         IFilterIndexed componentfilters = Modular.FindIndexedFilter(filters, index) ?? Modular.Default;
-        
+
         if (socket.ComponentPermitted(component, ____fleetFaction))
             return;
         if (socketfilter.Whitelist.Contains(Component.SaveKey) || componentfilters.Whitelist.Contains(__instance.BaseMissileDesignation) || socketfilter.Whitelisteverything || componentfilters.Whitelisteverything)
@@ -103,7 +103,7 @@ class MissileComponentPaletteSetEditingSocket
         Common.LogPatch();
         if (socket == null || ____editingMissile == null || ____editingMissile.Sockets.Count <= 0)
             return;
-        
+
         int index = ____editingMissile.Sockets.ToList().FindIndex(testsocket => testsocket == socket);
         IFilterIndexed socketfilter = Modular.FindIndexedFilter(____editingMissile.GetComponentsInChildren<IFilterIndexed>(), index) ?? Modular.Default;
         foreach (MissilePaletteItem item in ____allComponents.Where(item => item.Component != null))
@@ -276,7 +276,7 @@ class MissileSettingsPaneOpenSettingsPanel
         }
         //Debug.LogError("Prefix " + component.SaveKey + component.SettingsPanel);
     }
-    static void Postfix(MissileSettingsPane __instance, MissileComponentDescriptor component, ref bool __result, List<IMissileSettingsPane> ____settingsPanes)// 
+    static void Postfix(MissileSettingsPane __instance, MissileComponentDescriptor component, ref bool __result, List<IMissileSettingsPane> ____settingsPanes)//
     {
         Common.LogPatch();
         if (component == null)
@@ -345,7 +345,7 @@ class RuntimeMissileWarhead_ShouldFuzeOnTargetPatch
             //Debug.LogError("IFF Status: " + iffStatus);
 
             // Get the Proxy Fuse of the missile
-            BoxCollider collider = Traverse.Create(__instance.Missile).Field("_proxFuze").GetValue<BoxCollider>();
+            BoxCollider collider = __instance.Missile.Internals().ProxFuze;
 
             // Make sure the proxy fuse exists before performing the bypass check
             if (collider != null && collider.size.z > 0)

@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Reflection;
 
 [CreateAssetMenu(fileName = "New Area Debuff Profile", menuName = "Nebulous/Modules/Area Effects/Debuff Profile")]
 public class AreaDebuffProfileModule : ScriptableObject, IOnDamageableImpact, IOnGenericImpact
@@ -42,29 +41,23 @@ public class AreaDebuffProfileModule : ScriptableObject, IOnDamageableImpact, IO
             return;
         }
 
-        MethodInfo addDebuff = typeof(HullComponent).GetMethod("AddDebuffToComponent", Common.FunFlags);
-        if (addDebuff == null)
-        {
-            return;
-        }
-
         foreach (HullComponent component in AreaEffectRuntime.ComponentsInRadius(hitInfo.Point, EffectRadius))
         {
             MunitionHitInfo componentHitInfo = MakeLocalHitInfo(hitInfo, component);
             foreach (ComponentDebuff debuff in ValidDebuffs(NormalDebuffs))
             {
-                addDebuff.Invoke(component, new object[] { debuff, componentHitInfo, true });
+                component.Internals().AddDebuff(debuff, componentHitInfo, true);
             }
 
             foreach (ComponentDebuff debuff in ValidDebuffs(ForcedDebuffs))
             {
-                addDebuff.Invoke(component, new object[] { debuff, componentHitInfo, false });
+                component.Internals().AddDebuff(debuff, componentHitInfo, false);
             }
 
             foreach (ComponentDebuff debuff in ValidDebuffs(TimeLimitedDebuffs))
             {
                 HashSet<int> existingInstances = ActiveDebuffInstanceIds(component, debuff);
-                addDebuff.Invoke(component, new object[] { debuff, componentHitInfo, true });
+                component.Internals().AddDebuff(debuff, componentHitInfo, true);
                 foreach (int instanceId in ActiveDebuffInstanceIds(component, debuff).Where(instanceId => !existingInstances.Contains(instanceId)))
                 {
                     component.gameObject.GetOrAddComponent<TimedAreaDebuffRemoval>()
@@ -90,18 +83,18 @@ public class AreaDebuffProfileModule : ScriptableObject, IOnDamageableImpact, IO
     private static HashSet<int> ActiveDebuffInstanceIds(HullComponent component, ComponentDebuff debuff)
     {
         HashSet<int> instanceIds = new();
-        object activeDebuffs = Common.GetVal<object>(component, "_activeDebuffs");
-        if (activeDebuffs is not IEnumerable debuffInstances)
+        IEnumerable debuffInstances = component?.Internals().ActiveDebuffs;
+        if (debuffInstances == null)
         {
             return instanceIds;
         }
 
         foreach (object instance in debuffInstances)
         {
-            ComponentDebuff activeDebuff = Common.GetVal<ComponentDebuff>(instance, "Debuff");
+            ComponentDebuff activeDebuff = HullComponentInternals.GetInstanceDebuff(instance);
             if (activeDebuff == debuff)
             {
-                instanceIds.Add(Common.GetVal<int>(instance, "InstanceID"));
+                instanceIds.Add(HullComponentInternals.GetDebuffInstanceId(instance));
             }
         }
 
@@ -143,13 +136,6 @@ public class TimedAreaDebuffRemoval : MonoBehaviour
             yield break;
         }
 
-        object rpcProvider = Common.GetVal<object>(component, "_componentRpcProvider");
-        MethodInfo removeDebuff = rpcProvider?.GetType().GetMethod("RemoveDebuff", Common.FunFlags);
-        if (removeDebuff == null)
-        {
-            yield break;
-        }
-
-        removeDebuff.Invoke(rpcProvider, new object[] { component, instanceId });
+        component.Internals().ComponentRpcProvider?.RemoveDebuff(component, instanceId);
     }
 }

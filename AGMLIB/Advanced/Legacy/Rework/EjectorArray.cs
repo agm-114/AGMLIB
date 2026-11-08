@@ -43,7 +43,7 @@ public class EjectorArray : MonoBehaviour
         //if (ejector = null)
         //    ejector = (MissileEjector)GetPrivateField(launcher, "_ejector");
 
-        launcherindex = tubelauncher != null ? Common.GetVal<int>(tubelauncher, "_currentShot") : index;
+        launcherindex = tubelauncher != null ? (tubelauncher?.Internals().CurrentShot ?? default) : index;
 
         if (tubelauncher == null)
         {

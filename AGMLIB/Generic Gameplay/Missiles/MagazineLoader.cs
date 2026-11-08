@@ -51,11 +51,11 @@ class SettingsMagazineLoadoutUpdateQuantities
         }
         IMagazineProvider _provider = SettingsMagazineLoadoutSet.Mags[__instance];
         IMagazineProvider base_provider = _provider;
-        TextMeshProUGUI _capacityText = Common.GetVal<TextMeshProUGUI>(__instance, "_capacityText");
-        TextMeshProUGUI _emptyLoadText = Common.GetVal<TextMeshProUGUI>(__instance, "_emptyLoadText");
-        Image _gaugeImage = Common.GetVal<Image>(__instance, "_gaugeImage");
-        Button _addMagazineButton = Common.GetVal<Button>(__instance, "_addMagazineButton");
-        List<MagazineAmmoItem> _magazines = Common.GetVal<List<MagazineAmmoItem>>(__instance, "_magazines");
+        TextMeshProUGUI _capacityText = __instance.Internals().CapacityText;
+        TextMeshProUGUI _emptyLoadText = __instance.Internals().EmptyLoadText;
+        Image _gaugeImage = __instance.Internals().GaugeImage;
+        Button _addMagazineButton = __instance.Internals().AddMagazineButton;
+        List<MagazineAmmoItem> _magazines = __instance.Internals().Magazines;
 
         if (base_provider == null)
         {
@@ -91,9 +91,9 @@ class BaseCellLauncherComponentGetDesignWarnings
         MagazineLoader loader = __instance.GetComponentInChildren<MagazineLoader>();
         if (loader == null)
             return true;
-        BaseCellMissileMagazine Missiles = Common.GetVal<BaseCellMissileMagazine>(__instance, "_missiles");
+        BaseCellMissileMagazine Missiles = (BaseCellMissileMagazine)(__instance.Internals().Missiles);
 
-        BaseHull _myHull = Common.GetVal<BaseHull>(__instance, "_myHull");
+        BaseHull _myHull = (BaseHull)(((HullPart)__instance).Internals().MyHull);
         if (_myHull.MyShip.AmmoFeed.GetAllCompatibleAmmoTypes(__instance).Count == 0)
         {
             warnings.Add(ShipDesignWarning.Warning("No Ammunition", "The missile launcher " + __instance.ComponentName + " on " + __instance.Socket.Name + " has no missiles loaded.", _myHull.MyShip));
@@ -144,7 +144,7 @@ class ShipLoadFromSave
         {
             //Debug.LogError(item.Key + "  " +  item.ComponentName + "  " + BundleManager.Instance.GetHullComponent(item.ComponentName).GetType().ToString());
             CellLauncherComponent launcher = BundleManager.Instance.GetHullComponent(item.ComponentName) as CellLauncherComponent;
-            //if(launcher != null) 
+            //if(launcher != null)
             //   Debug.LogError("Launcher Detected");
             CellLauncherData socketdata = item.ComponentData as CellLauncherData;
 

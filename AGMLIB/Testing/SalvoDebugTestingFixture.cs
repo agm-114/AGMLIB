@@ -1,7 +1,8 @@
+using Munitions.ModularMissiles.Runtime;
 #if DEBUG && AGMLIB_LOCAL_TEST_FIXTURES
 using Lib.Diagnostics;
 using Lib.Munitions.Damagers;
-using global::Munitions.ModularMissiles;
+using Munitions.ModularMissiles;
 
 namespace Lib.Testing;
 
@@ -192,7 +193,7 @@ internal class SalvoDebugFlightAssertions : MonoBehaviour
             WarheadFlightProbe probe = FindObjectsOfType<WarheadFlightProbe>()
                 .FirstOrDefault(item => ((IMissile)item.GetComponent<ModularMissile>()).ID == missile.MissileId);
             int expectedRays = probe != null ? (int)Math.Ceiling(((BeamWarheadDescriptor)probe
-                .GetComponent<global::Munitions.ModularMissiles.Runtime.RuntimeMissileWarhead>().Internals().Descriptor).EffectiveBeamCount) : -1;
+                .GetComponent<RuntimeMissileWarhead>().Internals().Descriptor).EffectiveBeamCount) : -1;
             if (missile.Path.Count < 2 || missile.Rays.Count != expectedRays || missile.Rays.Any(ray => !ray.Completed || ray.ReportedDamage != 1f))
             {
                 _failures++;

@@ -10,7 +10,7 @@ public class KeyDebugger : ShipState
     // Update is called once per frame
     void Update()
     {
-        GameObject dcboardgo = Common.GetVal<GameObject>(Ship.Hull, "_damageControlBoardPrefab");
+        GameObject dcboardgo = Ship.Hull?.Internals().DamageControlBoardPrefab;
         if (dcboardgo == null)
         {
             Debug.LogError("No DC Board Detected");

@@ -54,7 +54,7 @@ public class InternalShipState : NetworkBehaviour
         get
         {
             if (ShipController != null && _rigidbody == null)
-                _rigidbody = Common.GetVal<Rigidbody>(ShipController, "_rigidbody");
+                _rigidbody = ShipController?.Internals().Rigidbody;
             return _rigidbody;
         }
 
@@ -158,7 +158,7 @@ public class ShipState : NetworkBehaviour
             InternalShipState = Root.GetComponent<InternalShipState>() ?? Root.AddComponent<InternalShipState>(); ;
             return;
         }
-            
+
         InternalShipState = InternalShipState.GetInternalShipState(ship);
     }
 

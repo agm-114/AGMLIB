@@ -107,7 +107,7 @@ static class FleetStatsPaneUpdateFleetStats
 
             int _currentCount = typeCount;
             int _compoundingClassCount = compoundingClassCount;
-            TextMeshProUGUI _count = Common.GetVal<TextMeshProUGUI>(__instance, "_count"); ;
+            TextMeshProUGUI _count = __instance.Internals().Count; ;
             _count.gameObject.SetActive(value: true);
 
 
@@ -135,8 +135,8 @@ static class FleetStatsPaneUpdateFleetStats
 
 
             _count.text += " <i>" + StringFormatter.GetColorTag(CustomColor.Gray) + FleetTools.Components[__instance.Component.SaveKey] + "</color></i>";
-            Common.SetVal<int>(__instance, "_currentCount", _currentCount);
-            Common.SetVal<int>(__instance, "_compoundingClassCount", _compoundingClassCount);
+            __instance.Internals().CurrentCount = _currentCount;
+            __instance.Internals().CompoundingClassCount = _compoundingClassCount;
         }
 
 

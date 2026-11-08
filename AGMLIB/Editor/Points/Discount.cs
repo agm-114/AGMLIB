@@ -9,7 +9,7 @@ public class SimpleDiscount : MonoBehaviour
 
     public static float ListCalc(HullComponent component, int existingCount)
     {
-        HullSocket currentsocket = Common.GetVal<HullSocket>(component, "_socket") ?? CostingSocket ?? UISocket;
+        HullSocket currentsocket = (HullSocket)(component?.Internals().Socket) ?? CostingSocket ?? UISocket;
         //Debug.LogError("Discount Calc for " + existingCount + "th " + component.ComponentName);
         List<SimpleDiscount> discounts = component?.GetComponents<SimpleDiscount>()?.ToList() ?? new();
         if (currentsocket != null)
@@ -43,7 +43,7 @@ public class Discount : SimpleDiscount
     {
         if (amount == 0)
             return amount;
-        
+
         int discountedcomps = (int)(amount / Modulo);
         return ((discountedcomps * Cost) + (amount - discountedcomps)) / amount;
     }*/
@@ -61,7 +61,7 @@ class HullComponentGetPointCost
         Postfix();
         if (saveInfo == null)
             return;
-        SimpleDiscount.CostingSocket = Common.GetVal<HullSocket>(saveInfo, "_socket");
+        SimpleDiscount.CostingSocket = (HullSocket)(saveInfo?.Internals().Socket);
     }
 
 

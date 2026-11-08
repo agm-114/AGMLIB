@@ -16,15 +16,15 @@
     private bool _waitingForCell;
     private float _cellAccum;
     private bool _weaponprecharge = true;
-    protected IMagazine _ammoSource => Common.GetVal<IMagazine>(DiscreteWeaponComponent, "_ammoSource");
-    protected int _magazineSize => Common.GetVal<int>(DiscreteWeaponComponent, "_magazineSize");
-    protected bool _reloading => Common.GetVal<bool>(DiscreteWeaponComponent, "_reloading");
+    protected IMagazine _ammoSource => ((WeaponComponent)DiscreteWeaponComponent)?.Internals().AmmoSource;
+    protected int _magazineSize => (DiscreteWeaponComponent?.Internals().MagazineSizeRef ?? default);
+    protected bool _reloading => (DiscreteWeaponComponent?.Internals().Reloading ?? default);
 
-    protected bool _waitingForMuzzle => Common.GetVal<bool>(DiscreteWeaponComponent, "_waitingForMuzzle");
-    protected int _magazineFired => Common.GetVal<int>(DiscreteWeaponComponent, "_magazineFired");
-    BaseHull _myHull => Common.GetVal<BaseHull>(DiscreteWeaponComponent, "_myHull");
+    protected bool _waitingForMuzzle => (DiscreteWeaponComponent?.Internals().WaitingForMuzzle ?? default);
+    protected int _magazineFired => (DiscreteWeaponComponent?.Internals().MagazineFired ?? default);
+    BaseHull _myHull => (BaseHull)(((HullPart)DiscreteWeaponComponent)?.Internals().MyHull);
 
-    protected ShipController _controller => Common.GetVal<ShipController>(DiscreteWeaponComponent, "_controller");
+    protected ShipController _controller => ((WeaponComponent)DiscreteWeaponComponent)?.Internals().Controller;
 
     protected void Start()
     {
@@ -51,15 +51,15 @@
             return Common.RunFunction;
 
         //Debug.LogError(_cellAccum);
-        Common.SetVal<int>(DiscreteWeaponComponent, "_magazineFired", _magazineFired + 1);
+        DiscreteWeaponComponent.Internals().MagazineFired = _magazineFired + 1;
 
         if (_magazineFired >= _magazineSize)
             DiscreteWeaponComponent.ReloadIfNeeded();
         else if (!_reloading)
         {
-            Common.SetVal<bool>(DiscreteWeaponComponent, "_waitingForMuzzle", true);
+            DiscreteWeaponComponent.Internals().WaitingForMuzzle = true;
 
-            Common.SetVal<float>(DiscreteWeaponComponent, "_muzzleAccum", 0);
+            DiscreteWeaponComponent.Internals().MuzzleAccum = 0;
             //_waitingForCell = true;
             //_cellAccum = 0;
         }

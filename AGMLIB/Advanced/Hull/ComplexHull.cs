@@ -1,7 +1,7 @@
 ﻿public class ComplexHull : Hull
 {
 
-    private GameObject _sampler => Common.GetVal<GameObject>(this, "_colliderSamplerPrefab");
+    private GameObject _sampler => this.Internals().ColliderSamplerPrefab;
 
 
     protected override BaseColliderSampler SpawnColliderSamplerInternal()

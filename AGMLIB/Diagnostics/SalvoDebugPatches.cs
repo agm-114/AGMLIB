@@ -1,3 +1,4 @@
+using Munitions.InstancedDamagers;
 namespace Lib.Diagnostics;
 
 [HarmonyPatch(typeof(ActiveMissileSalvo), nameof(ActiveMissileSalvo.RegisterMissile))]
@@ -128,10 +129,10 @@ internal static class SalvoDebugInteriorRayPatch
         part is Component component ? component.name : part.GetType().Name;
 }
 
-[HarmonyPatch(typeof(global::Munitions.InstancedDamagers.BaseThrowawayDamager), "Munitions.IDamageDealer.DamageComponents")]
+[HarmonyPatch(typeof(BaseThrowawayDamager), "Munitions.IDamageDealer.DamageComponents")]
 internal static class SalvoDebugInternalDamagePatch
 {
-    private static void Prefix(global::Munitions.InstancedDamagers.BaseThrowawayDamager __instance, out DamageTraceStep? __state) =>
+    private static void Prefix(BaseThrowawayDamager __instance, out DamageTraceStep? __state) =>
         __state = BeamRayCapture.Owns(__instance) ? BeamRayCapture.CurrentInternalRay : null;
 
     private static void Postfix(float damageDone, HitResult hitRes, DamageTraceStep? __state)

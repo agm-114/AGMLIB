@@ -111,7 +111,7 @@ public class ShipStatusPowerBar : MonoBehaviour
             return;
         }
 
-        QuantityStatusIcon powerIcon = Common.GetVal<QuantityStatusIcon>(statusIcons, "_powerQuantityIcon");
+        QuantityStatusIcon powerIcon = statusIcons?.Internals().PowerQuantityIcon;
         if (powerIcon == null)
         {
             return;

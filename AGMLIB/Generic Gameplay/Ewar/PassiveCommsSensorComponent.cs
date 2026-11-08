@@ -679,7 +679,7 @@ static class PassiveCommsSensorTrackHelpers
 
     private static List<PassiveCommsSensorComponent> GetPassiveCommsSensors(SensorTrack track)
     {
-        List<ISensor> passiveSensors = Common.GetVal<List<ISensor>>(track, "_passiveSensors");
+        List<ISensor> passiveSensors = track?.Internals().PassiveSensors;
         return passiveSensors?.OfType<PassiveCommsSensorComponent>().ToList() ?? new List<PassiveCommsSensorComponent>();
     }
 
@@ -693,8 +693,8 @@ static class PassiveCommsSensorTrackHelpers
     private static List<PassiveCommsSensorComponent> GetPassiveCommsSensorsForNetworkHandle(object networkHandle)
     {
         List<PassiveCommsSensorComponent> sensors = new List<PassiveCommsSensorComponent>();
-        NetworkedSensorTrack parent = Common.GetVal<NetworkedSensorTrack>(networkHandle, "_parent");
-        List<ITrack> contributors = Common.GetVal<List<ITrack>>(parent, "_contributors");
+        NetworkedSensorTrack parent = NetworkedSensorTrackInternals.GetHandleParent(networkHandle);
+        List<ITrack> contributors = parent?.Internals().Contributors;
         if (contributors != null)
         {
             foreach (ITrack contributor in contributors)
@@ -726,13 +726,24 @@ static class PassiveCommsSensorTrackHelpers
             return;
         }
 
-        IBoardPiece primaryPiece = Common.GetVal<IBoardPiece>(piece, "_primaryPiece");
+        IBoardPiece primaryPiece = piece switch
+        {
+            GroupedFixedPieceCollection group => group.Internals().PrimaryPiece,
+            GroupedTrackCollection group => group.Internals().PrimaryPiece,
+            SingleBoardPieceGroup group => group.Internals().PrimaryPiece,
+            _ => Common.GetVal<IBoardPiece>(piece, "_primaryPiece")
+        };
         if (primaryPiece != null)
         {
             AddPassiveCommsSensors(primaryPiece, sensors);
         }
 
-        IEnumerable<IBoardPiece> pieces = Common.GetVal<IEnumerable<IBoardPiece>>(piece, "_pieces");
+        IEnumerable<IBoardPiece> pieces = piece switch
+        {
+            GroupedFixedPieceCollection group => group.Internals().Pieces,
+            GroupedTrackCollection group => group.Internals().Pieces,
+            _ => Common.GetVal<IEnumerable<IBoardPiece>>(piece, "_pieces")
+        };
         if (pieces == null)
         {
             return;

@@ -34,9 +34,9 @@ public sealed class RadarSignalStrengthTestingComponentFactory : ITestingCompone
                 .SetPointCost(0)
                 .UnlockForAllFactions();
 
-            Common.SetVal(builder.Component, "_size", Vector3Int.one);
-            Common.SetVal(builder.Component, "_mass", 0f);
-            Common.SetVal(builder.Component, "_bindToTag", "");
+            builder.Component.Internals().Size = Vector3Int.one;
+            builder.Component.Internals().Mass = 0f;
+            builder.Component.Internals().BindToTag = "";
             builder.Component.Modifiers = [];
 
             builder.AddToRoot<RadarSignalStrengthComponent>();

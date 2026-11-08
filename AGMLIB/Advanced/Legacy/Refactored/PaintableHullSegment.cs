@@ -24,7 +24,7 @@ public class PaintableHullSegment : HullSegment
 
         }
     }
-    void GetBaseMat() => OrignalMaterial = Common.GetVal<Material>(this, "_originalMaterial");
+    void GetBaseMat() => OrignalMaterial = this.Internals().OriginalMaterial;
 
     void UpdatePaintScheme() => OrignalMaterial.SetTexture(_paintMaskParam, paintScheme);
 

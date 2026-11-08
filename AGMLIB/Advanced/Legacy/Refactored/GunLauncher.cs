@@ -37,11 +37,11 @@ class HullComponentConsumeResourcesDead
 
 
         TargetingMode _targetMode = Common.GetVal<TargetingMode>(tube, "_targetMode");
-        LauncherProgrammingQueue _pendingLaunches = Common.GetVal<LauncherProgrammingQueue>(tube, "_pendingLaunches");
-        bool _isReloading = Common.GetVal<bool>(tube, "_isReloading");
-        bool _isCyclingNextShot = Common.GetVal<bool>(tube, "_isCyclingNextShot");
-        float _nextShotTime = Common.GetVal<float>(tube, "_nextShotTime");
-        float _cycleLength = Common.GetVal<float>(tube, "_cycleLength");
+        LauncherProgrammingQueue _pendingLaunches = tube?.Internals().PendingLaunches;
+        bool _isReloading = (tube?.Internals().IsReloading ?? default);
+        bool _isCyclingNextShot = (tube?.Internals().IsCyclingNextShot ?? default);
+        float _nextShotTime = (tube?.Internals().NextShotTime ?? default);
+        float _cycleLength = (tube?.Internals().CycleLength ?? default);
         bool _operatingConsumingResources = _nextShotTime > Time.time;
         bool TEST =
             _targetMode != 0 ||

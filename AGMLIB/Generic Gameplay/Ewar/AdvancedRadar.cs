@@ -36,8 +36,7 @@ class SensorTrackUpdate
     static void Prefix(SensorTrack __instance)
     {
         Common.LogPatch();
-        List<AdvancedRadar> _pingSensors = Common.
-            GetVal<List<ISensor>>(__instance, "_pingSensors").
+        List<AdvancedRadar> _pingSensors = __instance.Internals().PingSensors.
             ConvertAll(a => a?.GetAdvancedRadar()).
             Where(a => a?.PingTracksOnly ?? false)
             .ToList();
@@ -96,16 +95,16 @@ class BaseActiveSensorComponentCanSeeSignature
         {
             Vector3 toSig = __instance.transform.position.To(sig.Position);
             Vector3 localPosition = __instance.transform.root.InverseTransformDirection(toSig);
-            StatValue _statMaxRange = Common.GetVal<StatValue>(__instance, "_statMaxRange");
-            StatValue _statRadiatedPower = Common.GetVal<StatValue>(__instance, "_statRadiatedPower");
-            StatValue _statBurnthroughPowerMultiplier = Common.GetVal<StatValue>(__instance, "_statBurnthroughPowerMultiplier");
-            StatValue _statGain = Common.GetVal<StatValue>(__instance, "_statGain");
-            StatValue _statAperture = Common.GetVal<StatValue>(__instance, "_statAperture");
-            StatValue _statNoiseFiltering = Common.GetVal<StatValue>(__instance, "_statNoiseFiltering");
-            StatValue _statSensitivity = Common.GetVal<StatValue>(__instance, "_statSensitivity");
-            bool _runSweepCycle = Common.GetVal<bool>(__instance, "_runSweepCycle");
-            ReceivedJamming _jammingSources = Common.GetVal<ReceivedJamming>(__instance, "_jammingSources");
-            ISensorProvider _provider = Common.GetVal<ISensorProvider>(__instance, "_provider");
+            StatValue _statMaxRange = __instance.Internals().StatMaxRange;
+            StatValue _statRadiatedPower = __instance.Internals().StatRadiatedPower;
+            StatValue _statBurnthroughPowerMultiplier = __instance.Internals().StatBurnthroughPowerMultiplier;
+            StatValue _statGain = __instance.Internals().StatGain;
+            StatValue _statAperture = __instance.Internals().StatAperture;
+            StatValue _statNoiseFiltering = __instance.Internals().StatNoiseFiltering;
+            StatValue _statSensitivity = __instance.Internals().StatSensitivity;
+            bool _runSweepCycle = __instance.Internals().RunSweepCycle;
+            ReceivedJamming _jammingSources = __instance.Internals().JammingSourcesRef;
+            ISensorProvider _provider = __instance.Internals().ProviderValue;
             if (toSig.magnitude - sig.SigRadius > _statMaxRange.Value)
             {
                 Profiler.EndSample();

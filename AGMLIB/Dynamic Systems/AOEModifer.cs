@@ -200,7 +200,8 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
                     {
                         if (antijam && !SoftKillAntiJamVals)
                             continue;
-                        Common.SetVal(seeker, "_validationReliable", false);
+                        if (seeker is RuntimeBeamSeeker beamSeeker)
+                            beamSeeker.Internals().ValidationReliable = false;
                     }
 
 
@@ -208,7 +209,7 @@ public class OldAOEModifer : ActiveSettings, IJammingSource
                     {
                         if (antijam && !JamAntiJam)
                             continue;
-                        ReceivedJamming jammming = Common.GetVal<ReceivedJamming>(seeker, "_jammingSources");
+                        ReceivedJamming jammming = (seeker as RuntimeBeamSeeker)?.Internals().JammingSources;
                         if (active)
                             jammming.AddSource(this);
                         else

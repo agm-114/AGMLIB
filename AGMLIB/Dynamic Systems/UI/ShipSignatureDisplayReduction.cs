@@ -60,7 +60,7 @@ public sealed class ShipSignatureDisplayReduction : MonoBehaviour
             return;
         }
 
-        TextMeshProUGUI text = Common.GetVal<TextMeshProUGUI>(signatureText, "_text");
+        TextMeshProUGUI text = signatureText?.Internals().Text;
         if (text != null)
         {
             if (displayedMultiplier <= NegligibleSignatureThreshold)
@@ -130,7 +130,7 @@ public sealed class ShipSignatureDisplayReduction : MonoBehaviour
             .FirstOrDefault();
         if (signature != null)
         {
-            Common.RunFunc(signature, "FireSignatureChangedEvent", []);
+            signature.Internals().FireSignatureChangedEvent();
         }
     }
 }

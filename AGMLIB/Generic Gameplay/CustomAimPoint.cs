@@ -39,17 +39,17 @@ class BaseTurretedLauncherComponentFixedUpdate
         CustomAimPoint customaimpoint = __instance.GetComponentInChildren<CustomAimPoint>();
         if (customaimpoint == null)
             return true;
-        ITrack _trainOnTrack = Common.GetVal<ITrack>(__instance, "_trainOnTrack");
-        Vector3? _trainOnPosition = Common.GetVal<Vector3?>(__instance, "_trainOnPosition");
-        float _missileFlightSpeed = Common.GetVal<float>(__instance, "_missileFlightSpeed"); ;
-        Vector3 _trackOffset = Common.GetVal<Vector3>(__instance, "_trackOffset");
-        TurretController _turretControl = Common.GetVal<TurretController>(__instance, "_turretControl");
-        StatValue _statTraverseRate = Common.GetVal<StatValue>(__instance, "_statTraverseRate");
-        StatValue _statElevationRate = Common.GetVal<StatValue>(__instance, "_statElevationRate");
-        Vector3? _lastAimPoint = Common.GetVal<Vector3?>(__instance, "_lastAimPoint");
-        bool _waitingForCell = Common.GetVal<bool>(__instance, "_waitingForCell"); ;
-        float _timeBetweenCells = Common.GetVal<float>(__instance, "_timeBetweenCells"); ;
-        float _cellAccum = Common.GetVal<float>(__instance, "_cellAccum"); ;
+        ITrack _trainOnTrack = __instance.Internals().TrainOnTrack;
+        Vector3? _trainOnPosition = __instance.Internals().TrainOnPosition;
+        float _missileFlightSpeed = __instance.Internals().MissileFlightSpeed; ;
+        Vector3 _trackOffset = __instance.Internals().TrackOffset;
+        TurretController _turretControl = __instance.Internals().TurretControl;
+        StatValue _statTraverseRate = __instance.Internals().StatTraverseRate;
+        StatValue _statElevationRate = __instance.Internals().StatElevationRate;
+        Vector3? _lastAimPoint = __instance.Internals().LastAimPoint;
+        bool _waitingForCell = ((BaseCellLauncherComponent)__instance).Internals().WaitingForCell; ;
+        float _timeBetweenCells = ((BaseCellLauncherComponent)__instance).Internals().TimeBetweenCells; ;
+        float _cellAccum = ((BaseCellLauncherComponent)__instance).Internals().CellAccum; ;
 
 
         if (_trainOnTrack == null && !_trainOnPosition.HasValue)
@@ -80,9 +80,9 @@ class BaseTurretedLauncherComponentFixedUpdate
                 _waitingForCell = false;
             }
         }
-        Common.SetVal(__instance, "_lastAimPoint", _lastAimPoint);
-        Common.SetVal(__instance, "_cellAccum", _cellAccum);
-        Common.SetVal(__instance, "_waitingForCell", _waitingForCell);
+        __instance.Internals().LastAimPoint = _lastAimPoint;
+        ((BaseCellLauncherComponent)__instance).Internals().CellAccum = _cellAccum;
+        ((BaseCellLauncherComponent)__instance).Internals().WaitingForCell = _waitingForCell;
         return false;
     }
 }

@@ -109,7 +109,7 @@ public class SimpleOwnerFilter : BaseFilter, ISimpleFilter
     [SerializeField] protected bool Friendly = false;
     [SerializeField] protected bool Enemy = true;
     [SerializeField] protected bool None = true;
-        
+
 
     override public bool CheckMissile(ShipController parent, ModularMissile target) => ValidIFFTarget(parent.OwnedBy, target?.OwnedBy);
     public bool ValidIFFTarget(IPlayer owner, IPlayer toPlayer)
@@ -140,6 +140,7 @@ public class SimpleFilter : BaseFilter, ISimpleFilter
     [SerializeField] protected bool _defaultvalue = false;
     public IList<string> Whitelist => _whitelist;
     public IList<string> Blacklist => _blacklist;
+    public bool DefaultValue { get => _defaultvalue; set => _defaultvalue = value; }
     public ISimpleFilter CopyFilter(ICoreFilter filter, bool newdefault = true)
     {
         _whitelist = filter.Whitelist.ToList();
@@ -301,7 +302,7 @@ public class KeyBasedFilterLookup : BaseSocketLookup
 
     public override Color GetGroupBackgroundColor(string key)
     {
-        if (Keys.Contains(key)) 
+        if (Keys.Contains(key))
         {
             int index = Keys.IndexOf(key);
             if (index >= 0 && index >= BackgroundColors.Count)
@@ -440,12 +441,12 @@ public class SocketFilters : BasicSocketEditorUISettings, IFilter
     [HideInInspector]
     public bool Resized = false;
 
-    
+
     public static void EnsureChildSetup(HullSocket socket, HullComponent hullComponent)
     {
         SocketEditorChildSettings? childsettings = socket?.GetComponent<SocketEditorChildSettings>();
         SocketEditorParentSettings? parentsettings = socket?.GetComponent<SocketEditorParentSettings>();
-        
+
 
         if (childsettings != null && childsettings.VisualChildren.Count > 0)
         {
@@ -478,7 +479,7 @@ public class SocketFilters : BasicSocketEditorUISettings, IFilter
     {
         //if (hullComponent?.name != null)
         //    Debug.LogError("Socketfilter Checking legality of component " + hullComponent?.name + " on socket " + socket?.name);
-  
+
 
 
 
@@ -510,9 +511,9 @@ public class SocketFilters : BasicSocketEditorUISettings, IFilter
             return true;
         else if (socketFilters.Blacklist.Contains(hullComponent.Category))
             return false;
-        else if (socketFilters.Whitelist.Contains(Common.GetVal<string>(hullComponent, "_factionKey") ?? "NOFACTIONKEY"))
+        else if (socketFilters.Whitelist.Contains(hullComponent?.Internals().FactionKey ?? "NOFACTIONKEY"))
             return true;
-        else if (socketFilters.Blacklist.Contains(Common.GetVal<string>(hullComponent, "_factionKey") ?? "NOFACTIONKEY"))
+        else if (socketFilters.Blacklist.Contains(hullComponent?.Internals().FactionKey ?? "NOFACTIONKEY"))
             return false;
         else if (socketFilters.Whitelist.Contains(hullComponent.SourceModId?.ToString() ?? "Vanilla_Neb"))
             return true;

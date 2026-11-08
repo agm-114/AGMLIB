@@ -15,7 +15,7 @@ internal sealed class RadarSignalStrengthIconBinding : MonoBehaviour
     {
         ClearSource();
         _source = source;
-        _tooltip = Common.GetVal<TooltipTrigger>(trackedIcon, "_tooltip", typeof(StatusIcon));
+        _tooltip = trackedIcon?.Internals().Tooltip;
         _tooltip?.SetGetTextCallback(BuildTooltipText);
         _renderedRevision = -1;
         _nextRefreshTime = 0f;
@@ -108,7 +108,7 @@ internal static class ShipStatusIconGroupSetShipRadarSignalStrengthPatch
 {
     private static void Postfix(ShipStatusIconGroup __instance, ShipController ship)
     {
-        TrackedStatusIcon trackedIcon = Common.GetVal<TrackedStatusIcon>(__instance, "_trackedIcon");
+        TrackedStatusIcon trackedIcon = __instance.Internals().TrackedIcon;
         if (trackedIcon == null)
         {
             return;

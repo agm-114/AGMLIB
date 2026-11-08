@@ -17,9 +17,9 @@ public class MultiTarget : MonoComponent
     public List<Muzzle> MultiTargetMuzzles = new();
 
     public WeaponComponent Weapon => this.GetComponentInParent<WeaponComponent>();
-    public bool MuzzlesActive => Common.GetVal<bool>(Weapon, "_muzzlesActive");
-    private bool Reloading => Common.GetVal<bool>(Weapon, "_reloading");
-    private bool WaitingForMuzzle => Common.GetVal<bool>(Weapon, "_waitingForMuzzle");
+    public bool MuzzlesActive => Weapon is ContinuousWeaponComponent continuous && continuous.Internals().MuzzlesActive;
+    private bool Reloading => Weapon is DiscreteWeaponComponent discrete && discrete.Internals().Reloading;
+    private bool WaitingForMuzzle => Weapon is DiscreteWeaponComponent discrete && discrete.Internals().WaitingForMuzzle;
     private bool NoTarget => Weapon.CurrentTargetingMode == TargetingMode.None;
     bool SplitBeams(bool fire)
     {
@@ -44,7 +44,7 @@ public class MultiTarget : MonoComponent
         }
         return false;
     }
-    List<Muzzle> Muzzles => [.. Common.GetVal<Muzzle[]>(Weapon, "_muzzles")];
+    List<Muzzle> Muzzles => [.. Weapon?.Internals().Muzzles];
 
     List<Muzzle> ActiveMuzzles
     {
@@ -134,7 +134,7 @@ public class MultiTarget : MonoComponent
 
     public void StopFire(int muzzle)
     {
-        //return; 
+        //return;
         //Common.Trace((this.gameObject), "StopFire");
         //Muzzles[muzzle].gameObject.transform.localRotation = Quaternion.identity;
         //if (muzzle == 0)
@@ -144,7 +144,7 @@ public class MultiTarget : MonoComponent
 
         if (Weapon is ContinuousWeaponComponent beamwep && !_baseRpcProvider.IsHost)
         {
-            IWeaponComponentRPC _weaponRpcProvider = Common.GetVal<IWeaponComponentRPC>(Weapon, "_weaponRpcProvider");
+            IWeaponComponentRPC _weaponRpcProvider = Weapon?.Internals().WeaponRpcProvider;
 
             if (!_weaponRpcProvider.IsHost)
                 return;
@@ -263,12 +263,12 @@ class PointDefenseControllerTaskDirectWeapon
     {
         Common.LogPatch();
         if (turret == null) { return; }
-        if (Common.GetVal<IWeapon>(turret, "Wep") is not WeaponComponent cwp) { return; }
+        if (PointDefenseControllerInternals.GetTurretWeapon(turret) is not WeaponComponent cwp) { return; }
         if (cwp.gameObject?.GetComponent<MultiTarget>() is not MultiTarget beamdata) { return; }
         //Common.SetVal(cwp, "_cooldownStyle", CooldownType.Proportional);
         List<Object> targetList2 = new List<Object>();
         targetList.ToList(targetList2);
-        beamdata.AssignTracks(targetList2.ConvertAll(target => Common.GetVal<ITrack>(target, "Track")) ?? new());
+        beamdata.AssignTracks(targetList2.ConvertAll(PointDefenseControllerInternals.GetTargetTrack) ?? new());
     }
 }
 /*

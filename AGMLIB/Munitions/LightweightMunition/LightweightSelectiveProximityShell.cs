@@ -6,7 +6,7 @@
 
 
         [SerializeField]
-        private float TriggerRadius => Common.GetVal<float>(this, "_triggerRadius");
+        private float TriggerRadius => this.Internals().TriggerRadius;
 
 
         [Flags]

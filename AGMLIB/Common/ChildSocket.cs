@@ -15,8 +15,8 @@ public class ChildSocket : MonoBehaviour
         {
             GameObject socketObject = Object.Instantiate(new GameObject(), _hullsocket.transform);
             HullSocket newsocket = socketObject.AddComponent<HullSocket>();
-            Common.SetVal(newsocket, "_key", ShortGuid.NewGuid().ToString());
-            Common.SetVal(gameObject.GetComponentInParent<BaseHull>(), "_socketLookup", null);
+            newsocket.Internals().Key = ShortGuid.NewGuid().ToString();
+            gameObject.GetComponentInParent<BaseHull>().Internals().SocketLookup = null;
             //socketObject.AddComponent<SocketFilters>().Whitelisteverything = true;
             newsocket.SetComponent(componentPrefab);
 

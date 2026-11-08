@@ -14,8 +14,8 @@ public class ShipStatusPowerBarBinding : ShipStatusPowerBar.Binding
     public void SetSource(ShipStatusPowerBar source, QuantityStatusIcon powerIcon)
     {
         _powerIcon = powerIcon;
-        _iconImage = Common.GetVal<Image>(_powerIcon, "_iconImage");
-        Tooltip = Common.GetVal<TooltipTrigger>(_powerIcon, "_tooltip", typeof(StatusIcon));
+        _iconImage = _powerIcon?.Internals().IconImage;
+        Tooltip = ((StatusIcon)_powerIcon)?.Internals().Tooltip;
         EnsureMask();
         SetPowerSource(source);
     }

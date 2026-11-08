@@ -18,7 +18,7 @@ namespace AGMLIB.Dynamic_Systems.Area
             {
                 restoreStatus = lockerComponent.gameObject.AddComponent<RestoreStatus>();
                 restoreStatus.LockerComponent = lockerComponent;
-                restoreStatus.RestoreCount = Common.GetVal<int>(lockerComponent, "_restoreCount");
+                restoreStatus.RestoreCount = (lockerComponent?.Internals().RestoreCount ?? default);
 
             }
             return restoreStatus;
@@ -34,7 +34,7 @@ namespace AGMLIB.Dynamic_Systems.Area
         {
             if (RestoreStock > 1)
             {
-                Common.SetVal(LockerComponent, "_restoreCount", _restoresRemaining + 1);
+                LockerComponent.Internals().RestoreCount = _restoresRemaining + 1;
                 RestoreStock -= 1;
             }
         }
@@ -160,7 +160,7 @@ namespace AGMLIB.Dynamic_Systems.Area
                 }
 
             }
- 
+
         }
         */
 

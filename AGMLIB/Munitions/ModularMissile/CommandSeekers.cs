@@ -34,7 +34,7 @@ public interface IDebugableMissileSeeker
     List<DebugLine> GetDebugLines();
 }
 
-//    
+//
 
 
 [CreateAssetMenu(fileName = "New Position Seeker", menuName = "Nebulous/Missiles/Seekers/Position")]
@@ -132,7 +132,7 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
     public SensorUpdateMode SeekerUpdateMode = SensorUpdateMode.BestSource;
 
     [Header("Inflight Noise Settings")]
-    
+
     public SeekerMode UpdatePrimarySource = SeekerMode.SensorCenter;
     public bool UpdatePrimaryUseBounds = true;
     public bool UpdatePrimaryUseSphereNoise = false;
@@ -162,14 +162,14 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
         if (SeekerUpdateMode == SensorUpdateMode.None)
             return "<color=" + GameColors.GetTextColor(Color) + ">GOLIS</color>";
         return "<color=" + GameColors.GetTextColor(Color) + ">GOT</color>";
-        
+
     }
     public override string GetDetailSummarySegment()
     {
         if (SeekerUpdateMode == SensorUpdateMode.None)
             return "GOTO LOCATION IN SPACE";
         return "GOTO TARGET";
-        
+
     }
 
     public override string GetFunctionalDescriptionSegment()
@@ -177,7 +177,7 @@ public class PositionSeekerDescriptor : CommandSeekerDescriptor
         if (SeekerUpdateMode == SensorUpdateMode.None)
             return "predicts target postion based on target kinematics before launch";
         return "predicts target postion based on last good target data";
-        
+
     }
 
     public override void FinalSetup(ModularMissile missile)
@@ -252,7 +252,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
 
     private float _age = 0f;
 
-    public override Vector3 LocalBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(Transform.InverseTransformDirection(Transform.position.To(PredictedPosition).normalized)), 90) * Vector3.forward; //;// 
+    public override Vector3 LocalBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(Transform.InverseTransformDirection(Transform.position.To(PredictedPosition).normalized)), 90) * Vector3.forward; //;//
     public Vector3 TrueBeamDirection => Quaternion.RotateTowards(Quaternion.identity, Quaternion.LookRotation(Transform.InverseTransformDirection(Transform.position.To(KnownPosition).normalized)), 90) * Vector3.forward; //;//
 
     //KnownPosition - base.Missile.transform.position;
@@ -304,7 +304,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
     }
 
 
-    public Vector3 MixGetPostionWithNoise(SeekerPositionData posData, SeekerSettings settings)   
+    public Vector3 MixGetPostionWithNoise(SeekerPositionData posData, SeekerSettings settings)
     {
         Vector3 primaryPostion = GetPostionWithNoise(posData, settings.Primary, settings.RandomScale);
 
@@ -347,7 +347,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
             base.SetTrackTarget(target, initialPosition);
         }
         _startvelocity = (TargetedTrack?.AbsoluteVelocity ?? Vector3.zero);// + Vector3.up * 3;
-        
+
         _startaccel = TargetedTrack?.Acceleration ?? Vector3.zero;
         SeekerPositionData startpos = new(
             initialPosition,
@@ -374,8 +374,8 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
         if (_comdesc == null || _comdesc.SeekerUpdateMode == SensorUpdateMode.None)
             return;
 
-        List<RuntimeMissileSeeker> _validationSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_validationSeekers") ?? new();
-        List<RuntimeMissileSeeker> _targetingSeekers = Common.GetVal<List<RuntimeMissileSeeker>>(Missile, "_targetingSeekers") ?? new();
+        List<RuntimeMissileSeeker> _validationSeekers = Missile?.Internals().ValidationSeekers ?? new();
+        List<RuntimeMissileSeeker> _targetingSeekers = Missile?.Internals().TargetingSeekers ?? new();
 
         List<Vector3> _velocities = new List<Vector3>();
         List<Vector3> _accelerations = new List<Vector3>();
@@ -393,7 +393,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
                 continue;
 
             }
-           
+
 
 
             if (_comdesc.SeekerUpdateMode == SensorUpdateMode.FirstSource)
@@ -438,7 +438,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
         }
 
         if (_comdesc.SeekerUpdateMode == SensorUpdateMode.Average && _positions.Count > 0)
-        { 
+        {
             _startvelocity = Vector3.zero;
             _startaccel = Vector3.zero;
             _startposition = Vector3.zero;
@@ -458,7 +458,7 @@ public class RuntimePostionSeeker : RuntimeCommandSeeker, IDebugableMissileSeeke
         {
             _startposition = MixGetPostionWithNoise(new SeekerPositionData(intialPostion, TruePosition, _startposition ?? Vector3.zero), _comdesc.InFlightSettings);
         }
-        
+
         /*
         foreach (RuntimeMissileSeeker seeker in .gameObject.GetComponents<RuntimeMissileSeeker>())
         {
@@ -547,7 +547,7 @@ class MissileDetailOverlayDrawShapesPatch
     // We use ___missile to access the private field of the same name
     static void Postfix(MissileDetailOverlay __instance, Camera cam)
     {
-        ISelectableMissile _missile = Common.GetVal<ISelectableMissile>(__instance, "_missile");
+        ISelectableMissile _missile = __instance.Internals().Missile;
         // Basic safety check: same logic as original DrawShapes
         if (_missile == null || !_missile.Alive) return;
 

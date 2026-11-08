@@ -29,14 +29,14 @@ public class FormationManager : ShipState
             hullComponent.GetAvailableDCJobs(ref repairJobs, ref repairJobs, true, false);
         foreach (IRepairJob job in repairJobs.Where(a => !a.IsRestoration && a.Name.Contains("Repairing") && a.Name.Contains("in")))
             job.DoRepairWork(1);
-        NavigationTask task = Common.GetVal<NavigationTask>(ShipController, "_navOrder");
+        NavigationTask task = ShipController?.Internals().NavOrder;
 #pragma warning disable IDE0045 // Convert to conditional expression
         if (task is KeepFormationTask keepFormationTask)
         {
-            ShipController _guide = Common.GetVal<ShipController>(keepFormationTask, "_guide");
+            ShipController _guide = keepFormationTask?.Internals().Guide;
             if (_guide.FormStyle == FormationStyle.Relative)
-                targetpos = _guide.transform.position + _guide.transform.TransformDirection(Common.GetVal<Vector3>(keepFormationTask, "_relativePosition"));
-            targetpos = _guide.transform.position + Common.GetVal<Vector3>(keepFormationTask, "_relativePosition");
+                targetpos = _guide.transform.position + _guide.transform.TransformDirection((keepFormationTask?.Internals().RelativePosition ?? default));
+            targetpos = _guide.transform.position + (keepFormationTask?.Internals().RelativePosition ?? default);
         }
         else if (task is MoveToTask moveToTask && moveToTask.Path.Count > 0)
             targetpos = moveToTask.Path.First();

@@ -24,10 +24,10 @@ public class FixedTubeLauncherComponent : TubeLauncherComponent, IFixedWeapon
     protected bool _lastBlock = false;
     protected int _lastShot = 0;
     protected float _lastShotTime = 0;
-    protected int RawShotValue => Common.GetVal<int>(this, "_currentShot");
+    protected int RawShotValue => this.Internals().CurrentShot;
     protected int CurrentShot => RawShotValue == 0 ? _launchesPerLoad : RawShotValue;
     public override string ActiveStatusText => "F-" + CurrentShot.ToString();
-    protected float CurrentShotTime => Common.GetVal<float>(this, "_nextShotTime") + 0.1f;
+    protected float CurrentShotTime => this.Internals().NextShotTime + 0.1f;
     protected bool BlockingFire => CurrentShotTime >= Time.time; // _isCyclingNextShot inverse?
 
     protected override ComponentActivity GetFunctionalActivityStatus() => BlockingFire ? ComponentActivity.Active : base.GetFunctionalActivityStatus();

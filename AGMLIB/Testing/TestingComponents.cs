@@ -147,7 +147,7 @@ public sealed class TestingComponentBuilder
         if (!string.IsNullOrWhiteSpace(displayName))
         {
             Prefab.name = displayName.Trim();
-            Common.SetVal(Component, "_shortUIName", Prefab.name);
+            Component.Internals().ShortUIName = Prefab.name;
         }
 
         return this;
@@ -155,35 +155,35 @@ public sealed class TestingComponentBuilder
 
     public TestingComponentBuilder SetCategory(string category)
     {
-        Common.SetVal(Component, "_category", category ?? "");
+        Component.Internals().Category = category ?? "";
         return this;
     }
 
     public TestingComponentBuilder SetDescription(string description)
     {
-        Common.SetVal(Component, "_shortDescription", "");
-        Common.SetVal(Component, "_longDescription", description ?? "");
+        Component.Internals().ShortDescription = "";
+        Component.Internals().LongDescription = description ?? "";
         return this;
     }
 
     public TestingComponentBuilder SetPointCost(int pointCost)
     {
-        Common.SetVal(Component, "_pointCost", Mathf.Max(0, pointCost));
-        Common.SetVal(Component, "_compoundingCost", false);
-        Common.SetVal(Component, "_compoundingCostClass", "");
-        Common.SetVal(Component, "_firstInstanceFree", false);
+        Component.Internals().PointCost = Mathf.Max(0, pointCost);
+        Component.Internals().CompoundingCost = false;
+        Component.Internals().CompoundingCostClass = "";
+        Component.Internals().FirstInstanceFree = false;
         return this;
     }
 
     public TestingComponentBuilder UnlockForAllFactions()
     {
-        Common.SetVal(Component, "_factionKey", "");
+        Component.Internals().FactionKey = "";
         return this;
     }
 
     internal void FinalizeMetadata()
     {
-        Common.SetVal(Component, "_saveKey", SaveKey);
+        Component.Internals().SaveKey = SaveKey;
         Component.SourceModId = TestingComponentContext.AgmlibModId;
     }
 
@@ -262,7 +262,7 @@ public sealed class TestingComponentContext
     internal TestingComponentContext(TestingComponentReport report)
     {
         _report = report;
-        _components = Common.GetVal<Dictionary<string, HullComponent>>(BundleManager.Instance, "_components")
+        _components = BundleManager.Instance?.Internals().Components
             ?? throw new InvalidOperationException("BundleManager component registry is unavailable.");
         _sourceComponents = BundleManager.Instance.AllComponents
             .Where(component => component != null && component.GetComponent<TestingComponentMarker>() == null)

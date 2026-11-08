@@ -8,7 +8,7 @@
 
         public Muzzle[] Muzzles = new Muzzle[1];
 
-        protected Muzzle[] _muzzles => Common.GetVal<Muzzle[]>(Weapon, "_muzzles");
+        protected Muzzle[] _muzzles => Weapon?.Internals().Muzzles;
         private int _currentMuzzle = 0;
         public Muzzle GetNextMuzzle(out int num)
         {
@@ -147,7 +147,7 @@
             MuzzleState state = __instance.GetComponentInChildren<MuzzleState>() ?? __instance.gameObject.AddComponent<MuzzleState>();
             if (state._muzzles == null)
             {
-                state._muzzles = Common.GetVal<Muzzle[]>(__instance, "_muzzles");
+                state._muzzles = ((WeaponComponent)__instance).Internals().Muzzles;
             }
             Muzzle[] _muzzles = state._muzzles;
             //Common.SetVal(__instance, "_muzzles", _muzzles);
@@ -170,7 +170,7 @@
                     else
                         filteredMuzzles[i] = new DummyMuzzle();
                 }
-                Common.SetVal<Muzzle[]>(__instance, "_muzzles", _tempmuzzles);
+                ((WeaponComponent)__instance).Internals().Muzzles = _tempmuzzles;
                 return;
             }
             else

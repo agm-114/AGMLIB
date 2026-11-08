@@ -49,11 +49,11 @@ public class ModularFactionDescription : FactionDescription, IModular
     [SerializeField]
     private string[] _sharedEquipmentPatternsblacklist = new string[0];
 
-    public string[] SharedFactionAll => Common.GetVal<string[]>(this, "_sharedFactionAll");
+    public string[] SharedFactionAll => this.Internals().SharedFactionAll;
 
-    public string[] SharedEquipmentList => Common.GetVal<string[]>(this, "_sharedEquipmentList");
+    public string[] SharedEquipmentList => this.Internals().SharedEquipmentList;
 
-    public string[] SharedEquipmentPatterns => Common.GetVal<string[]>(this, "_sharedEquipmentPatterns");
+    public string[] SharedEquipmentPatterns => this.Internals().SharedEquipmentPatterns;
 
     public bool AllowFactionLessComponents = true;
 
@@ -159,7 +159,7 @@ public class ModularFactionDescription : FactionDescription, IModular
         //    Debug.Log("faction: " + faction);
 
         //Debug.Log("NO filters KEY " + checkKey + "faction?: " + string.IsNullOrEmpty(primaryFactionKey) +  " include faction all: " + includeFactionAll + " contains: " + _sharedFactionSet.Contains(primaryFactionKey));
-        
+
         if(_sharedFactionSet.Contains(primaryFactionKey))
         {
             return true;
@@ -184,7 +184,7 @@ class HullComponentUseableByFaction{
         Common.LogPatch();
         if (faction is not ModularFactionDescription FactionDescription)
             return;
-        string primaryFactionKey = Common.GetVal<string>(__instance, "_factionKey") ?? "";
+        string primaryFactionKey = __instance.Internals().FactionKey ?? "";
         string checkKey = __instance.SaveKey;
         bool oldresult = __result;
         __result = FactionDescription.FullCheckSharedEquipment(checkKey, primaryFactionKey, true);
@@ -263,8 +263,8 @@ public class AvailableMunitionsSetConstructor
             return;
 
         }
-        List<IMunition> _allMunitions = Common.GetVal<List<IMunition>>(__instance, "_allMunitions");
-        Dictionary<Guid, IMunition> _allMunitionsByNetKey = Common.GetVal<Dictionary<Guid, IMunition>>(__instance, "_allMunitionsByNetKey");
+        List<IMunition> _allMunitions = __instance.Internals().AllMunitions;
+        Dictionary<Guid, IMunition> _allMunitionsByNetKey = __instance.Internals().AllMunitionsByNetKey;
         foreach (IMunition munition in BundleManager.Instance.AllMunitions)
         {
 

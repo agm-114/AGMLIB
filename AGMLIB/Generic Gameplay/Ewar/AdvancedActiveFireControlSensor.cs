@@ -17,8 +17,8 @@ namespace Lib.Generic_Gameplay.Ewar
         public static bool CanSeeSignature(ActiveFireControlSensor sensor, ISignature sig)
         {
             //Common.Hint("using modified max range");
-            float _maxRange = Common.GetVal<StatValue>(sensor, "_statMaxRange").Value;
-            float _fov = Common.GetVal<float>(sensor, "_fov");
+            float _maxRange = (((FireControlSensor)sensor)?.Internals().StatMaxRange).Value;
+            float _fov = (((FireControlSensor)sensor)?.Internals().Fov ?? default);
 
             Vector3 to = sig.Position - sensor.transform.position;
 
@@ -45,7 +45,7 @@ class ActiveFireControlSensorCanSeeSignature
         ActiveFireControlSensorOptions options = __instance.gameObject.GetComponent<ActiveFireControlSensorOptions>();
         if (options != null)
         {
-            if (options.AllowModifedMaxRange) 
+            if (options.AllowModifedMaxRange)
                 __result = ActiveFireControlSensorOptions.CanSeeSignature(__instance, sig);
         }
         //__result = true;

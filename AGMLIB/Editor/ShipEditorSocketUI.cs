@@ -35,7 +35,7 @@ class ShipEditorPaneSetShip
     {
         Common.LogPatch();
 
-        
+
 
         IReadOnlyCollection<HullSocket> allSockets = ____currentShip.Ship.Hull.AllSockets;
         //Debug.LogError("Setting Ship");
@@ -65,7 +65,7 @@ class ShipEditorPaneSetShip
                 Image image = socketgroupgo2.GetComponentInChildren<Image>();
                 image.color = childsettings.BackgroundColor;
                 //socketgroupgo2.active = socket.Component != null;
-                TextMeshProUGUI accordianText = Common.GetVal<TextMeshProUGUI>(accordionName, "_text");
+                TextMeshProUGUI accordianText = accordionName?.Internals().Text;
                 accordianText.color = childsettings.TextColor;
 
                 void HandleComponentChange(HullComponent component)
@@ -95,7 +95,7 @@ class ShipEditorPaneSetShip
 
                         }
 
-                        
+
                     }
                 }
 
@@ -126,7 +126,7 @@ class ShipEditorPaneSetShip
 
             }
             //Debug.LogError("removing socket " + socket?.ShortName);
-            List<SocketItem> _sockets = Common.GetVal<List<SocketItem>>(__instance, "_sockets");
+            List<SocketItem> _sockets = __instance.Internals().Sockets;
             _sockets.Remove(socketitem);
             UnityEngine.Object.Destroy(socketitem?.gameObject);
 
@@ -210,7 +210,7 @@ class ShipEditorPanePatch
         //if(socketFilters == null)
         //ComponentPalette _palette = (ComponentPalette)GetPrivateField(__instance, "_palette"); ;
 
-        ModalListSelectDetailed _openPalette = Common.GetVal<ModalListSelectDetailed>(__instance, "_openPalette");
+        ModalListSelectDetailed _openPalette = __instance.Internals().OpenPalette;
         if (_openPalette == null)
             return;
 

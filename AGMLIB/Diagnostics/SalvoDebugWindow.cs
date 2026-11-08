@@ -1,3 +1,4 @@
+using Cameras;
 using Mirror;
 
 namespace Lib.Diagnostics;
@@ -75,7 +76,7 @@ internal class SalvoDebugWindow : MonoBehaviour
 
     internal void FocusImpact()
     {
-        if (SelectedRay is not BeamRayTrace ray || FindObjectOfType<global::Cameras.ImprovedOrbitCamera>() is not { } camera)
+        if (SelectedRay is not BeamRayTrace ray || FindObjectOfType<ImprovedOrbitCamera>() is not { } camera)
             return;
         float radius = ray.HasTargetBounds ? Mathf.Max(ray.TargetBounds.extents.magnitude, 1f) : 10f;
         camera.TweenToPosition(ray.End, 0.25f);

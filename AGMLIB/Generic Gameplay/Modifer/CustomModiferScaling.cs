@@ -57,7 +57,7 @@ class StatValueCalculateModifierCustomScaling
         ref float totalModifier,
         ref float totalLiteral)
     {
-        Dictionary<IModifierSource, StatModifier> modifierSources = Common.GetVal<Dictionary<IModifierSource, StatModifier>>(__instance, "_modifiers");
+        Dictionary<IModifierSource, StatModifier> modifierSources = __instance.Internals().Modifiers;
         if (modifierSources == null || modifiers == null)
             return;
 
@@ -75,7 +75,7 @@ class StatValueCalculateModifierCustomScaling
         if (scaling == null)
             return;
 
-        ShipStatAttribute attribute = Common.GetVal<ShipStatAttribute>(__instance, "Attribute");
+        ShipStatAttribute attribute = __instance.Attribute;
         if (scaling.OnlyWhenStatHasStackingPenalty && attribute?.StackingPenalty != true)
             return;
 

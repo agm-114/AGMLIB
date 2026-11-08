@@ -26,7 +26,7 @@ class DiscreteWeaponComponentCalculateLead
         if (__instance.TryGetComponent<DiscreteWeaponComponentLeadLogic>(out var leadLogic))
         {
             IMunition SelectedAmmoType = __instance.SelectedAmmoType;
-            Vector3 _aimPosition = Common.GetVal<Transform>(__instance, "_aimCheckFrom").position;
+            Vector3 _aimPosition = ((__instance as FixedDiscreteWeaponComponent)?.Internals().AimCheckFrom).position;
             float muzzleVelocity = __instance.MuzzleVelocity;
             if(SelectedAmmoType is Missile missile)
             {

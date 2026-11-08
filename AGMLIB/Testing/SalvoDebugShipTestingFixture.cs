@@ -1,6 +1,6 @@
 #if DEBUG && AGMLIB_LOCAL_TEST_FIXTURES
 using Lib.Diagnostics;
-using global::Munitions.ModularMissiles;
+using Munitions.ModularMissiles;
 using UnityEngine.SceneManagement;
 
 namespace Lib.Testing;

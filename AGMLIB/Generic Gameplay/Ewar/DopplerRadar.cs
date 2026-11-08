@@ -547,7 +547,7 @@ internal static class DopplerNotchOverlayVisibilityPatch
 
     internal static void UpdateOverlay(ShipDetailOverlay detailOverlay, DopplerNotchOverlay overlay)
     {
-        bool active = Common.GetVal<bool>(detailOverlay, "_active");
+        bool active = (detailOverlay?.Internals().Active ?? default);
         ShipController ship = detailOverlay.ForShip;
         overlay.SetVisible(ship != null && ship.OwnedBy != null && ship.OwnedBy.IsOnLocalPlayerTeam && active);
     }

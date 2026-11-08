@@ -244,7 +244,7 @@ public static class TestingPrefabYamlDumper
                 continue;
             }
 
-            foreach (global::Munitions.SubmunitionWarhead warhead in parentObject.GetComponentsInChildren<global::Munitions.SubmunitionWarhead>(includeInactive: true))
+            foreach (SubmunitionWarhead warhead in parentObject.GetComponentsInChildren<SubmunitionWarhead>(includeInactive: true))
             {
                 GameObject? submunitionPrefab = ReadMember(warhead, "_submunitionPrefab") as GameObject;
                 if (submunitionPrefab == null || !knownGameObjects.Add(submunitionPrefab.GetInstanceID()))

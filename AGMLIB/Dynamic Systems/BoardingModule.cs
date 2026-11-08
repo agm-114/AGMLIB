@@ -40,13 +40,13 @@ public class AssultTeamPiece : MonoBehaviour
         Debug.LogError("Settingup team");
         _shipController = ship;
         _board = board;
-        _progressBar = Common.GetVal<Image>(source, "_progressBar");
-        _tooltip = Common.GetVal<TooltipTrigger>(source, "_tooltip");
+        _progressBar = source?.Internals().ProgressBar;
+        _tooltip = source?.Internals().Tooltip;
 
-        _idleColor = Common.GetVal<GameColors.ColorName>(source, "_idleColor");
-        _enRouteColor = Common.GetVal<GameColors.ColorName>(source, "_enRouteColor");
-        _workingColor = Common.GetVal<GameColors.ColorName>(source, "_workingColor");
-        _deadColor = Common.GetVal<GameColors.ColorName>(source, "_deadColor");
+        _idleColor = (source?.Internals().IdleColor ?? default);
+        _enRouteColor = (source?.Internals().EnRouteColor ?? default);
+        _workingColor = (source?.Internals().WorkingColor ?? default);
+        _deadColor = (source?.Internals().DeadColor ?? default);
         Component.Destroy(source);
 
         base.transform.localScale = new Vector3(1f, 1f, 1f);

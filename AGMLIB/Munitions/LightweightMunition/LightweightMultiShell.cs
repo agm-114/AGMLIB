@@ -118,11 +118,11 @@ namespace Lib.Munitions.LightweightMunition
             hit = new RaycastHit();
             /*
             if(!Physics.BoxCast(
-                center:transform.position, 
-                halfExtents:Fragment.offsetRange, 
+                center:transform.position,
+                halfExtents:Fragment.offsetRange,
                 direction:transform.forward,
                 orientation: transform.rotation,
-                maxDistance: raydistance, 
+                maxDistance: raydistance,
                 layerMask:_includeMunitions ? 524801 : 513,
                 queryTriggerInteraction: QueryTriggerInteraction.Ignore
                 ))
@@ -156,7 +156,7 @@ namespace Lib.Munitions.LightweightMunition
 
                     // Set the positions to visualize the ray
                     lineRenderer.positionCount = 2;
-                    lineRenderer.SetPosition(0, r.origin); 
+                    lineRenderer.SetPosition(0, r.origin);
                     lineRenderer?.SetPosition(1, r.GetPoint(raydistance));
 
                 }
@@ -214,7 +214,7 @@ namespace Lib.Munitions.LightweightMunition
             }
 
             //
-            //return 
+            //return
 
             return false;
         }
@@ -238,8 +238,8 @@ namespace Lib.Munitions.LightweightMunition
             //Common.Hint("test frag");
 
 
-            Common.SetVal(this, "_tracerEffect", _childShellTemplate.TracerEffect);
-            Common.SetVal(this, "_whine", _childShellTemplate.Whine);
+            this.Internals().TracerEffect = _childShellTemplate.TracerEffect;
+            this.Internals().Whine = _childShellTemplate.Whine;
             LightweightKineticMunitionContainer container = base.InstantiateSelf(startPosition, startRotation, startVelocity) as LightweightKineticMunitionContainer;
             if (container == null)
                 return null;

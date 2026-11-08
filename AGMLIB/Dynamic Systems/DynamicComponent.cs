@@ -18,7 +18,7 @@
             MonoBehaviour.enabled = active;
             if (MonoBehaviour is BaseSignature sig)
             {
-                Common.RunFunc(sig, "FireSignatureChangedEvent", []);
+                sig.Internals().FireSignatureChangedEvent();
                 //sig.OnSignatureChanged.Invoke();
             }
         }

@@ -31,7 +31,7 @@ public abstract class BaseShellWarheadDescriptor : AngleWarheadDescriptor
     {
         if (localImbued == null)
             return;
-        IWeaponStatReportReceiver _reportTo = Common.GetVal<IWeaponStatReportReceiver>(runtime.Missile, "_reportTo");
+        IWeaponStatReportReceiver _reportTo = ((LookaheadMunitionBase)runtime.Missile)?.Internals().ReportToValue;
         localImbued.ImbueLocal(runtime.Missile.LaunchedFrom);
         localImbued.SetWeaponReportPath(_reportTo);
     }
@@ -41,7 +41,7 @@ public abstract class BaseShellWarheadDescriptor : AngleWarheadDescriptor
 public class ShellWarheadDescriptor : BaseShellWarheadDescriptor
 {
     public GameObject ShellMunitionPrefab;
-    
+
 
     public ShellMunition ShellMunition => ShellMunitionPrefab.GetComponentInChildren<ShellMunition>();
 

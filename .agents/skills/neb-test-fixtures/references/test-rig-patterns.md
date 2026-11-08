@@ -158,6 +158,12 @@ For selective target logic, vary one target-class flag at a time and include an 
 
 ## Test Layers
 
+- Accessor compatibility checks can initialize each accessor's cached `Refs`
+  with `RuntimeHelpers.RunClassConstructor`, including closed generic accessors.
+  Verify enum type identity against the loaded game: an AGMLIB enum with the same
+  short name can compile successfully and still fail a typed field binding.
+  Exercise private nested-data getters and setters with inert plain data objects
+  to verify delegate visibility, null defaults, and mutation/restoration.
 - Unity adapter checks can run in an explicitly gated testing factory to verify
   hierarchy searches and native Harmony getters without starting a match. Use
   inert test subclasses to suppress unrelated initialization, frame callbacks,

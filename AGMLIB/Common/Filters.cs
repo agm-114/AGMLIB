@@ -18,9 +18,9 @@
 
 
 
-            MunitionTags[] _compatibleAmmoTags = Common.GetVal<MunitionTags[]>(weaponComponent, "_compatibleAmmoTags");
+            MunitionTags[] _compatibleAmmoTags = weaponComponent?.Internals().CompatibleAmmoTags;
             IEnumerable<string> taglist = _compatibleAmmoTags.ToList().ConvertAll(tag => tag.Subclass);
-            string _statGroupSubtype = Common.GetVal<string>(weaponComponent, "_statGroupSubtype");
+            string _statGroupSubtype = weaponComponent is ContinuousWeaponComponent continuous ? continuous.Internals().StatGroupSubtype : null;
             if (Blacklist.Intersect(taglist).Any())
                 return false;
             if (Whitelist.Intersect(taglist).Any())

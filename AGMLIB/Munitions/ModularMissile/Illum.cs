@@ -13,7 +13,7 @@ class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
         JammerSupportDescriptor source = BundleManager.Instance.AllMissileComponents.Where(desc => desc is JammerSupportDescriptor jammer).Select(desc => (JammerSupportDescriptor)desc).First();
 
         _effectPrefab = Common.GetVal<ActiveEWarEffect>(source, "_effectPrefab");
-        SignatureType _sigType = Common.GetVal<SignatureType>(_effectPrefab, "_sigType");
+        SignatureType _sigType = (_effectPrefab?.Internals().SigType ?? default);
 
         if (__instance is ModularJammerSupportDescriptor jammer)
         {
@@ -26,7 +26,7 @@ class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
             HullComponent goodewar = hullComponents.FirstOrDefault(x => x.SaveKey == jammer.PrefabName);
             //Debug.LogError("Found Target " + goodewar.SaveKey);
             RezFollowingMuzzle goodmuzzel = goodewar.gameObject.GetComponentInChildren<RezFollowingMuzzle>();
-            GameObject prefab = Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab");
+            GameObject prefab = goodmuzzel?.Internals().FollowingPrefab;
             if (prefab == null)
                 return;
             SensorIlluminator illum = prefab.GetComponent<SensorIlluminator>();
@@ -44,7 +44,7 @@ class JammerSupportDescriptorSpawnJammingEffect : MonoBehaviour
             */
         }
 
-        Common.SetVal(__instance, "_sigType", SignatureType.Radar);
+        __instance.Internals().SigType = SignatureType.Radar;
         Common.SetVal(__instance, "_effectPrefab", _effectPrefab);
     }
 

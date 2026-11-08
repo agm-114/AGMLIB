@@ -139,7 +139,7 @@ class RaycastMuzzleDoRaycast
         }
 
         Vector3 effectPosition = __result?.Point ?? position + direction.normalized * length;
-        MuzzleInternals internals = __instance.Internals();
+        MuzzleInternals internals = ((Muzzle)__instance).Internals();
         internals.Weapon.TriggerHitEffect(
             internals.MuzzleIndex,
             HitResult.None,
@@ -190,8 +190,8 @@ class BallisticRaycastMuzzleFixedUpdate
 
         public RaycastBulletObject(Object bullet)
         {
-            Lifetime = Common.GetVal<float>(bullet, "Lifetime");
-            Position = Common.GetVal<Vector3>(bullet, "Position");
+            Lifetime = BallisticRaycastMuzzleInternals.GetBulletLifetime(bullet);
+            Position = BallisticRaycastMuzzleInternals.GetBulletPosition(bullet);
         }
     }
 
@@ -202,8 +202,7 @@ class BallisticRaycastMuzzleFixedUpdate
         //Common.Hint("updating bullet queue");
 
 
-        object _activeBullets = Common.GetVal<object>(__instance, "_activeBullets");
-        var enumerable = _activeBullets as System.Collections.IEnumerable;
+        IEnumerable enumerable = ((BallisticRaycastMuzzle)__instance).Internals().ActiveBullets;
 
         foreach (var bulletobj in enumerable)
         {

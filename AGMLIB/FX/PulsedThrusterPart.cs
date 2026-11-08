@@ -1,7 +1,7 @@
 ﻿using Game.Map;
 public class PulsedThrusterPart : ThrusterPart
 {
-    private bool EffectPlaying => Common.GetVal<bool>(this, "_effectPlaying");
+    private bool EffectPlaying => this.Internals().EffectPlaying;
 
 
     public BaseSoundEffect PulsedSimpleSoundEffect;

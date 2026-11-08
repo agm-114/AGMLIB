@@ -44,8 +44,8 @@ public class AmmoModeCycleProfileModule : ScriptableObject, IOnDiscreteWeaponChe
         AmmoModeCycleProfileRuntime.Apply(discrete);
         if (!ReloadOnAmmoChange && !wasReloading)
         {
-            Common.SetVal(discrete, "_reloading", false);
-            Common.SetVal(discrete, "_reloadAccum", 0f);
+            discrete.Internals().Reloading = false;
+            discrete.Internals().ReloadAccum = 0f;
         }
     }
 }
@@ -60,8 +60,8 @@ public static class AmmoModeCycleProfileRuntime
         }
 
         AmmoModeRuntimeState state = weapon.gameObject.GetOrAddComponent<AmmoModeRuntimeState>();
-        StatValue recycleStat = Common.GetVal<StatValue>(weapon, "_statRecycleTime");
-        StatValue reloadStat = Common.GetVal<StatValue>(weapon, "_statReloadTime");
+        StatValue recycleStat = weapon?.Internals().StatRecycleTime;
+        StatValue reloadStat = weapon?.Internals().StatReloadTime;
         if (recycleStat == null || reloadStat == null)
         {
             return;
@@ -69,7 +69,7 @@ public static class AmmoModeCycleProfileRuntime
 
         if (!state.CycleCached)
         {
-            state.BaseMagazineSize = Common.GetVal<int>(weapon, "_magazineSize");
+            state.BaseMagazineSize = (weapon?.Internals().MagazineSizeRef ?? default);
             state.BaseRecycleSeconds = recycleStat.BaseValue;
             state.BaseReloadSeconds = reloadStat.BaseValue;
             state.CycleCached = true;
@@ -87,20 +87,20 @@ public static class AmmoModeCycleProfileRuntime
             reloadSeconds = Mathf.Max(0f, profile.ReloadSeconds);
         }
 
-        Common.SetVal(weapon, "_magazineSize", magazineSize);
+        weapon.Internals().MagazineSizeRef = magazineSize;
         SetStatBaseValue(recycleStat, recycleSeconds);
         SetStatBaseValue(reloadStat, reloadSeconds);
 
-        int fired = Common.GetVal<int>(weapon, "_magazineFired");
+        int fired = (weapon?.Internals().MagazineFired ?? default);
         if (fired > magazineSize)
         {
-            Common.SetVal(weapon, "_magazineFired", magazineSize);
+            weapon.Internals().MagazineFired = magazineSize;
         }
     }
 
     private static void SetStatBaseValue(StatValue stat, float baseValue)
     {
-        Common.SetVal(stat, "_baseValue", baseValue);
-        Common.RunFunc(stat, "Recalculate");
+        stat.Internals().BaseValue = baseValue;
+        stat.Internals().Recalculate();
     }
 }

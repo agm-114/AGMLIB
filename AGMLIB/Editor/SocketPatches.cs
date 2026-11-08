@@ -33,13 +33,14 @@ class SettingsMagazineLoadoutAddMagazine
     static void Postfix(SettingsMagazineLoadout __instance)
     {
         Common.LogPatch();
-        
+
         ModalListSelectDetailed select = (ModalListSelectDetailed)MenuController.Instance.GetTopMenu();
         if (select == null)
             return;
 
-        IMagazineProvider _provider = Common.GetVal<IMagazineProvider>(__instance, "_provider");
-        BaseHull _hull = Common.GetVal<BaseHull>(__instance, "_hull");
+        var internals = ((SettingsAmmoLoadout<IMagazineProvider>)__instance).Internals();
+        IMagazineProvider _provider = internals.Provider;
+        BaseHull _hull = internals.Hull;
         /*
         _openPalette.AddFilter("Show Only Filtered", delegate (object data)
         {
@@ -49,7 +50,7 @@ class SettingsMagazineLoadoutAddMagazine
         */
         select.RemoveFilters();
         //Debug.LogError("Finished Delegates");
- 
+
 
         bool anyTemplates = false;
         foreach (MissileTemplate template in _hull.MyShip.Fleet.AvailableMunitions.AllMissileTemplates)
@@ -70,14 +71,14 @@ class SettingsMagazineLoadoutAddMagazine
                 IMunition ammo2 = data as IMunition;
                 if (ammo2 != null)
                 {
-                    return 
-                        weapons.Any((IWeapon x) => x.NeedsExternalAmmoFeed && x.IsAmmoCompatible(ammo2)) || 
+                    return
+                        weapons.Any((IWeapon x) => x.NeedsExternalAmmoFeed && x.IsAmmoCompatible(ammo2)) ||
                         craft.Any((Spacecraft x) => x.AnyLoadoutUsesAmmoType(ammo2)) ||
                         ammoeffects.Any(effect => effect.ValidAmmo.Any(x => x.IsAmmoCompatible(ammo2)));
                         ;
                 }
                 MissileTemplate template2 = data as MissileTemplate;
-                return template2 == null || 
+                return template2 == null ||
                 weapons.Any((IWeapon x) => x.NeedsExternalAmmoFeed && x.IsAmmoCompatible(template2.MissileBody));
             }, initialState: true);
             //select.AddFilter("Actually Good", delegate (object data) { return false; }, true);
@@ -144,12 +145,12 @@ class SocketItemSetComponent
         settings = settings ?? __instance.Socket.gameObject.GetComponent<SocketEditorUISettings>();
         if (settings == null)
             return;
-        Common.SetVal(__instance, "_installedColor", settings.InstalledColor);
+        __instance.Internals().InstalledColor = settings.InstalledColor;
     }
 
     static void Postfix(SocketItem __instance, HullComponent component)
     {
-        Common.SetVal(__instance, "_installedColor", ColorName.DarkBlue);
+        __instance.Internals().InstalledColor = ColorName.DarkBlue;
     }
 
 }
@@ -186,7 +187,7 @@ class HullSocketPatch
         Common.LogPatch();
         HullSocket socket = __instance;
         SocketFilters socketFilters = socket.GetComponent<SocketFilters>() ?? new();
-        
+
         //Common.Trace($"Socket Filter Key: {socket.Key} Allow Null {socketFilters.AllowNullComponent} comp key {componentPrefab?.SaveKey}");
 
         if (socket.GetComponent<SocketFilters>() == null && componentPrefab?.GetComponent<SocketFilters>() == null)
@@ -198,7 +199,7 @@ class HullSocketPatch
             CheckDepedends(socket, true, true);
             _component.enabled = false;
             UnityEngine.Object.Destroy(_component.gameObject);
-            Common.SetVal(socket, "_component", null);
+            socket.Internals().Component = null;
             //SetPrivateField(_component, "_size", _component);
             socket.UpdateColliderActive();
         }
@@ -234,7 +235,7 @@ class HullSocketPatch
             //Common.Trace("poor socket");
             socketFilters.Size = socket.Size.Dimensions;
             socketFilters.Resized = true;
-            Common.SetVal(socket, "_size", componentPrefab.Size);
+            socket.Internals().Size = componentPrefab.Size;
             return true;
         }
 
@@ -252,7 +253,7 @@ class HullSocketPatch
         if (socketFilters.Resized && socketFilters.Size != null)
         {
             //Common.Trace("Reseting size");
-            Common.SetVal(__instance, "_size", socketFilters.Size);
+            __instance.Internals().Size = socketFilters.Size;
             socketFilters.Resized = false;
         }
         /*

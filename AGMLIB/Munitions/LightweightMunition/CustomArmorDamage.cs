@@ -31,7 +31,7 @@ namespace AGMLIB.Munitions.LightweightMunition
             {
                 return true;
             }
-            _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
+            _dynamicArmor = controller.Ship.Hull?.Internals().DynamicArmor;
             if (dynamicArmorIndex >= _dynamicArmor.Length)
             {
                 return true;
@@ -47,7 +47,7 @@ namespace AGMLIB.Munitions.LightweightMunition
             IModular modular = character as IModular;
             if (modular == null && character is BaseThrowawayDamager damager)
             {
-                modular = Common.GetVal<IDamageCharacteristic>(damager, "_damage") as IModular;
+                modular = damager?.Internals().Damage as IModular;
                 //Debug.LogError("Damager is " + Common.GetVal<IDamageCharacteristic>(damager, "_damage"));
 
             }
@@ -65,7 +65,7 @@ namespace AGMLIB.Munitions.LightweightMunition
                 if (mult.MaxThickness)
                 {
                     //Debug.LogError("Max Thickness");
-                    IArmorSection[] _dynamicArmor = Common.GetVal<IArmorSection[]>(controller.Ship.Hull, "_dynamicArmor");
+                    IArmorSection[] _dynamicArmor = controller.Ship.Hull?.Internals().DynamicArmor;
                     doarmordamage = true;
                     //Debug.LogError("Armor Sections " + _dynamicArmor.FirstOrDefault().Thickness + " % " + mult.ArmorStripMultiplier);
                     armordamage += _dynamicArmor.FirstOrDefault().Thickness * mult.ArmorStripMultiplier;

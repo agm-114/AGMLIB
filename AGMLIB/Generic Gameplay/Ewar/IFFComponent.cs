@@ -19,7 +19,7 @@ public class IFFComponent : MonoBehaviour
         jammed = _shipController.Comms.AnyJamming;
 
         foreach (LoiteringMissile loiteringMissile in _detectedmines)
-            if (Common.GetVal<Communicator>(loiteringMissile, "_comms").AnyJamming)
+            if ((loiteringMissile?.Internals().Comms).AnyJamming)
                 jammed = true;
         if (jammed)
             Common.Trace("IFF SHIP JAMMED" + jammed);
@@ -42,10 +42,10 @@ public class IFFComponent : MonoBehaviour
             Common.Trace("TRIGGERING IFF");
             List<InternalActiveSensorComponent> internals = _shipController.GetComponentsInChildren<InternalActiveSensorComponent>().ToList();
             Common.Trace("FINDING TARGET SENSOR");
-            disabledsensor = internals.Where((InternalActiveSensorComponent x) => x.IsFunctional).SelectMax((InternalActiveSensorComponent x) => Common.GetVal<StatValue>(x, "_statRadiatedPower").Value);
+            disabledsensor = internals.Where((InternalActiveSensorComponent x) => x.IsFunctional).SelectMax((InternalActiveSensorComponent x) => (x?.Internals().StatRadiatedPower).Value);
             Common.Trace("TRANSMITTING VIA RADAR");
 
-            SetAntennaPower(Common.GetVal<StatValue>(disabledsensor, "_statRadiatedPower").Value);
+            SetAntennaPower((disabledsensor?.Internals().StatRadiatedPower).Value);
             Debug.LogError("RECALCULATING");
 
             //typeof(StatValue).GetMethod("Recalculate").Invoke((StatValue)GetPrivateField(antenna, "_statTransmitPower"), null);
@@ -59,11 +59,11 @@ public class IFFComponent : MonoBehaviour
 
     void SetAntennaPower(float power)
     {
-        Common.SetVal(Common.GetVal<StatValue>(antenna, "_statTransmitPower"), "_valueCached", power);
+        (antenna?.Internals().StatTransmitPower).Internals().ValueCached = power;
 
         FreeModifierSource mod = new("Toggle Radar", new StatModifier("test", 0f, 0f));
-        Common.GetVal<StatValue>(antenna, "_statTransmitPower").AddModifier(mod, mod.Modifier);
-        Common.GetVal<StatValue>(antenna, "_statTransmitPower").RemoveModifier(mod);
+        (antenna?.Internals().StatTransmitPower).AddModifier(mod, mod.Modifier);
+        (antenna?.Internals().StatTransmitPower).RemoveModifier(mod);
     }
 
     public void OnTriggerEnter(Collider other)

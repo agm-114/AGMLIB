@@ -12,11 +12,11 @@ namespace Lib.Craft
 {
     public class AutoCraftGunTurretWeapon : CraftGunTurretWeapon
     {
-        public TurretController TurretControl => Common.GetVal<TurretController>(this, "_turretControl");
+        public TurretController TurretControl => this.Internals().TurretControl;
 
 
 
-        
+
         public override void FinalSetup(Spacecraft craft)
         {
             RuntimeCraftAmmoWeapon newruntime;
@@ -31,7 +31,7 @@ namespace Lib.Craft
                 Debug.LogError("Discrete Weapon");
                 newruntime = craft.AddRuntimeBehaviour<AutoRuntimeCraftDiscreteWeapon>(this);
             }
-            Common.SetVal(this, "_runtime", newruntime);
+            ((CraftGunWeapon)this).Internals().Runtime = newruntime;
         }
 
     }
@@ -39,7 +39,7 @@ namespace Lib.Craft
     {
         public TurretController TurretControl => Common.GetVal<TurretController>(this, "_turretControl");
 
-        public ITrack Track => Common.GetVal<ITrack>(this, "_target");
+        public ITrack Track => this.Internals().Target;
 
         AutoCraftGunTurretWeapon TurretWeapon => _weapon as AutoCraftGunTurretWeapon;
 
@@ -108,7 +108,7 @@ namespace Lib.Craft
 
             if (ValidTrack(Track))
             {
-                
+
 
                 base.FixedUpdate();
                 return;
@@ -130,10 +130,10 @@ namespace Lib.Craft
             }
             ITrack Stashtrack = Track;
 
-            Common.SetVal(this, "_target", _secondaryTargetTrack);
+            this.Internals().Target = _secondaryTargetTrack;
             Common.Hint(this, $"Switching Target to {_secondaryTargetTrack.ContactName}");
             base.FixedUpdate();
-            Common.SetVal(this, "_target", Stashtrack);
+            this.Internals().Target = Stashtrack;
             //SetTargetTrack();
         }
     }

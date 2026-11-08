@@ -98,7 +98,7 @@ public class WeaponComponentChangeAmmoTypeModuleCallbacks
 {
     static void Prefix(WeaponComponent __instance, out bool __state)
     {
-        __state = __instance is DiscreteWeaponComponent discrete && Common.GetVal<bool>(discrete, "_reloading");
+        __state = __instance is DiscreteWeaponComponent discrete && (discrete?.Internals().Reloading ?? default);
     }
 
     static void Postfix(WeaponComponent __instance, bool __result, bool __state)

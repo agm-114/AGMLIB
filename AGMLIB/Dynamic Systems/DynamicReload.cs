@@ -13,20 +13,20 @@ namespace Lib.Dynamic_Systems
         static void Prefix(DiscreteWeaponComponent __instance)
         {
             Common.LogPatch();
-            if (__instance.CurrentlyFiring || !Common.GetVal<bool>(__instance, "_reloading"))
+            if (__instance.CurrentlyFiring || !__instance.Internals().Reloading)
                 return;
             if (__instance.GetComponent<DynamicReload>() is not DynamicReload reload)
                 return;
             if (!reload.AlwaysUnloaded)
                 return;
-            Debug.LogError("blocking reload " + Common.GetVal<float>(__instance, "_reloadAccum"));
-            float _reloadAccum = Common.GetVal<float>(__instance, "_reloadAccum");
-            IWeaponComponentRPC _weaponRpcProvider = Common.GetVal<IWeaponComponentRPC>(__instance, "_weaponRpcProvider");
+            Debug.LogError("blocking reload " + __instance.Internals().ReloadAccum);
+            float _reloadAccum = __instance.Internals().ReloadAccum;
+            IWeaponComponentRPC _weaponRpcProvider = ((WeaponComponent)__instance).Internals().WeaponRpcProvider;
             _reloadAccum -= Time.fixedDeltaTime;
             _reloadAccum = 0;
             _weaponRpcProvider.MarkCycle(__instance, 0f);
-            Common.SetVal(__instance, "_reloadAccum", _reloadAccum);
-            Debug.LogError("blocking reload 2 " + Common.GetVal<float>(__instance, "_reloadAccum"));
+            __instance.Internals().ReloadAccum = _reloadAccum;
+            Debug.LogError("blocking reload 2 " + __instance.Internals().ReloadAccum);
 
         }
     }

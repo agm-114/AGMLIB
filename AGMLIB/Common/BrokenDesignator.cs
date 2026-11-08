@@ -29,12 +29,12 @@ public class BrokenDesignator : MonoBehaviour
             Common.Hint("Could not find rez following muzzle on indicated prefab " + PrefabName);
             return;
         }
-        if (Common.GetVal<GameObject>(goodmuzzel, "_followingPrefab") is not GameObject prefab)
+        if (goodmuzzel?.Internals().FollowingPrefab is not GameObject prefab)
         {
             Common.Hint("Could not find following prefab in rez following muzzle on indicated prefab " + PrefabName);
             return;
         }
-        Common.SetVal(optionaltargeMuzle, "_followingPrefab", prefab);
+        optionaltargeMuzle.Internals().FollowingPrefab = prefab;
         Destroy(this);
     }
 }

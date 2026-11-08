@@ -87,7 +87,8 @@ namespace AGMLIB.Dynamic_Systems.Area
                 //Debug.LogError("Softkilling " + target.gameObject.name);
                 if (SoftKillAntiJamVals && FailChance >= Random.Range(0.0f, 1f))
                 {
-                    Common.SetVal(seeker, "_validationReliable", false);
+                    if (seeker is RuntimeBeamSeeker beamSeeker)
+                        beamSeeker.Internals().ValidationReliable = false;
                 }
             }
         }
@@ -96,7 +97,7 @@ namespace AGMLIB.Dynamic_Systems.Area
     public class MissileJammingEffect : GenericSeekerEffect
     {
 
-        public ReceivedJamming GetJammingSources(RuntimeMissileSeeker seeker) => Common.GetVal<ReceivedJamming>(seeker, "_jammingSources");
+        public ReceivedJamming GetJammingSources(RuntimeMissileSeeker seeker) => (seeker as RuntimeBeamSeeker)?.Internals().JammingSources;
 
 
         public override void ApplyEffect(ModularMissile target)

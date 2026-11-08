@@ -93,7 +93,7 @@ public static class CraftLaunchLimitExtensions
             return 0;
         }
 
-        IEnumerable queue = Common.GetVal<IEnumerable>(carrier, "_trafficQueue");
+        IEnumerable queue = carrier?.Internals().TrafficQueue;
         if (queue == null)
         {
             Debug.LogError("AGMLIB craft limit could not count queued launches because the carrier traffic queue was unavailable.");
@@ -103,7 +103,7 @@ public static class CraftLaunchLimitExtensions
         int count = 0;
         foreach (object order in queue)
         {
-            if (Common.GetVal<object>(order, "Type")?.ToString() == "Launch")
+            if (CraftCarrierControllerInternals.GetOrderType(order)?.ToString() == "Launch")
             {
                 count++;
             }
@@ -186,7 +186,7 @@ internal static class CraftCarrierControllerTickCraftLaunchLimitPatch
             return;
         }
 
-        IEnumerable queue = Common.GetVal<IEnumerable>(__instance, "_trafficQueue");
+        IEnumerable queue = __instance.Internals().TrafficQueue;
         if (queue == null)
         {
             Debug.LogError("AGMLIB craft limit could not suspend queued launches because the carrier traffic queue was unavailable.");
@@ -196,7 +196,7 @@ internal static class CraftCarrierControllerTickCraftLaunchLimitPatch
         __state = new List<SuspendedLaunchOrder>();
         foreach (object order in queue)
         {
-            object orderType = Common.GetVal<object>(order, "Type");
+            object orderType = CraftCarrierControllerInternals.GetOrderType(order);
             if (orderType?.ToString() != "Launch")
             {
                 continue;
@@ -207,7 +207,7 @@ internal static class CraftCarrierControllerTickCraftLaunchLimitPatch
                 Order = order,
                 OriginalType = orderType,
             });
-            Common.SetVal(order, "Type", System.Enum.ToObject(orderType.GetType(), -1));
+            CraftCarrierControllerInternals.SetOrderType(order, System.Enum.ToObject(orderType.GetType(), -1));
         }
     }
 
@@ -231,7 +231,7 @@ internal static class CraftCarrierControllerTickCraftLaunchLimitPatch
 
         foreach (SuspendedLaunchOrder suspended in suspendedOrders)
         {
-            Common.SetVal(suspended.Order, "Type", suspended.OriginalType);
+            CraftCarrierControllerInternals.SetOrderType(suspended.Order, suspended.OriginalType);
         }
 
         suspendedOrders.Clear();

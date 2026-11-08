@@ -1,12 +1,48 @@
 # Native boundaries
 
-## Current structural inventory
+## Verified accessor coverage (2026-11-08)
 
-The generated source scan found:
+The installed `Nebulous_Data/Managed/Nebulous.dll` has SHA-256
+`86EF9681F3C6B08BD9BEAC2173F903CE29D8197DD4D5E49279EA9CA058F14461`.
+The opt-in `NativeAccessorTestingFixture` successfully initialized **390 cached
+bindings across 95 accessor types**, including a closed generic ammo-loadout
+accessor. Eight private-data getter/setter checks and the existing dynamic-stun
+adapter fixture's 79 checks also passed.
+This verifies binding compatibility and the stun regression, not every gameplay
+feature that consumes these members.
+
+Typed accessors under `AGMLIB/Nebulous` now cover the known reflection members
+used by weapons, muzzles, missile stages/guidance, sensors, ship state, hull parts,
+resources, carrier traffic, bundles, editor controls, status UI, and Mirror
+identity setup. Related weapon/hull configuration and missile runtime state are
+available for future work. Existing public native APIs are used directly where
+appropriate. Source contains no `global::` qualifications; imports and aliases
+disambiguate native types, including the game's `Utility.WeaponRole` from AGMLIB's
+serialized avionics restriction enum.
+
+A semantic inventory with Debug and local-fixture symbols reduced active
+`Common.GetVal`, `Common.SetVal`, and `Common.RunFunc` calls from 284 to 19.
+Private carrier traffic orders, ballistic bullets, debuff instances, network
+track handles, and point-defense records use cached typed decoders compiled once
+by `NativePrivateFields`. The inaccessible native types remain at that boundary;
+the callers receive public domain values. Remaining dynamic boundaries include
+configurable field names, unfamiliar board-piece implementations, and generic
+serialization/inspection. Legacy member
+names absent from the current native assembly require version-specific research
+before binding; similar-looking fields are not sufficient evidence of equivalence.
+
+Run the binding fixture when extending these accessors; the exact gate and
+implementation rules are in [`AGMLIB/Nebulous/AGENTS.md`](../AGMLIB/Nebulous/AGENTS.md).
+Machine-local logs, full prefab snapshots, and migration inventories remain in
+the ignored cache and testing notes.
+
+## Historical structural inventory
+
+The initial generated source scan found:
 
 - 163 active-looking `HarmonyPatch` attributes;
 - 88 files containing known reflection-boundary tokens;
-- only two current typed `Internals()` accessor files, for
+- two typed `Internals()` accessor files at that time, for
   `ModularMissile` and `WeaponComponent`.
 
 An AST-aware cross-check found 96 directly decorated patch classes and 189

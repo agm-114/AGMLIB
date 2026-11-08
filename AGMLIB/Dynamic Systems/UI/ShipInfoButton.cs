@@ -51,11 +51,11 @@ public class ShipInfoButton : ShipState
                 .Where(behaviour => behaviour is ShipInfoButton ||
                     behaviour.GetComponentInParent<NetworkIdentity>() == shipIdentity)
                 .ToArray();
-            Common.SetVal(shipIdentity, "NetworkBehaviours", shipBehaviours, typeof(NetworkIdentity));
+            shipIdentity.Internals().NetworkBehaviours = shipBehaviours;
             for (int i = 0; i < shipBehaviours.Length; i++)
             {
-                Common.SetVal(shipBehaviours[i], "netIdentity", shipIdentity, typeof(NetworkBehaviour));
-                Common.SetVal(shipBehaviours[i], "ComponentIndex", i, typeof(NetworkBehaviour));
+                shipBehaviours[i].Internals().NetIdentity = shipIdentity;
+                shipBehaviours[i].Internals().ComponentIndex = i;
             }
         }
     }
@@ -231,7 +231,7 @@ public class ButtonData
     //LayoutElement Layout => GameObject.transform.parent.GetComponent<LayoutElement>();
     TextMeshProUGUI Text => GameObject.GetComponentInChildren<TextMeshProUGUI>();
 
-    TooltipTrigger Tooltip => Common.GetVal<TooltipTrigger>(Button, "_tooltip") ?? GameObject.GetComponentInChildren<TooltipTrigger>();
+    TooltipTrigger Tooltip => Button?.Internals().Tooltip ?? GameObject.GetComponentInChildren<TooltipTrigger>();
 
     public SequentialButton? FindButton()
     {
@@ -258,12 +258,12 @@ public class ButtonData
         Tooltip.Text = PrimaryInfoButton.TooltipString;
         //Layout.minWidth = 550 / 3 * 4;
         OnValueChanged.RemoveAllListeners();
-        Common.GetVal<SequenceOption[]>(Button, "_options");
+        _ = Button?.Internals().Options;
 
-        Common.SetVal(Button, "_onValueChanged", new SequentialButtonEvent());
-        Common.SetVal(Button, "_options", PrimaryInfoButton.Options);
+        Button.Internals().OnValueChanged = new SequentialButtonEvent();
+        Button.Internals().Options = PrimaryInfoButton.Options;
 
-        Common.SetVal(Button, "_originalTooltip", PrimaryInfoButton.TooltipString);
+        Button.Internals().OriginalTooltip = PrimaryInfoButton.TooltipString;
         //Debug.LogError(PrimaryInfoButton.ButtonName);
         //foreach(string state in ButtonState.States)
         //    Debug.LogError("state: " + state);
@@ -330,14 +330,14 @@ class ShipInfoBarMatchAllButtons
         PlayerAction action = 0;
         if (playerActionLimiter != null)
         {
-            action = Common.GetVal<PlayerAction>(playerActionLimiter, "_availableActions");
+            action = (playerActionLimiter?._availableActions ?? default);
         }
 
 
         Common.LogPatch();
         //Debug.LogError("buttonmatch");
-        ShipController _primaryShip = Common.GetVal<ShipController>(__instance, "_primaryShip");
-        List<ShipController> _shipGroup = Common.GetVal<List<ShipController>>(__instance, "_shipGroup") ?? new();
+        ShipController _primaryShip = __instance.Internals().PrimaryShip;
+        List<ShipController> _shipGroup = __instance.Internals().ShipGroup ?? new();
         foreach (var button in uibuttons)
             if (button.Value != null && button.Value.GameObject != null)
                 UnityEngine.Object.Destroy(button.Value.GameObject);

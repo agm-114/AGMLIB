@@ -25,7 +25,7 @@ namespace AGMLIB.Generic_Gameplay
             Missiles,
             Spaceframes,
             Munitions
-           
+
         }
 
         public enum FieldName
@@ -54,11 +54,11 @@ namespace AGMLIB.Generic_Gameplay
         public FieldName TargetFieldName = FieldName._particles;
 
         private BundleManager Bundle => BundleManager.Instance;
-        private Dictionary<string, BaseHull> _hulls => Common.GetVal<Dictionary<string, BaseHull>>(Bundle, "_hulls");
-        private Dictionary<string, HullComponent> _components => Common.GetVal<Dictionary<string, HullComponent>>(Bundle, "_components");
-        private Dictionary<string, ModularMissile> _missileBodies => Common.GetVal<Dictionary<string, ModularMissile>>(Bundle, "_missileBodies");
-        private Dictionary<string, Spacecraft> _spaceframes => Common.GetVal<Dictionary<string, Spacecraft>>(Bundle, "_spaceframes");
-        private Dictionary<string, IMunition> _munitionsBySaveKey => Common.GetVal<Dictionary<string, IMunition>>(Bundle, "_munitionsBySaveKey");
+        private Dictionary<string, BaseHull> _hulls => Bundle?.Internals().Hulls;
+        private Dictionary<string, HullComponent> _components => Bundle?.Internals().Components;
+        private Dictionary<string, ModularMissile> _missileBodies => Bundle?.Internals().MissileBodies;
+        private Dictionary<string, Spacecraft> _spaceframes => Bundle?.Internals().Spaceframes;
+        private Dictionary<string, IMunition> _munitionsBySaveKey => Bundle?.Internals().MunitionsBySaveKey;
 
 
         public MonoBehaviour VisualEffectDestination;
@@ -177,7 +177,7 @@ namespace AGMLIB.Generic_Gameplay
                 sourceComponent = GetSpecificComponent(target, SourceComponent, SourceComponentIndex) ?? sourceComponent;
                 //switch statement to find component based on value
             }
-            
+
             VisualEffect? effect;
             DynamicVisibleParticles? visibleParticles;
             effect = Common.GetVal<VisualEffect>(sourceComponent, SourceFieldName.ToString());
@@ -186,7 +186,7 @@ namespace AGMLIB.Generic_Gameplay
             {
                 visibleParticles = Common.GetVal<DynamicVisibleParticles>(sourceComponent, SourceFieldName.ToString());
                 if (visibleParticles != null)
-                    effect = Common.GetVal<VisualEffect>(visibleParticles, FieldName._particles.ToString());
+                    effect = visibleParticles.Internals().Particles;
             }
 
             if (effect == null)
@@ -195,9 +195,9 @@ namespace AGMLIB.Generic_Gameplay
                 return;
             }
 
-            if (VisualEffectDestination is DynamicVisibleParticles)
+            if (VisualEffectDestination is DynamicVisibleParticles destination)
             {
-                Common.SetVal(VisualEffectDestination, FieldName._particles.ToString(), effect);
+                destination.Internals().Particles = effect;
             }
             else
             {
@@ -205,7 +205,7 @@ namespace AGMLIB.Generic_Gameplay
             }
         }
 
-        
+
     }
 
 }

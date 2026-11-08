@@ -4,7 +4,7 @@
     {
 
         [SerializeField]
-        private float TriggerRadius => Common.GetVal<float>(this, "_lookaheadSphereRadius");
+        private float TriggerRadius => this.Internals().LookaheadSphereRadius;
 
 
         [Flags]

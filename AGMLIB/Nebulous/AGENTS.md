@@ -57,6 +57,9 @@ missile.Internals().CurrentStageNumber = 1;
 
 Accessor structs may expose a narrow typed convenience such as `CurrentStage` or
 `TryGetCurrentStage`, but gameplay behavior stays in the owning feature.
+For inaccessible nested native data, static decoders may return concrete public
+values without requiring a live owner. `NativePrivateFields` compiles their
+field delegates once; keep nested type and field names in the owning accessor.
 
 ## Rules
 
@@ -66,7 +69,26 @@ Accessor structs may expose a narrow typed convenience such as `CurrentStage` or
 - Keep cached delegate names compact inside a nested `Refs` class; use `Stages`, not `StagesField`.
 - Expose concrete types and ref-return properties so reads and writes use the same API.
 - Keep raw native field names private to the accessor file.
+- Prefer the native public API when it already exposes the needed member.
+- Qualify native types when AGMLIB defines the same short name, such as
+  `Utility.WeaponRole`; a same-named enum can compile but fail field binding.
+- Use normal imports or aliases instead of `global::` qualification. Rename an
+  AGMLIB collision only when serialized type/field identity and downstream
+  compatibility are preserved; serialized avionics restriction enums retain
+  their existing identity.
+- When adding an `Internals()` overload for a derived native type, check existing
+  callers that need the base accessor and cast to the declaring type explicitly.
 - Fail clearly when a required binding changes after a game update. Provide a `Try...` helper only
   when an invalid runtime lifecycle state is expected and the caller should fail closed.
 - Use `Common.GetVal` only for infrequent or genuinely dynamic reflection where a typed accessor
   cannot be defined.
+
+## Binding verification
+
+The opt-in `NativeAccessorTestingFixture` initializes every accessor's cached
+bindings in the installed game, including a closed generic ammo-loadout accessor.
+Build with `AgmlibEnableLocalTestFixtures=true` and launch with
+`AGMLIB_NATIVE_ACCESSOR_TEST=1`. Require `event=native-accessors result=success`
+and zero binding failures. This verifies compatibility with the loaded assemblies;
+feature behavior still needs its appropriate regression fixture. Ordinary builds
+exclude the fixture and its activation key.

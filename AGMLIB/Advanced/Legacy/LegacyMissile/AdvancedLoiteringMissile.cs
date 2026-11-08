@@ -4,14 +4,6 @@ using SmallCraft;
 
 public class AdvancedLoiteringMissile : LoiteringMissile
 {
-    private static readonly FieldInfo ActivationTriggerField = typeof(LoiteringMissile).GetField(
-        "_activationTrigger",
-        BindingFlags.Instance | BindingFlags.NonPublic);
-
-    private static readonly MethodInfo TriggerAttackMethod = typeof(LoiteringMissile).GetMethod(
-        "TriggerAttack",
-        BindingFlags.Instance | BindingFlags.NonPublic);
-
     [Header("Advanced Magnetic Fuse")]
     [Tooltip("Enables the replacement proximity and sensor fuse controller.")]
     public bool MagneticFuse = true;
@@ -52,7 +44,7 @@ public class AdvancedLoiteringMissile : LoiteringMissile
 
     protected override string GetDetailTextInternal()
     {
-        _stockActivationTrigger ??= ActivationTriggerField?.GetValue(this) as SphereCollider;
+        _stockActivationTrigger ??= this.Internals().ActivationTrigger;
         if (_stockActivationTrigger != null)
         {
             return base.GetDetailTextInternal();
@@ -210,17 +202,14 @@ public class AdvancedLoiteringMissile : LoiteringMissile
 
     private void EnsureActivationTrigger()
     {
-        _stockActivationTrigger ??= ActivationTriggerField?.GetValue(this) as SphereCollider;
+        _stockActivationTrigger ??= this.Internals().ActivationTrigger;
         if (_stockActivationTrigger == null)
         {
             _stockActivationTrigger = gameObject.AddComponent<SphereCollider>();
-            ActivationTriggerField?.SetValue(this, _stockActivationTrigger);
+            this.Internals().ActivationTrigger = _stockActivationTrigger;
         }
         ConfigureActivationTrigger();
     }
 
-    private void TriggerAttack(Vector3 targetPosition)
-    {
-        TriggerAttackMethod?.Invoke(this, new object[] { targetPosition, true });
-    }
+    private void TriggerAttack(Vector3 targetPosition) => this.Internals().TriggerAttack(targetPosition);
 }

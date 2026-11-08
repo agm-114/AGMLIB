@@ -34,10 +34,10 @@ public sealed class DynamicReductionTestingComponentFactory : ITestingComponentF
                 .SetPointCost(0)
                 .UnlockForAllFactions();
 
-            Common.SetVal(builder.Component, "_size", new Vector3Int(2, 2, 2));
+            builder.Component.Internals().Size = new Vector3Int(2, 2, 2);
 
             SimpleFilter filter = builder.AddToRoot<SimpleFilter>();
-            Common.SetVal(filter, "_defaultvalue", true);
+            filter.DefaultValue = true;
 
             DynamicReduction reduction = builder.AddToRoot<DynamicReduction>();
             reduction.ResourceName = "Power";

@@ -62,8 +62,8 @@ class TurretControllerFaceTarget
         }
         TraversalLimits _forwardLimits = customlimits.ForwardLimits;
         Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
-        Transform _body = Common.GetVal<Transform>(__instance, "_body"); ;
-        Transform _barrel = Common.GetVal<Transform>(__instance, "_barrel"); ;
+        Transform _body = __instance.Internals().Body; ;
+        Transform _barrel = __instance.Internals().Barrel; ;
 
         float traverse = MathHelpers.ConvertAngle360to180(_body.localRotation.eulerAngles.y);
         float elevation = MathHelpers.ConvertAngle360to180(_barrel.localRotation.eulerAngles.x) * -1;
@@ -84,7 +84,7 @@ class TurretControllerTargetWithinLimits
 {
 
     /*
-     * 
+     *
         Vector3 to = base.transform.InverseTransformPoint(worldPosition);
         Vector3 normalized = new Vector3(to.x, 0f, to.z).normalized;
         float num = Vector3.Angle(normalized, to);
@@ -131,7 +131,7 @@ class TurretControllerTargetWithinLimits
         Vector3 local = __instance.transform.InverseTransformPoint(worldPosition);
         Vector3 onHorizontal = new Vector3(local.x, 0f, local.z).normalized;
         float elevation = Vector3.Angle(onHorizontal, local);
-        TraversalLimits? _limits = Common.GetVal<TraversalLimits?>(__instance, "_forwardLimits"); 
+        TraversalLimits? _limits = Common.GetVal<TraversalLimits?>(__instance, "_forwardLimits");
 
         if (_limits.HasValue)
         {
@@ -149,8 +149,8 @@ class TurretControllerTargetWithinLimits
     }
 }
 
-/* This is the version that messed with vanilla 
-   
+/* This is the version that messed with vanilla
+
   static void Prefix(TurretController __instance)
     {
         _forwardLimits = Common.GetVal<TraversalLimits?>(__instance, "_forwardLimits");
@@ -158,7 +158,7 @@ class TurretControllerTargetWithinLimits
         Common.SetVal<bool>(__instance, "_insideForwardLimits", true);
 
     }
-     
+
     static void Postfix(TurretController __instance)
     {
 
@@ -193,7 +193,7 @@ class TurretControllerTargetWithinLimits
         }
 
 
-        
+
         Common.SetVal<TraversalLimits?>(__instance, "_forwardLimits", _forwardLimits);
 
 

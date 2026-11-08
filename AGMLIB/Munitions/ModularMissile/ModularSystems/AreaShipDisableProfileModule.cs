@@ -105,7 +105,7 @@ public class AreaCommandDisruptionState : MonoBehaviour
 
         if (Time.time >= _endTime)
         {
-            typeof(ShipController).GetMethod("HandleCommandWorkingChanged", Common.FunFlags)?.Invoke(_ship, new object[] { null });
+            _ship.Internals().RefreshCommandState();
             Destroy(this);
             return;
         }
