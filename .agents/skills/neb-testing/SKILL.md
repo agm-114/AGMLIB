@@ -242,6 +242,21 @@ Use live ammunition counts to verify how many shots actually fired:
 
 Do not treat an accepted order, the transient order icon, or an initial `event=fire` line as proof of repeated launches. Those signals can occur before the weapon bears and may only describe order acceptance. For a persistent firing cycle, require the ammunition count to continue decreasing across samples; if the count remains fixed and the weapon card reports `Idle`, the cycle stopped.
 
+### Verify docked inventory transfers
+
+For an exception in InventorySerializers.ReadStorableItem, inspect the live
+SkirmishGameManager.StorableItems lookup. Native initialization supplies it only
+for campaign. Exercise the real CmdImmediateItemTransfer command and verify both
+source and destination quantities; a successful item serialization round trip
+alone does not establish that storage changed. Bound fuel test amounts by the
+receiver's actual capacity. Also cover fleet missile/craft designs alongside
+bundled ammunition, fuel, and restores.
+
+On a local Mirror host, a command exception can log a disconnect/rejection while
+NetworkClient.isConnected still reads true. Capture the exact native exception
+for the baseline, then require quantity conservation and a ready connection in
+the passing run. Verify lookup setup does not clone patterns when profiling cost.
+
 ## Enter local skirmish
 
 1. Open `Skirmish` > `New Skirmish` from the main menu.
@@ -416,6 +431,18 @@ can create a significant number of NREs.
   pool owner and wait for native repooling to finish before reusing them.
   Immediate repooling yields two frames; a fixed wall-clock delay can expire
   during slow startup frames before that lifecycle has completed.
+- For spent-missile cleanup, record detonation, the native `OnRepoolDelayed`
+  callback, and later samples separately. Native delayed repooling moves the
+  object to the supplied impact point before waiting two render frames to call
+  `OnRepoolDelayed`, even with `disableImmediately=true`. Distinguish that
+  position jump from residual Rigidbody motion and from a sustained live missile.
+- `DynamicVisibleLODGroup` hides by forcing its culled LOD; its renderers can
+  remain enabled. Use the body's `DynamicVisible` state and LOD wiring when
+  checking visibility, alongside Rigidbody velocity and detonation/damage counts.
+- Reserve a shared game installation for one runtime test at a time. Preserve
+  the current normal deployment after any other test finishes, and wait for a
+  terminated process to exit before restoring DLLs; an immediate copy can fail
+  while Windows still holds the DLL mapping.
 - Exercise delayed fuses through the patched `OnTriggerEnter` and Unity's
   coroutine scheduler. Check duplicate triggers, cancellation on repool, and
   reuse past the cancelled deadline. Give the cancellation case enough delay

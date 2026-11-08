@@ -111,6 +111,18 @@ Use a unique prefix and stable key-value fields:
 ```
 
 Keep high-volume events behind `DeepTelemetry=false`. A normal run should emit enough information to establish activation, outcome, and summary without logging every frame.
+Round-trip diagnostic exports in the live game. A nonempty JSON object is not
+proof that nested telemetry survived: Unity JsonUtility has omitted lists of
+runtime mod-defined snapshot classes while retaining their primitive fields.
+Assert nested record counts, endpoints, and measured totals after reading the
+export back. Use a framework serializer when Unity's runtime type metadata does
+not cover those snapshot types. This check is separate from AssetBundle authoring
+and does not establish anything about AssetBundle serialization.
+Separate emitted-ray counts from distinct visible lines. A deterministic fixed
+aim point can produce coincident rays, so verify numbered captures and configured
+ray counts. Client/RPC presentation counters can lag authoritative termination;
+wait for presentation completion instead of reading them synchronously when the
+server marks a missile finished.
 
 ## Scenario Plan
 
@@ -156,6 +168,10 @@ For selective target logic, vary one target-class flag at a time and include an 
 Escalate only when the lower layer cannot represent the suspected failure.
 
 ## Damage Verification
+- For multi-ray and spalling dealers, match individual internal casts to their
+  component-damage calls. Intersections alone do not prove damage, and the
+  parent beam's total must not be assigned to every internal ray. Distinguish
+  misses, filtered/zero-damage hits, and positive reported damage.
 
 - Separate collision/damage dispatch checks from real armor and component HP
   changes. A dummy IDamageable returning a fixed number does not exercise native
