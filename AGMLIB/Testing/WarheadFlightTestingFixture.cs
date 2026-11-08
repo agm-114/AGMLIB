@@ -18,6 +18,43 @@ internal class WarheadFlightProbe : MonoBehaviour
     public int WrongDirections;
     public float DetonationRange;
     public Transform Target = null!;
+
+    public int CleanupFrame = -1;
+    public int DetonationFrame = -1;
+    public HitResult DetonationResult;
+    public Vector3 DetonationPosition;
+    public Vector3 ImpactPosition;
+    private ModularMissile? _missile;
+    private Rigidbody? _body;
+    private Renderer[] _meshes = [];
+    private DynamicVisible[] _bodyVisuals = [];
+
+    public float BodySpeed => _body != null ? _body.velocity.magnitude : 0f;
+    public int EnabledMeshes => _meshes.Count(mesh => mesh != null && mesh.enabled && mesh.gameObject.activeInHierarchy);
+    public int ShowingBodyVisuals => _bodyVisuals.Count(visual => visual != null && visual.gameObject.activeInHierarchy && visual.IsVisible);
+
+    public void ObserveCleanup(ModularMissile missile)
+    {
+        _missile = missile;
+        _body = missile.GetComponent<Rigidbody>();
+        _meshes = missile.GetComponentsInChildren<Renderer>(true)
+            .Where(renderer => renderer is MeshRenderer or SkinnedMeshRenderer).ToArray();
+        _bodyVisuals = missile.GetComponentsInChildren<DynamicVisible>(true)
+            .Where(visual => visual is DynamicVisibleLODGroup or DynamicVisibleMesh).ToArray();
+    }
+
+    private void LateUpdate()
+    {
+        if (_missile != null && DetonationFrame >= 0 && Time.frameCount - DetonationFrame <= 8)
+            SampleCleanup("frame");
+    }
+
+    public void SampleCleanup(string phase)
+    {
+        if (_missile == null || DetonationFrame < 0)
+            return;
+        Debug.Log($"[AGMLIB Test] event=warhead-cleanup phase={phase} netId={_missile.netId} frame={Time.frameCount - DetonationFrame} result={DetonationResult} dead={_missile.IsDead} speed={BodySpeed:F3} showing={ShowingBodyVisuals}/{_bodyVisuals.Length} enabledMeshes={EnabledMeshes}/{_meshes.Length} fromDetonation={Vector3.Distance(_missile.transform.position, DetonationPosition):F3} fromImpact={Vector3.Distance(_missile.transform.position, ImpactPosition):F3}");
+    }
 }
 
 internal class WarheadFlightTests : MonoBehaviour
@@ -55,7 +92,8 @@ internal class WarheadFlightTests : MonoBehaviour
         ShipController launcher = manager.SkirmishLocalPlayer.PlayerFleet.FleetShipControllers.First();
         Vector3 origin = launcher.transform.position + Vector3.up * 10000;
         WarheadAdapterTarget target = new GameObject("Native Flight Damage Target").AddComponent<WarheadAdapterTarget>();
-        target.transform.position = origin + Vector3.forward * 80;
+        bool cleanup = Environment.GetEnvironmentVariable("AGMLIB_WARHEAD_FLIGHT_CLEANUP") == "1";
+        target.transform.position = origin + Vector3.forward * (cleanup ? 400 : 80);
         BoxCollider targetCollider = target.gameObject.AddComponent<BoxCollider>();
         targetCollider.size = Vector3.one;
         bool scenery = Environment.GetEnvironmentVariable("AGMLIB_WARHEAD_FLIGHT_SCENERY") == "1";
@@ -80,6 +118,8 @@ internal class WarheadFlightTests : MonoBehaviour
                 BeamWarheadDescriptor descriptor = (BeamWarheadDescriptor)runtime.Internals().Descriptor;
                 WarheadFlightProbe probe = missile.gameObject.AddComponent<WarheadFlightProbe>();
                 probe.Target = targetCollider.transform;
+                if (cleanup)
+                    probe.ObserveCleanup(missile);
                 bool proximity = missile.GetComponentsInChildren<Collider>(true)
                     .Any(collider => collider.isTrigger && collider.gameObject.layer == 22);
                 missile.SetProgramPath(launcher, [targetCollider.transform.position]);
@@ -107,6 +147,12 @@ internal class WarheadFlightTests : MonoBehaviour
                 Require(!proximity || probe.BeamEvents == 0 || probe.DetonationRange > 20f, "native-beam-standoff-distance");
                 int damageCalls = scenery ? 0 : target.Hits - hits;
                 Require(scenery || damageCalls > 0, "native-damage-count");
+                if (cleanup)
+                {
+                    probe.SampleCleanup("two-seconds");
+                    Require(probe.CleanupFrame >= 0 && probe.CleanupFrame - probe.DetonationFrame <= 8, "native-cleanup-callback-delayed");
+                    Require(probe.BodySpeed < 0.01f && probe.ShowingBodyVisuals == 0, "missile-body-remains-after-detonation");
+                }
                 Debug.Log($"[AGMLIB Test] event=warhead-native-impact result=success key={key} reuse={reuse} netId={missile.netId} collisions={probe.Collisions} triggers={probe.TriggerCollisions} detonations={probe.Detonations} damageEffects={probe.DamageEffects} presentationEffects={probe.PresentationEffects} beams={probe.BeamEvents} beamHits={probe.BeamHits} wrongDirections={probe.WrongDirections} distance={probe.DetonationRange} damageCalls={damageCalls}");
                 launches++;
                 Destroy(probe);
@@ -156,12 +202,30 @@ internal static class WarheadFlightCollisionObserver
 [HarmonyPatch(typeof(AngleWarheadDescriptor), nameof(AngleWarheadDescriptor.TriggerDetonate))]
 internal static class WarheadFlightDetonationObserver
 {
-    private static void Postfix(RuntimeMissileWarhead runtime)
+    private static void Postfix(RuntimeMissileWarhead runtime, MunitionHitInfo hitInfo, HitResult __result)
     {
         if (runtime.Missile.GetComponent<WarheadFlightProbe>() is { } probe)
         {
             probe.Detonations++;
             probe.DetonationRange = Vector3.Distance(runtime.transform.position, probe.Target.position);
+            probe.DetonationFrame = Time.frameCount;
+            probe.DetonationResult = __result;
+            probe.DetonationPosition = runtime.transform.position;
+            probe.ImpactPosition = hitInfo?.Point ?? runtime.transform.position;
+            probe.SampleCleanup("detonation");
+        }
+    }
+}
+
+[HarmonyPatch(typeof(ModularMissile), "OnRepoolDelayed")]
+internal static class WarheadFlightCleanupObserver
+{
+    private static void Postfix(ModularMissile __instance)
+    {
+        if (__instance.GetComponent<WarheadFlightProbe>() is { } probe)
+        {
+            probe.CleanupFrame = Time.frameCount;
+            probe.SampleCleanup("native-cleanup");
         }
     }
 }

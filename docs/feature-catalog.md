@@ -194,13 +194,30 @@ The modular missile family adds:
 
 `FuseSupportDescriptor` and `FuseWarheadDescriptor` both install
 `RuntimeMissileFuse`. Their `OnlyFuseOnTarget` option restricts proximity
-detonation to `Missile.CurrentTarget`, following seeker retargeting. With no
-current target or a different object hit, proximity detonation is blocked.
+detonation to `Missile.CurrentTarget`, following seeker retargeting. When that
+is null, the fuse falls back to the initial launch track's object. With neither
+target available or a different object hit, proximity detonation is blocked.
 `RequireFoundSeeker` requires guidance to have a selected seeker with
 a successful search result; no contact or a jammed result blocks detonation.
 Both options default to `false`, and enabling both requires both checks to
 pass. These options apply to proximity triggers; direct impacts and the
 warhead's native checks retain their normal behavior.
+
+`FilterTargetClassification` optionally rejects fighter or missile proximity
+contacts whose classification differs from the current or fallback target.
+It defaults to `true` on both descriptors. Disabling it leaves classification
+decisions to the normal warhead/game checks; `OnlyFuseOnTarget` and
+`RequireFoundSeeker` still apply independently.
+
+The current seeker target takes priority over the launch target. The fallback
+requires the launch track to remain available through the launching ship's
+sensors; position-only launches have no launch track to fall back to. The launch
+track ID is saved with in-progress missiles and cleared when they are pooled.
+When neither target is available or its classification is unknown,
+`FilterTargetClassification` allows the contact through to the normal
+warhead/game checks. `OnlyFuseOnTarget` blocks proximity detonation without
+either target. `RequireFoundSeeker` always requires a successful, unjammed
+seeker result, even when a launch target is available.
 
 The fuse patch for submunitions is associated with two focused historical
 AGMLIB commits. It skips a proxy-fuse decision on the transient `IFF.None`
