@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net481</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GameReferences Condition="'$(GameReferences)' == ''">$(MSBuildProjectDirectory)\..\..\..\AGMLIB\libs</GameReferences>
+    <NebulousGameRoot Condition="'$(NebulousGameRoot)' == ''">$(MSBuildProgramFiles32)\Steam\steamapps\common\Nebulous</NebulousGameRoot>
+    <BridgeInstallDir Condition="'$(BridgeInstallDir)' == ''">$(NebulousGameRoot)\Mods\NebulousGameBridge</BridgeInstallDir>
+    <BaseOutputPath>..\..\..\artifacts\NebulousGameBridge\</BaseOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\BridgeProtocol.cs" Link="BridgeProtocol.cs" />
+    <None Update="ModInfo.xml" CopyToOutputDirectory="PreserveNewest" />
+    <Reference Include="System.Runtime.Serialization" />
+    <_GameAssembly Include="Nebulous;Mirror;UnityEngine.CoreModule;UnityEngine.UI;UnityEngine.UIModule;Unity.TextMeshPro" />
+    <Reference Include="@(_GameAssembly)">
+      <HintPath>$(GameReferences)\%(Identity).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="DeployNebulousGameBridge" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
+    <Error Condition="!Exists('$(NebulousGameRoot)\Nebulous.exe')" Text="Nebulous.exe was not found in $(NebulousGameRoot). Set NebulousGameRoot to the game installation." />
+    <Copy SourceFiles="$(TargetPath);$(TargetDir)ModInfo.xml" DestinationFolder="$(BridgeInstallDir)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Deployed Nebulous Game Bridge to $(BridgeInstallDir)" />
+  </Target>
+</Project>

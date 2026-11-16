@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModInfo>
+  <ModName>Nebulous Game Bridge</ModName>
+  <ModDescription>Local game controls for neb-cli.</ModDescription>
+  <ModVer>0.1.0</ModVer>
+  <Assemblies>
+    <string>Nebulous.GameBridge.dll</string>
+  </Assemblies>
+  <GameVer>0.6.2</GameVer>
+</ModInfo>

@@ -149,6 +149,19 @@ List apps after launch, then select the window titled `Nebulous`. Do not target 
 
 If window capture fails, stop automated input rather than clicking blind. Record the exact capture error and ask for a short manual navigation handoff.
 
+## Drive menus through neb-cli
+
+Enable the separate [Nebulous Game Bridge](../../../docs/neb-cli.md) mod before
+launching. Use `neb-cli status` to check the current scene and menu, then
+`neb-cli inspect` to get actionable controls. Read the label and path and use an
+interactable control ID with the current snapshot. Refresh after each action and
+wait for a newly opened menu's controls to become interactable.
+
+In Testing Range, `ships`, `select-ship` and `throttle` use the local player's
+fleet. Read `ships` again to verify the throttle order applied. `pause` and
+`resume` operate the native solo pause menu. Compare `status.elapsedSeconds`
+across commands to verify that the simulation stopped and started.
+
 ## Prefer keyboard macros
 
 Prefer a known keyboard shortcut or short key macro over an equivalent multi-step UI flow. Keyboard input is faster, avoids coordinate drift, and is generally more reliable once the correct game context and binding are verified.
@@ -194,7 +207,8 @@ Prefer Testing Range for rapid fleet, weapon, missile, mine, and fighter iterati
 1. Open `Fleet Editor` from the main menu.
 2. Load or create the fleet needed for the test.
 3. Press `Esc` after the fleet is open, then choose the testing-range action from the pause/menu screen.
-4. Complete deployment if prompted, then select the relevant ship or object before reproducing the issue.
+4. Select and confirm an opposing fleet if the fleet list opens.
+5. Complete deployment if prompted, then select the relevant ship or object before reproducing the issue.
 
 Testing Range can end immediately when the player fleet has no offensive capability. For long-running
 noncombat tests, include one minimally supplied weapon in a weapon group so the range remains active.

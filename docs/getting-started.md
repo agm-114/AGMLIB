@@ -43,6 +43,7 @@ or launch NEBULOUS and must not be confused with repository-only validation.
 - `docs/component-authoring.md`: how to add and configure components safely.
 - `docs/compatibility.md`: public API, serialization, namespace, and save rules.
 - `docs/testing-and-troubleshooting.md`: validation levels and evidence.
+- [NEBULOUS CLI](neb-cli.md) covers the standalone command-line tool and its bridge mod.
 - `knowledge/`: verified and inferred notes about native game behavior.
 - `planning/`: implementation plans, risk registers, consolidation proposals,
   and exhaustive generated inventories.
