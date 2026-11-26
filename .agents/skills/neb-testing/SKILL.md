@@ -188,6 +188,23 @@ Prefer a known keyboard shortcut or short key macro over an equivalent multi-ste
 
 ## Enter Testing Range
 
+For multi-craft deck checks, build with `AgmlibEnableLocalTestFixtures=true`
+and set `AGMLIB_MULTI_CRAFT_PAD_TEST_FLEET` to a fleet containing a stock Levy
+with at least three identical fighters and a usable loadout at index zero.
+The fixture reuses the center elevator Animator with two offset fighter
+anchors on its moving platform. It holds the test carrier stationary and
+offsets the stock hull's approach and departure paths for each spot. Both
+fighter positions are direct children of the center pad. Supply only the
+center pad to registration and leave the list and masks at defaults
+to exercise hierarchy discovery. The fixture also checks 40 independent child
+positions using both hierarchy discovery and a parent-owned list. It checks
+the fighter pair on the first frame that a launch operation is visible, follows
+both craft back into storage, then launches a lone fighter and a craft with
+large pad dimensions to check exclusive occupancy. Staggered fighter delays
+exercise the interval between releases. Each launch checks for one open/close
+cycle and movement of the shared platform. Look for the final `[MultiCraftPadTest] PASS` in
+the game log. Restore the ordinary build after the run.
+
 For friendly tender docking, select the receiving ship, right-click the tender,
 then choose `MOV` -> `DOCK`. Current vanilla docking orders work outside campaign;
 check the visible, enabled native DOCK command before assuming a campaign gate.

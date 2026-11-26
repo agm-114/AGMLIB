@@ -83,11 +83,9 @@ and the current
 - `AutoAttachToAllShips` defaults to false, so the Harmony initialization patch
   does not enable the system globally unless a ship already has the component
   or configuration changes that static flag.
-- `GetActiveCraft` filters groups by `OwnedBy` and only checks that a craft's
-  launching ship has the same owner. It does not require the exact carrier
-  ship. One carrier can therefore count craft launched by every ship belonging
-  to that player.
-- `GetPendingLaunchCount` has the same owner-wide scope.
+- `GetActiveCraft` searches the owner's groups and counts flying craft whose
+  `LaunchedFromShip` is the exact carrier ship. `GetPendingLaunchCount` uses the
+  same ship identity for launches that have yet to become airborne.
 - The `CraftCarrierController.Tick` prefix suspends launches by changing the
   private traffic order's enum value to `-1`, then restores it in both postfix
   and finalizer.

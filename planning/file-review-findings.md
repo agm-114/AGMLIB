@@ -152,8 +152,6 @@ by reading the AGMLIB implementation beside the pinned native control flow.
 
 ### `Generic Gameplay/Craft/FighterLimit.cs`
 
-- Active and pending counts are player-wide because they compare `OwnedBy`, not
-  the exact carrier.
 - Capacity suspension mutates a private native traffic-order enum to `-1`.
 - Suspended orders skip preflight and launch processing and can retain an
   already reserved pad.

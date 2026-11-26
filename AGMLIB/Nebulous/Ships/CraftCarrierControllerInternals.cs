@@ -20,6 +20,10 @@ public readonly struct CraftCarrierControllerInternals
             AccessTools.FieldRefAccess<CraftCarrierController, float>("_maxGreenDeckSpeed");
         internal static readonly AccessTools.FieldRef<CraftCarrierController, IEnumerable> TrafficQueue =
             AccessTools.FieldRefAccess<CraftCarrierController, IEnumerable>("_trafficQueue");
+        internal static readonly AccessTools.FieldRef<CraftCarrierController, List<ICraftEntryExitPoint>> SharedPads =
+            AccessTools.FieldRefAccess<CraftCarrierController, List<ICraftEntryExitPoint>>("_sharedPads");
+        internal static readonly System.Reflection.FieldInfo ReservedPad =
+            AccessTools.Field(AccessTools.Inner(typeof(CraftCarrierController), "TrafficOrder"), "ReservedPad");
     }
 
     private readonly CraftCarrierController _carrier;
@@ -31,6 +35,8 @@ public readonly struct CraftCarrierControllerInternals
     public ref float MinGreenDeckSpeed => ref Refs.MinGreenDeckSpeed(_carrier);
     public ref float MaxGreenDeckSpeed => ref Refs.MaxGreenDeckSpeed(_carrier);
     public IEnumerable TrafficQueue => Refs.TrafficQueue(_carrier);
+    public List<ICraftEntryExitPoint> SharedPads => Refs.SharedPads(_carrier);
+    internal static System.Reflection.FieldInfo ReservedPadField => Refs.ReservedPad;
     public static object GetOrderType(object order) => Refs.GetOrderType(order);
     public static void SetOrderType(object order, object type) => Refs.SetOrderType(order, type);
 }

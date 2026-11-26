@@ -161,8 +161,8 @@ part of it, cancel remaining queued launches, save/reload during the queue, and
 repeat with AI control.
 
 Add a two-carrier case under the same player and a landing request while the
-launch cap is full. This catches the current owner-wide counter and reserved-pad
-starvation defects.
+launch cap is full. Verify each hull has independent capacity and landing
+traffic can continue while launch orders wait.
 
 ## Debuff on impact
 

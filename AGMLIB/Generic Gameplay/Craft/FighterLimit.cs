@@ -50,14 +50,12 @@ public sealed class CraftLaunchLimit : MonoBehaviour
             craft == null
             || craft.IsDead
             || craft.IsFlying);
-        if (ship?.OwnedBy == null)
+        if (ship == null)
         {
             return 0;
         }
 
-        return PendingLaunches.Count(craft =>
-            craft.LaunchedFromShip != null
-            && craft.LaunchedFromShip.OwnedBy == ship.OwnedBy);
+        return PendingLaunches.Count(craft => craft.LaunchedFromShip == ship);
     }
 }
 
@@ -146,8 +144,7 @@ public static class CraftLaunchLimitExtensions
                 craft != null
                 && !craft.IsDead
                 && craft.IsFlying
-                && craft.LaunchedFromShip != null
-                && craft.LaunchedFromShip.OwnedBy == ship.OwnedBy);
+                && craft.LaunchedFromShip == ship);
         }
 
         return count;

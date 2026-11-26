@@ -133,6 +133,40 @@ turrets. Generic gameplay adds configurable bulk hangars, craft weapon settings,
 fighter limits, and lightweight work slots. `Systems/DroneTester` is an
 experimental runtime test/control feature.
 
+`MultiCraftLandingPad` lets one deck launch or recover several craft on the
+same carrier traffic cycle. For **one bomber or two fighters**, put the center
+bomber pad on the parent GameObject. Add a left and a right
+fighter pad as direct child GameObjects, each with its own
+`MultiCraftLandingPad`. Assign only the center pad to the carrier's standalone
+pad part or integrated hangar. Leave **Positions** empty to discover direct
+children, or add the fighter pads to the parent's **Positions** list. The
+parent links every listed pad at runtime, including pads elsewhere in the
+prefab. Each child gets its own space and the center uses all of them.
+Add more children the same way. Set the children's native pad dimensions
+for the fighters and the parent's for the bomber.
+
+For one moving elevator, assign its Animator to the center pad and leave the
+fighter pads' Animators empty (or assign that same Animator). Put three launch
+anchors on the animated platform: center, left, and right. Assign each pad its
+corresponding anchor and the same native hull part. Two ready fighters can
+ride one ascent together. The elevator stays up until the last position
+releases it. A single fighter or a bomber can use the same elevator alone.
+If a position has its own moving platform, assign its own Animator instead.
+
+Configure takeoff and approach points and launch and landing support on each
+position. Enable **Use Own Pattern Points** for separate flight paths. The
+animation, launch/landing delay, and traversal time determine the cycle time.
+
+Leave **Occupied Spaces** at zero on the parent for independent child
+positions. To model custom overlaps, list the positions on the parent and
+give the parent and every listed position a positive **Occupied Spaces**
+bitmask. Overlapping bits block each other. For example, masks 1 and 2
+can operate together and mask 3 blocks both. Keep the child order (or
+explicit list order) stable for existing saves.
+Craft must fit in all three dimensions and the hangar must
+have storage for them. Ready craft can start together, and a lone fighter
+can launch without waiting for a partner.
+
 [`HangarMagazineComponent`](../AGMLIB/Generic%20Gameplay/Craft/HangarMagazineComponent.cs)
 derives from `ConfigurableBulkCraftHangarComponent` and uses
 [`MagazineComponent`](../AGMLIB/Generic%20Gameplay/MagazineComponent.cs) to own

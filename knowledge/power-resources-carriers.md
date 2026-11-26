@@ -230,9 +230,9 @@ needs a measured decision rather than an assumed optimization.
 `CraftLaunchLimit` does not prevent fleet-control selection. It leaves launch
 orders in the native queue and temporarily hides their type from native tick
 processing while capacity is full. That preserves queued replacement intent,
-but the mechanism is unsafe:
+with [capacity tracked per hull](small-craft-carriers-orders-ai.md#current-craftlaunchlimit-audit).
+The mechanism has several limitations:
 
-- active and pending counts are owner-wide, not exact-ship or exact-carrier;
 - all `Spacecraft` count together, so manned/unmanned separation is not a
   policy;
 - a suspended order can retain its pad reservation and preflight state;
