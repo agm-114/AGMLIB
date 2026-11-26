@@ -38,6 +38,10 @@ public class LoiteringModularMissile : ModularMissile
     [SerializeField]
     private bool _usePushoffEngines = true;
 
+    [Tooltip("Ends push-off and starts arming early when terrain is within braking distance.")]
+    [SerializeField]
+    private bool _terrainFuse = true;
+
     [Tooltip("Displays the current modular stage's maneuvering-thruster particles during push-off. This does not affect the thrust force.")]
     [SerializeField]
     private bool _useManeuveringThrustersForPushoff = true;
@@ -205,6 +209,12 @@ public class LoiteringModularMissile : ModularMissile
             case LoiteringFlightPhase.Flyout:
                 if (_usingPushoffEngines)
                 {
+                    if (_terrainFuse && TerrainWithinStoppingDistance())
+                    {
+                        EnterPhase(LoiteringFlightPhase.Arming);
+                        break;
+                    }
+
                     FlightInterface.PointTowards(_pushoffDirection, Vector3.up);
                     ApplyPushoffThrust();
                 }
@@ -387,32 +397,25 @@ public class LoiteringModularMissile : ModularMissile
             Component target = contact.GetComponentInParent<Missile>();
             target ??= contact.GetComponentInParent<Spacecraft>();
             target ??= contact.GetComponentInParent<ShipController>();
-            if (target == null || !HasActivationLineOfSight(target.transform.position))
+            if (target == null)
             {
                 continue;
             }
 
-            switch (target)
+            Vector3? position = target switch
             {
-                case ShipController ship
-                    when ProximityShips &&
-                    !ship.IsEliminated &&
-                    IsFuseIFFTarget(ship):
-                    targetPosition = ship.Position;
-                    return true;
+                ShipController ship when ProximityShips && !ship.IsEliminated && IsFuseIFFTarget(ship) =>
+                    ship.Position,
+                Spacecraft fighter when ProximityFighters && IsFuseIFFTarget(fighter) => fighter.Position,
+                Missile missile when ProximityMissiles && missile != this && IsFuseIFFTarget(missile) =>
+                    missile.transform.position,
+                _ => null
+            };
 
-                case Spacecraft fighter
-                    when ProximityFighters &&
-                    IsFuseIFFTarget(fighter):
-                    targetPosition = fighter.Position;
-                    return true;
-
-                case Missile missile
-                    when ProximityMissiles &&
-                    missile != this &&
-                    IsFuseIFFTarget(missile):
-                    targetPosition = missile.transform.position;
-                    return true;
+            if (position is Vector3 eligiblePosition && HasActivationLineOfSight(target.transform.position))
+            {
+                targetPosition = eligiblePosition;
+                return true;
             }
         }
 
@@ -636,6 +639,27 @@ public class LoiteringModularMissile : ModularMissile
     {
         MissileEngineDescriptor? engine = GetCurrentStageEngine();
         return engine != null && engine.StrafeThrust(inBoostPhase: true) > 0f;
+    }
+
+    private bool TerrainWithinStoppingDistance()
+    {
+        Vector3 velocity = _body.velocity;
+        Vector3 direction = velocity.normalized;
+        if (direction == Vector3.zero)
+        {
+            return false;
+        }
+
+        float castDistance = velocity.magnitude * Time.fixedDeltaTime;
+        if (_loiterDrag > 0f)
+        {
+            castDistance += 2f * MathHelpers.StoppingDistanceByDrag(velocity, _body.mass, _loiterDrag);
+        }
+
+        return _avoider != null
+            ? _avoider.BroadphaseCheck(direction, castDistance, out _)
+            : Physics.Raycast(
+                _body.position, direction, castDistance, SpecialLayers.Mask_AvoidanceObstacles, QueryTriggerInteraction.Ignore);
     }
 
     private void ApplyPushoffThrust()
